@@ -1,0 +1,43 @@
+# Same gate as CI, run before the commit exists. Nothing lands that would go
+# red on push.
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-added-large-files
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.6
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: local
+    hooks:
+      # mypy and pytest run through uv so they resolve against the locked
+      # environment rather than whatever pre-commit happens to build.
+      - id: mypy
+        name: mypy (strict)
+        entry: uv run mypy
+        language: system
+        types: [python]
+        pass_filenames: false
+
+      - id: pytest
+        name: pytest
+        entry: uv run pytest -q
+        language: system
+        types: [python]
+        pass_filenames: false
+
+      - id: no-korean
+        name: repository is English only
+        entry: python3 scripts/check_english_only.py
+        language: system
+        pass_filenames: true
