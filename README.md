@@ -16,9 +16,10 @@ that measures it.
 ## Status
 
 Early. The scaffolding, the shared decision space, and the contract tests are
-in place; the agents, the attacks, and the report are not. The results table
-below is empty on purpose and will be filled by generated output rather than
-by hand.
+in place; the agents, the attacks, and the report are not. What is built and
+what is not is stated per part in the design notes, and the order of the
+remaining work is in [ROADMAP.md](ROADMAP.md). The results table below is
+empty on purpose and will be filled by generated output rather than by hand.
 
 ```bash
 uv sync
@@ -81,8 +82,22 @@ can be reproduced.
 
 ## Documentation
 
+Scope first, then design, then plan.
+
 - [What this measures](docs/what-this-measures.md), including what it does not
-- [Threat model](docs/threat-model.md)
+- [Threat model](docs/threat-model.md): what counts as compromise, and what is out of scope
+- [Design notes](docs/design/README.md): one note per part, each stating what is built and what is not
+- [Roadmap](ROADMAP.md)
+
+### Design notes
+
+- [Contract](docs/design/contract.md): what both gateway backends are held to, stated apart from either one
+- [Backends](docs/design/backends.md): the in-memory and HTTP gateways, and the differential test between them
+- [Agents](docs/design/agents.md): the four subjects and the defense each represents
+- [Attacks](docs/design/attacks.md): the catalog, its benign twins, and where an adversary may write
+- [Delegator](docs/design/delegator.md): the person the agent escalates to, modeled rather than assumed
+- [Metrics](docs/design/metrics.md): the five quantities, and why none is reported alone
+- [Reproducibility](docs/design/reproducibility.md): cassettes, seeds, repetitions, version records
 
 ## License
 
