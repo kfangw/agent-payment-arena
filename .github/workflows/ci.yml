@@ -1,0 +1,69 @@
+# CI: lint, strict type check and the full test suite on every push and PR.
+#
+# No job here calls an LLM provider. Tests that need one are marked `live` and
+# are excluded; the recorded cassettes are what CI replays, so a run costs
+# nothing and is deterministic.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Fail loudly rather than silently reaching a provider if a test is
+  # mismarked.
+  ANTHROPIC_API_KEY: ""
+  OPENAI_API_KEY: ""
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install
+        run: uv sync --all-extras --dev
+
+      - name: ruff format
+        run: uv run ruff format --check .
+
+      - name: ruff lint
+        run: uv run ruff check .
+
+      - name: mypy
+        run: uv run mypy
+
+      - name: English only
+        run: uv run python scripts/check_english_only.py
+
+      - name: pytest
+        run: uv run pytest -m "not live and not http_gateway" --cov --cov-report=term-missing
+
+  # The demo is the first thing a reader runs, so it is checked like a test:
+  # a clean install must reach a working command with no keys and no network
+  # services.
+  demo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install without extras
+        run: uv sync
+
+      - name: Run the CLI
+        run: |
+          uv run arena --version
+          uv run arena contract
