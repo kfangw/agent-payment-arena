@@ -16,7 +16,7 @@ from pathlib import Path
 
 import numpy as np
 
-from .design import NINE_CELLS
+from .design import EPS, NINE_CELLS
 from .report import write_once
 from .stats import boot_ci, holm, perm_p, ratio_mean, units, verdict
 
@@ -169,7 +169,7 @@ def main(argv: list[str] | None = None) -> None:
     """CLI entry: read results, write summary.json and the tables."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--results", default="results")
-    ap.add_argument("--eps", type=float, default=None)
+    ap.add_argument("--eps", type=float, default=EPS)
     ap.add_argument("--out", default="tables")
     args = ap.parse_args(argv)
     if args.eps is None:

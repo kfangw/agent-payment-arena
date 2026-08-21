@@ -24,6 +24,7 @@ import os
 import time
 import urllib.request
 from collections import defaultdict
+from pathlib import Path
 
 TAGS = ("unsafe", "safe", "finalized")
 # The public JSON-RPC tag for the unsafe head is "latest".
@@ -46,7 +47,12 @@ def _rpc(url: str, method: str, params: list, timeout: float) -> dict:
 
 def poll_once(url: str, provider: str, t_ms: int, timeout: float = 5.0) -> dict:
     """Poll the three heads of one provider.  Never raises; a failed call
-    lands in the sample's error field so the loop keeps its cadence."""
+    lands in the sample's error field so the loop keeps its cadence.
+
+    The sample carries both a wall clock (t_ms, comparable across process
+    restarts) and a monotonic clock (mono_ms, immune to wall-clock jumps);
+    durations are measured on the monotonic clock, and a gap between
+    monotonic stamps marks a polling gap that must not be counted."""
     height: dict = {}
     hsh: dict = {}
     err = None
@@ -58,9 +64,9 @@ def poll_once(url: str, provider: str, t_ms: int, timeout: float = 5.0) -> dict:
             hsh[tag] = blk["hash"] if blk else None
     except Exception as exc:  # noqa: BLE001  (any failure is a datum, not a crash)
         err = type(exc).__name__
-    rtt_ms = (time.monotonic() - t0) * 1000.0
-    return dict(t_ms=t_ms, provider=provider, height=height, hash=hsh,
-                rtt_ms=rtt_ms, error=err)
+    t1 = time.monotonic()
+    return dict(t_ms=t_ms, mono_ms=int(t1 * 1000), provider=provider,
+                height=height, hash=hsh, rtt_ms=(t1 - t0) * 1000.0, error=err)
 
 
 # ------------------------------------------------------------ pure estimators
@@ -113,81 +119,73 @@ def reorgs(stream: list[dict]) -> list[dict]:
     return out
 
 
-def _advance_gaps(stream: list[dict], period_s: float) -> list[tuple[int, float]]:
-    """Return (t_ms, seconds since the unsafe head last advanced) at each
-    tick where the head failed to advance."""
-    gaps = []
-    last_h = None
-    last_move_ms = None
-    for s in stream:
-        if s.get("error"):
-            continue
-        h = s["height"].get("unsafe")
-        if h is None:
-            continue
-        if last_h is None or h > last_h:
-            last_h, last_move_ms = h, s["t_ms"]
-            continue
-        # head did not advance this tick
-        if last_move_ms is not None:
-            gaps.append((s["t_ms"], (s["t_ms"] - last_move_ms) / 1000.0))
-    return gaps
+def _mono(s: dict) -> int | None:
+    """Monotonic stamp, falling back to the wall clock for older logs."""
+    return s.get("mono_ms", s.get("t_ms"))
 
 
-def stall_intervals(stream: list[dict], t_stall_s: float = 20.0) -> list[tuple[int, int]]:
-    """Maximal (start_ms, end_ms) spans where the unsafe head stayed put
-    for at least t_stall_s.  Used both per provider and for the overlap
-    that confirms a chain stall."""
-    spans: list[tuple[int, int]] = []
+def stall_runs(stream: list[dict], period_s: float, t_stall_s: float = 20.0,
+               gap_factor: float = 3.0) -> list[dict]:
+    """Runs where the unsafe head stayed put for at least t_stall_s.
+
+    Duration is accumulated on the monotonic clock, but a step longer than
+    gap_factor * period is a polling gap and contributes no time: a missing
+    stretch must not inflate the stall, because that duration feeds the
+    regime rate directly.  Each run carries its monotonic start and end so
+    two providers can be checked for a simultaneous stall.
+    """
+    runs: list[dict] = []
     last_h = None
-    stuck_since = None
+    prev_mono = None
+    run: dict | None = None
     for s in stream:
         if s.get("error"):
-            continue
+            continue                       # a failed poll is a gap, not a datum
         h = s["height"].get("unsafe")
-        if h is None:
+        mono = _mono(s)
+        if h is None or mono is None:
             continue
         if last_h is not None and h == last_h:
-            if stuck_since is None:
-                stuck_since = prev_ms
-            if s["t_ms"] - stuck_since >= t_stall_s * 1000.0:
-                spans.append((stuck_since, s["t_ms"]))
+            step = (mono - prev_mono) / 1000.0 if prev_mono is not None else period_s
+            inc = step if step <= gap_factor * period_s else 0.0   # drop gaps
+            if run is None:
+                run = dict(start_mono=prev_mono, end_mono=mono, dur=0.0, samples=1)
+            run["dur"] += inc
+            run["end_mono"] = mono
+            run["samples"] += 1
         else:
-            stuck_since = None
-        last_h, prev_ms = h, s["t_ms"]
-    # merge spans that share a stuck_since anchor into one maximal interval
-    merged: list[tuple[int, int]] = []
-    for a, b in spans:
-        if merged and a <= merged[-1][1]:
-            merged[-1] = (merged[-1][0], b)
-        else:
-            merged.append((a, b))
-    return merged
+            if run is not None and run["dur"] >= t_stall_s:
+                runs.append(run)
+            run = None
+        last_h, prev_mono = h, mono
+    if run is not None and run["dur"] >= t_stall_s:
+        runs.append(run)
+    return runs
 
 
-def _overlap(a: tuple[int, int], b: tuple[int, int]) -> bool:
-    return a[0] <= b[1] and b[0] <= a[1]
+def _overlap(a: dict, b: dict) -> bool:
+    return a["start_mono"] <= b["end_mono"] and b["start_mono"] <= a["end_mono"]
 
 
-def stalls(streams: dict[str, list[dict]], t_stall_s: float = 20.0) -> dict:
+def stalls(streams: dict[str, list[dict]], period_s: float = 2.0,
+           t_stall_s: float = 20.0) -> dict:
     """Chain stalls need both providers stuck at once; a one-sided stall
-    is a provider fault.  Returns durations of confirmed chain stalls and
-    the count of provider-only incidents."""
-    per = {p: stall_intervals(st, t_stall_s) for p, st in streams.items()}
+    is a provider fault.  Confirmed durations are the gap-robust overlap
+    length (the smaller of the two runs' measured durations)."""
+    per = {p: stall_runs(st, period_s, t_stall_s) for p, st in streams.items()}
     provs = list(per)
     confirmed: list[float] = []
     provider_only = 0
     if len(provs) >= 2:
-        a_spans, b_spans = per[provs[0]], per[provs[1]]
-        for a in a_spans:
-            hit = next((b for b in b_spans if _overlap(a, b)), None)
+        a_runs, b_runs = per[provs[0]], per[provs[1]]
+        for a in a_runs:
+            hit = next((b for b in b_runs if _overlap(a, b)), None)
             if hit is not None:
-                lo, hi = max(a[0], hit[0]), min(a[1], hit[1])
-                confirmed.append((hi - lo) / 1000.0)
+                confirmed.append(min(a["dur"], hit["dur"]))
             else:
                 provider_only += 1
-        provider_only += sum(1 for b in b_spans
-                             if not any(_overlap(a, b) for a in a_spans))
+        provider_only += sum(1 for b in b_runs
+                             if not any(_overlap(a, b) for a in a_runs))
     else:
         provider_only = sum(len(v) for v in per.values())
     return dict(count=len(confirmed), durations_s=confirmed,
@@ -236,7 +234,7 @@ def summarize(samples: list[dict], period_s: float = 2.0, tick_s: float = 60.0,
     n_per = {p: len(streams[p]) for p in provs}
     seconds = (min(n_per.values()) if n_per else 0) * period_s
     reorg_rows = reorgs(streams[provs[0]]) if provs else []
-    stall = stalls(streams, t_stall_s)
+    stall = stalls(streams, period_s, t_stall_s)
     durs = stall["durations_s"]
     mean_d = (sum(durs) / len(durs)) if durs else 0.0
     reg = regime(stall["count"], seconds, mean_d, tick_s)
@@ -257,33 +255,92 @@ def summarize(samples: list[dict], period_s: float = 2.0, tick_s: float = 60.0,
 
 
 # ------------------------------------------------------------ collection loop
+def _log_event(events_path: str, kind: str, reason: str) -> None:
+    """Append one supervisor event (start / restart / stop) so a
+    multi-day collection records its own interruptions instead of hiding
+    them by making a fresh file each run."""
+    ev = dict(kind=kind, reason=reason, t_ms=int(time.time() * 1000),
+              mono_ms=int(time.monotonic() * 1000))
+    with open(events_path, "a") as fh:
+        fh.write(json.dumps(ev) + "\n")
+
+
 def collect(urls: dict[str, str], out_dir: str, seconds: float,
-            period_s: float = 2.0) -> str:
-    """Poll both providers every period_s for `seconds`, append raw jsonl,
-    and write the summary.  Returns the summary path."""
+            period_s: float = 2.0, poll_fn=poll_once,
+            watchdog_s: float = 120.0) -> None:
+    """Poll every provider every period_s for `seconds`, appending raw
+    jsonl to one stable file per provider.  Raises if no provider has
+    answered within watchdog_s, so the supervisor can restart it.
+
+    Files are opened in append mode and never rotated per run, so a
+    restart continues the same log rather than orphaning the last one.
+    """
     os.makedirs(out_dir, exist_ok=True)
-    start_ms = int(time.time() * 1000)
     handles = {p: open(os.path.join(  # noqa: SIM115  (long-lived append handles)
-        out_dir, f"poll_{p}_{start_ms}.jsonl"), "w") for p in urls}
-    samples: list[dict] = []
+        out_dir, f"poll_{p}.jsonl"), "a") for p in urls}
     deadline = time.monotonic() + seconds
+    last_ok = time.monotonic()
     try:
         while time.monotonic() < deadline:
             t_ms = int(time.time() * 1000)
+            any_ok = False
             for p, url in urls.items():
-                s = poll_once(url, p, t_ms)
-                samples.append(s)
+                s = poll_fn(url, p, t_ms)
                 handles[p].write(json.dumps(s) + "\n")
                 handles[p].flush()
+                any_ok = any_ok or not s.get("error")
+            if any_ok:
+                last_ok = time.monotonic()
+            elif time.monotonic() - last_ok > watchdog_s:
+                raise RuntimeError("watchdog: no provider answered")
             time.sleep(period_s)
     finally:
         for h in handles.values():
             h.close()
+
+
+def supervise(urls: dict[str, str], out_dir: str, seconds: float,
+              period_s: float = 2.0, poll_fn=poll_once,
+              watchdog_s: float = 120.0, backoff_s: float = 5.0) -> str:
+    """Run collect under a watcher: on any crash or watchdog trip, log a
+    restart event and resume until the overall deadline, then summarise
+    the whole persistent log.  Returns the summary path."""
+    os.makedirs(out_dir, exist_ok=True)
+    events = os.path.join(out_dir, "poll_events.jsonl")
+    _log_event(events, "start", "supervisor start")
+    end = time.monotonic() + seconds
+    while time.monotonic() < end:
+        try:
+            collect(urls, out_dir, end - time.monotonic(), period_s,
+                    poll_fn=poll_fn, watchdog_s=watchdog_s)
+        except Exception as exc:  # noqa: BLE001  (restart on any failure)
+            _log_event(events, "restart", f"{type(exc).__name__}: {exc}")
+            if time.monotonic() < end:
+                time.sleep(min(backoff_s, max(0.0, end - time.monotonic())))
+    _log_event(events, "stop", "deadline reached")
+    return summarize_dir(out_dir, period_s)
+
+
+def summarize_dir(out_dir: str, period_s: float = 2.0) -> str:
+    """Summarise the persistent per-provider logs into one summary file."""
+    samples: list[dict] = []
+    for path in sorted(Path(out_dir).glob("poll_*.jsonl")):
+        if path.name == "poll_events.jsonl":
+            continue                       # the supervisor log, not samples
+        samples.extend(load_jsonl(str(path)))
     summary = summarize(samples, period_s=period_s)
-    path = os.path.join(out_dir, f"poll_summary_{start_ms}.json")
-    with open(path, "w") as fh:
+    summary["restarts"] = _count_restarts(os.path.join(out_dir,
+                                                        "poll_events.jsonl"))
+    out = os.path.join(out_dir, "poll_summary.json")
+    with open(out, "w") as fh:
         json.dump(summary, fh, indent=1)
-    return path
+    return out
+
+
+def _count_restarts(events_path: str) -> int:
+    if not Path(events_path).exists():
+        return 0
+    return sum(1 for ev in load_jsonl(events_path) if ev.get("kind") == "restart")
 
 
 def load_jsonl(path: str) -> list[dict]:
@@ -293,18 +350,20 @@ def load_jsonl(path: str) -> list[dict]:
 
 
 def main(argv: list[str] | None = None) -> None:
-    """CLI entry: run a collection window against two endpoints."""
+    """CLI entry: run a supervised collection against two endpoints."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--rpc-a", default=os.environ.get("RPC_A"))
     ap.add_argument("--rpc-b", default=os.environ.get("RPC_B"))
     ap.add_argument("--seconds", type=float, default=86400.0)
     ap.add_argument("--period", type=float, default=2.0)
+    ap.add_argument("--watchdog", type=float, default=120.0)
     ap.add_argument("--out", default="poll")
     args = ap.parse_args(argv)
     if not args.rpc_a or not args.rpc_b:
         ap.error("two endpoints required (--rpc-a/--rpc-b or RPC_A/RPC_B)")
     urls = {"a": args.rpc_a, "b": args.rpc_b}
-    path = collect(urls, args.out, args.seconds, args.period)
+    path = supervise(urls, args.out, args.seconds, args.period,
+                     watchdog_s=args.watchdog)
     print(f"wrote {path}")
 
 

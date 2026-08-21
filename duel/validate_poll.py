@@ -4,16 +4,22 @@ Run:  python -m duel.validate_poll
 """
 from __future__ import annotations
 
+import tempfile
+import time
+from pathlib import Path
+
 import numpy as np
 
-from .poll import reorgs, stall_intervals, stalls, summarize
+from .poll import (reorgs, stall_runs, stalls, summarize, summarize_dir,
+                   supervise)
 
 PERIOD = 2.0
 
 
 def _sample(provider: str, t_ms: int, unsafe_h: int | None, unsafe_x: str | None,
-            error: str | None = None) -> dict:
-    return dict(t_ms=t_ms, provider=provider,
+            error: str | None = None, mono_ms: int | None = None) -> dict:
+    return dict(t_ms=t_ms, mono_ms=t_ms if mono_ms is None else mono_ms,
+                provider=provider,
                 height=dict(unsafe=unsafe_h, safe=unsafe_h, finalized=unsafe_h),
                 hash=dict(unsafe=unsafe_x, safe=unsafe_x, finalized=unsafe_x),
                 rtt_ms=1.0, error=error)
@@ -108,16 +114,74 @@ def a6_4_missing_tolerance() -> None:
 
 
 def a6_stall_duration() -> None:
-    """Sanity: a single provider stall of ~30 s is measured near 30 s."""
+    """Sanity: a single provider stall of ~40 s is measured near 40 s."""
     stream = _chain("a", 10)
     hf = 9
     for j in range(20):
         stream.append(_sample("a", stream[-1]["t_ms"] + 2000, hf, f"x{hf}"))
-    spans = stall_intervals(stream, t_stall_s=20.0)
-    assert spans, "stall not detected"
-    dur = (spans[-1][1] - spans[-1][0]) / 1000.0
-    assert dur >= 20.0
-    print(f"stall duration ok: {dur:.0f}s span detected")
+    runs = stall_runs(stream, PERIOD, t_stall_s=20.0)
+    assert runs, "stall not detected"
+    assert runs[-1]["dur"] >= 20.0
+    print(f"stall duration ok: {runs[-1]['dur']:.0f}s stuck run detected")
+
+
+def a6_gap_not_inflated() -> None:
+    """The concrete defect: a polling gap inside a stall must not inflate
+    its measured duration (which feeds the regime rate)."""
+    stream = _chain("a", 5)
+    hf = 4
+    t = stream[-1]["t_ms"]
+    # 10 stuck samples at cadence (~20 s), then a one-hour polling gap,
+    # then 10 more stuck samples (~20 s).  True stuck-with-samples ~40 s.
+    for j in range(10):
+        t += 2000
+        stream.append(_sample("a", t, hf, f"x{hf}"))
+    t += 3_600_000                                  # one-hour gap
+    for j in range(10):
+        t += 2000
+        stream.append(_sample("a", t, hf, f"x{hf}"))
+    dur = stall_runs(stream, PERIOD, t_stall_s=20.0)[-1]["dur"]
+    assert dur < 60.0, f"gap inflated the stall duration to {dur:.0f}s"
+    print(f"A6 gap ok: gap excluded, duration {dur:.0f}s (not the hour gap)")
+
+
+def a6_supervisor_restarts() -> None:
+    """The supervisor logs a restart when the poll function crashes, keeps
+    one persistent file per provider, and records the restart count."""
+    calls = {"n": 0}
+
+    def flaky_poll(url: str, provider: str, t_ms: int, timeout: float = 5.0):
+        calls["n"] += 1
+        if provider == "a" and calls["n"] in (3, 4):
+            raise ConnectionError("injected outage")
+        h = calls["n"] // 2
+        return _sample(provider, t_ms, h, f"x{h}",
+                       mono_ms=int(time.monotonic() * 1000))
+
+    with tempfile.TemporaryDirectory() as d:
+        path = supervise({"a": "u", "b": "u"}, d, seconds=0.4, period_s=0.02,
+                         poll_fn=flaky_poll, watchdog_s=1.0, backoff_s=0.02)
+        events = Path(d) / "poll_events.jsonl"
+        assert events.exists()
+        kinds = [json_line(line)["kind"] for line in
+                 events.read_text().splitlines() if line.strip()]
+        assert "start" in kinds and "restart" in kinds and "stop" in kinds, kinds
+        assert (Path(d) / "poll_a.jsonl").exists()
+        assert (Path(d) / "poll_b.jsonl").exists()
+        summ = json_load(path)
+        assert summ["restarts"] >= 1, summ["restarts"]
+        print(f"A6 supervisor ok: restarts={summ['restarts']}, "
+              f"persistent files kept, events {sorted(set(kinds))}")
+
+
+def json_line(line: str) -> dict:
+    import json
+    return json.loads(line)
+
+
+def json_load(path: str) -> dict:
+    import json
+    return json.loads(Path(path).read_text())
 
 
 def main() -> None:
@@ -128,6 +192,8 @@ def main() -> None:
     a6_3_rule_of_three()
     a6_4_missing_tolerance()
     a6_stall_duration()
+    a6_gap_not_inflated()
+    a6_supervisor_restarts()
     print("\nS6 acceptance: all checks passed")
 
 

@@ -22,14 +22,16 @@ FLOWS = ("F1", "F2", "F3")
 # comparison (spec 3.4).
 NINE_CELLS = [f"{e} x {f}" for e in ENVS for f in FLOWS]
 
-# Main-narrative cells for the injection sweep (spec 2.1).  F1 may move to
-# F2 once the flow numbers settle; the sweep takes the cell as an argument.
-MAIN_CELLS = ["E-outage x F1", "E-slow x F1"]
+# Main-narrative cells for the injection sweep (spec 2.1), on the settled
+# F2 flow.  The sweep takes the cell as an argument, so this is the default.
+MAIN_CELLS = ["E-outage x F2", "E-slow x F2"]
 
-# Equivalence margin in dollars per payment, anchored to 1 bp of mean
-# exposure (spec 5.2).  None until the pilot fixes the mean exposure; the
-# aggregator then requires it to be passed explicitly.
-EPS: float | None = None
+# Equivalence margin in dollars per payment, 1 bp of the mean exposure
+# (spec 5.2).  With the flow settled, the mean exposure is fixed: 2M draws
+# give $49.50, so 1 bp is $0.004950 per payment ($4.95 per 1000).  Frozen
+# here so the verdict threshold stands before the data, and matched by the
+# 1-bp anchor the injection sweep computes per cell.
+EPS: float = 0.00495
 
 
 def in_band(seed: int, name: str) -> bool:
