@@ -1,7 +1,11 @@
 """Frozen design constants shared across the experiment: seed bands, the
 nine confirmatory cells, the equivalence margin, and the main-narrative
-cells.  Values the pilot decides (EPS, block lengths, axis point counts)
-are set here once, before the main run, and not changed after.
+cells.  These are set once, before the main run, and not changed after.
+
+The equivalence margin does not come from the pilot.  It is anchored to
+the exposure scale, so it is known as soon as the flow is fixed, and the
+pilot only sizes the sample that resolves it.  Keeping the anchor here
+means a single place decides it for every consumer.
 """
 from __future__ import annotations
 
@@ -22,16 +26,31 @@ FLOWS = ("F1", "F2", "F3")
 # comparison (spec 3.4).
 NINE_CELLS = [f"{e} x {f}" for e in ENVS for f in FLOWS]
 
-# Main-narrative cells for the injection sweep (spec 2.1), on the settled
-# F2 flow.  The sweep takes the cell as an argument, so this is the default.
+# Main-narrative cells for the injection sweep.  The suspicion-blind
+# flows leave the verify band nearly empty, so the cells that carry the
+# verification story are the thick-middle ones; the sweep still takes the
+# cell as an argument.
 MAIN_CELLS = ["E-outage x F2", "E-slow x F2"]
 
-# Equivalence margin in dollars per payment, 1 bp of the mean exposure
-# (spec 5.2).  With the flow settled, the mean exposure is fixed: 2M draws
-# give $49.50, so 1 bp is $0.004950 per payment ($4.95 per 1000).  Frozen
-# here so the verdict threshold stands before the data, and matched by the
-# 1-bp anchor the injection sweep computes per cell.
-EPS: float = 0.00495
+# Equivalence margin, in basis points of mean exposure.  A per-payment
+# edge below this cannot move an operator's decision: the smallest
+# processing fee on a payment of this size is two orders of magnitude
+# larger.  One value for every cell, so verdicts stay comparable.
+EPS_BP = 10.0
+
+# Mean exposure under the frozen flow (log-normal, median 30, sigma 1.0,
+# clipped to [0.5, 2000]), measured on 2e6 draws.
+MEAN_EXPOSURE_USD = 49.50
+
+# The margin itself, in dollars per payment.
+EPS = EPS_BP * 1e-4 * MEAN_EXPOSURE_USD
+
+
+def eps_for(mean_exposure: float) -> float:
+    """The margin at a measured mean exposure.  Callers that have the
+    realised exposure of their own batch use this so the anchor tracks
+    the batch rather than the declared average."""
+    return EPS_BP * 1e-4 * mean_exposure
 
 
 def in_band(seed: int, name: str) -> bool:

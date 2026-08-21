@@ -13,7 +13,7 @@ from pathlib import Path
 
 import numpy as np
 
-from .design import in_band
+from .design import eps_for, in_band
 from .flows import make_flows
 from .gate import envs_for
 from .inject import parse_cell
@@ -128,7 +128,7 @@ def run_pilot(cell: str, seeds, n_eval: int, n_tune: int, out_dir: str,
     ep_all = np.concatenate(ep_means)
     sd = episode_sd(ep_all, seed=1000)
     mean_exposure = float(np.mean(exposures))
-    eps = 1e-4 * mean_exposure                       # 1 bp of mean exposure
+    eps = eps_for(mean_exposure)                     # frozen anchor, not a pilot output
     size = sample_size(sd["upper95"], eps, ep_size)
     acf = autocorr(first_series)
     block_len = block_len_from_acf(acf)

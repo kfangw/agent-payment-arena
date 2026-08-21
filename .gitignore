@@ -20,3 +20,6 @@ runs/
 
 # Local secrets
 .env
+
+_to_delete/
+*.md.local

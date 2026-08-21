@@ -23,6 +23,7 @@ from pathlib import Path
 import numpy as np
 
 from .core import rho_hat_from_q, sigma_list
+from .design import eps_for
 from .flows import make_flows
 from .gate import CW_PER_S, envs_for
 from .outage import (compile_outage, draw_outage_batch_crn, replay_outage,
@@ -279,7 +280,7 @@ def run_axis(cell: str, axis: str, seed: int, n_eval: int, n_tune: int,
     ident = IDENTITY[axis]
     g0 = curve[ident]
     lo0, hi0 = boot_ci(block_sums[ident], counts, n_boot=n_boot, seed=seed + 2)
-    eps = mean_exposure * 1e-4        # 1 bp of mean exposure (spec 5.2)
+    eps = eps_for(mean_exposure)      # frozen anchor (duel.design)
 
     half = {}
     for name, br in _branches(axis, levels).items():

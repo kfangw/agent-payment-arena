@@ -6,7 +6,7 @@ the bootstrap interval and the sign-flip permutation p, corrects the nine
 A2 - B1 comparisons with Holm, and renders three-tier tables under the
 denominator rule.  It refuses to run on fewer than the nine cells.
 
-Run:  python -m duel.aggregate --results results --eps 0.005 --out tables
+Run:  python -m duel.aggregate --results results --out tables
 """
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ from pathlib import Path
 
 import numpy as np
 
-from .design import EPS, NINE_CELLS
+from .design import EPS as DEFAULT_EPS, NINE_CELLS
 from .report import write_once
 from .stats import boot_ci, holm, perm_p, ratio_mean, units, verdict
 
@@ -169,11 +169,9 @@ def main(argv: list[str] | None = None) -> None:
     """CLI entry: read results, write summary.json and the tables."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--results", default="results")
-    ap.add_argument("--eps", type=float, default=EPS)
+    ap.add_argument("--eps", type=float, default=DEFAULT_EPS)
     ap.add_argument("--out", default="tables")
     args = ap.parse_args(argv)
-    if args.eps is None:
-        ap.error("--eps is required (the frozen equivalence margin; see pilot)")
     cells = load_cells(args.results)
     summary = analyze(cells, args.eps)
     out = Path(args.out)
