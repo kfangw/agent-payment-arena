@@ -14,21 +14,22 @@ equivalence margin is decided elsewhere, from a pilot.
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
-import os
-import subprocess
+from pathlib import Path
 
 import numpy as np
 
 from .core import GRANT, REJECT, VERIFY, WAIT, sigma_list, rho_hat_from_q
-from .flows import make_flows
-from .gate import envs_for
+from .flows import FLOW_SPEC, make_flows
+from .gate import CW_PER_S, envs_for
 from .outage import (OutageEnv, compile_outage, draw_outage_batch,
                      replay_outage, survival, window_AD as outage_window_AD)
 from .policies import (B1, B2, B3, compile_A, default_grids, make_family_C,
                        tune)
+from .report import envelope, jsonable, write_once
 from .simulate import Channel, draw_batch, replay
+
+CHAIN_BLOCK = 1000     # payments per episode for the independent chain cells
 
 
 # ---------------- adapters: outage signature for B and C families ----
@@ -76,8 +77,9 @@ def run_chain(ch: Channel, rho_true, flow, n_tune, n_eval, seed):
         params[name] = best
     pols = dict(A, **tuned, **make_family_C(ch))
     out = {k: replay(ch, eval_d, p, ex_unit) for k, p in pols.items()}
-    meta = dict(q_hat=q_hat, rho_hat=rho_hat, b_params=_jsonable(params))
-    return out, eval_d, meta, None
+    meta = dict(q_hat=q_hat, rho_hat=rho_hat, b_params=jsonable(params))
+    episodes = np.arange(len(eval_d)) // CHAIN_BLOCK
+    return out, eval_d, meta, episodes
 
 
 def run_outage(env: OutageEnv, flow, n_tune, n_eval, seed,
@@ -121,19 +123,19 @@ def run_outage(env: OutageEnv, flow, n_tune, n_eval, seed,
          'C3': OB(lambda s, v, pi: VERIFY), 'C4': OWaitGrant(env.N + 1)}
     pols = dict(A, **tuned, **C)
     out = {k: replay_outage(env, eval_d, p, ex) for k, p in pols.items()}
-    meta = dict(q_hat=q_hat, rho_hat=rho_hat, b_params=_jsonable(params))
+    meta = dict(q_hat=q_hat, rho_hat=rho_hat, b_params=jsonable(params))
     episodes = np.arange(len(eval_d)) // payments_per_episode
     return out, eval_d, meta, episodes
 
 
-def _jsonable(x):
-    if isinstance(x, dict):
-        return {k: _jsonable(v) for k, v in x.items()}
-    if isinstance(x, (tuple, list)):
-        return [_jsonable(v) for v in x]
-    if isinstance(x, (np.floating, np.integer)):
-        return float(x)
-    return x
+def block_stats(arr, episodes):
+    """Per-episode sums of `arr` and the shared per-episode counts.  Every
+    policy replays the same evaluation draws, so counts are shared and any
+    paired difference is formed downstream by subtracting block sums."""
+    uniq = np.unique(episodes)
+    sums = np.array([float(arr[episodes == e].sum()) for e in uniq])
+    counts = np.array([int((episodes == e).sum()) for e in uniq])
+    return sums, counts
 
 
 def paired_ci(diff, episodes=None, n_boot=10_000, seed=7, level=0.95):
@@ -153,6 +155,22 @@ def paired_ci(diff, episodes=None, n_boot=10_000, seed=7, level=0.95):
         pick = rng.integers(0, len(uniq), size=(n_boot, len(uniq)))
         means = sums[pick].sum(axis=1) / cnts[pick].sum(axis=1)
     return float(np.quantile(means, lo_q)), float(np.quantile(means, hi_q))
+
+
+def _resolved(args, kind, env, rho):
+    """The resolved parameter dict that params_hash digests: environment
+    constants, the flow spec, and the tuning grids."""
+    if kind == 'chain':
+        env_d = dict(kind=kind, f=env.f, m=env.m, h=env.h, C=env.C, cw=env.cw,
+                     tau=env.tau, rho=rho)
+    else:
+        env_d = dict(kind=kind, f=env.f, m=env.m, h=env.h, C=env.C, cw=env.cw,
+                     tau=env.tau, H=env.H, rho=env.rho, p01=env.p01,
+                     p10=env.p10, tick_seconds=env.tick_seconds)
+    return dict(env_name=args.env, cell=f"{args.env}x{args.flow}",
+                flow=args.flow, flow_spec=FLOW_SPEC, cw_key=args.cw,
+                cw_per_s=CW_PER_S[args.cw], env=env_d,
+                grids=default_grids())
 
 
 def main(argv=None):
@@ -176,39 +194,31 @@ def main(argv=None):
         out, d, meta, episodes = run_outage(env, flow,
                                             args.n_tune, args.n_eval, args.seed)
 
-    diff = out['A2'] - out['B1']
-    lo, hi = paired_ci(diff, episodes)
-    per_1000 = 1000.0
-    bp = 1e4 / float(np.mean(d.v))
-    res = dict(
-        cell=f"{args.env}x{args.flow}", cw=args.cw, seed=args.seed,
-        n_eval=args.n_eval, n_tune=args.n_tune,
-        means={k: float(v.mean()) for k, v in out.items()},
-        a2_minus_b1=dict(mean=float(diff.mean()),
-                         per_1000=float(diff.mean() * per_1000),
-                         bp_of_exposure=float(diff.mean() * bp),
-                         ci95=[lo, hi],
-                         ci95_per_1000=[lo * per_1000, hi * per_1000]),
-        calib=meta,
-        code=_git_rev(),
+    # Per-policy episode block sums with shared counts; downstream forms any
+    # paired difference by subtracting sums (spec 0: the interchange format).
+    counts = None
+    policies = {}
+    for name, arr in out.items():
+        sums, cnts = block_stats(arr, episodes)
+        policies[name] = dict(block_sums=sums)
+        counts = cnts
+    payload = dict(
+        cw=args.cw, policies=policies, block_counts=counts,
+        n_episodes=int(len(counts)), mean_exposure=float(np.mean(d.v)),
+        means={k: float(v.mean()) for k, v in out.items()}, calib=meta,
     )
-    os.makedirs(args.out, exist_ok=True)
+    cell = f"{args.env} x {args.flow}"
+    env_obj = envelope('duel', cell, args.seed, args.n_eval, args.n_tune,
+                       _resolved(args, kind, env, rho), payload)
+
     tag = f"{args.env}_{args.flow}_{args.cw}_s{args.seed}"
-    path = os.path.join(args.out, f"duel_{tag}.json")
-    with open(path, 'w') as fh:
-        json.dump(res, fh, indent=1)
-    print(json.dumps(dict(cell=res['cell'], means=res['means'],
-                          a2_minus_b1=res['a2_minus_b1']), indent=1))
+    path = str(Path(args.out) / f"duel_{tag}.json")
+    write_once(path, env_obj)
+    diff = out['A2'] - out['B1']
+    print(json.dumps(dict(cell=cell,
+                          means={k: round(float(v.mean()), 6) for k, v in out.items()},
+                          a2_minus_b1_mean=round(float(diff.mean()), 6)), indent=1))
     print(f"wrote {path}")
-
-
-def _git_rev():
-    try:
-        rev = subprocess.run(['git', 'rev-parse', 'HEAD'], capture_output=True,
-                             text=True, timeout=10).stdout.strip()
-        return rev or None
-    except Exception:
-        return None
 
 
 if __name__ == '__main__':
