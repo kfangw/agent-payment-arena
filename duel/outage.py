@@ -183,15 +183,55 @@ class OutageDraws:
         return len(self.v)
 
 
+def retime_answers_geom(theta, u_ans, rho_h, rho_m):
+    """Geometric answer ticks by inverse-CDF from a fixed uniform, per
+    intent.  t = ceil(log(1 - u) / log(1 - rho)) reproduces geometric(rho)
+    and moves continuously with rho, so a response-bias sweep keeps common
+    random numbers across its levels."""
+    n = len(theta)
+    t = np.ones(n, dtype=np.int64)
+    for intent, rho in ((0, rho_h), (1, rho_m)):
+        idx = np.where(theta == intent)[0]
+        if len(idx) == 0:
+            continue
+        r = min(max(float(rho), 1e-9), 1.0 - 1e-12)
+        u = np.clip(u_ans[idx], 1e-12, 1.0 - 1e-12)
+        tt = np.ceil(np.log1p(-u) / np.log1p(-r))
+        t[idx] = np.maximum(tt.astype(np.int64), 1)
+    return t
+
+
 def draw_outage_batch(env: OutageEnv, flow, n: int, rng,
-                      episode_len: int = 1440, payments_per_episode: int = 50):
+                      episode_len: int = 1440, payments_per_episode: int = 50,
+                      rho_m: float | None = None):
     """Episode-structured common random numbers.  Each episode owns one
     regime path (stationary start); its payments arrive at uniform
     offsets and read the same path, which is what makes regime shocks
-    correlate within an episode (block bootstrap consumes this)."""
+    correlate within an episode (block bootstrap consumes this).
+
+    rho_m, if given, is the misuse-intent answer hazard for the response
+    bias axis; honest intent keeps env.rho."""
+    return _draw_outage(env, flow, n, rng, episode_len,
+                        payments_per_episode, rho_m)[0]
+
+
+def draw_outage_batch_crn(env: OutageEnv, flow, n: int, rng,
+                          episode_len: int = 1440,
+                          payments_per_episode: int = 50):
+    """Like draw_outage_batch, but also return the fixed answer uniforms
+    for a response-bias sweep."""
+    return _draw_outage(env, flow, n, rng, episode_len, payments_per_episode,
+                        None)
+
+
+def _draw_outage(env: OutageEnv, flow, n: int, rng, episode_len: int,
+                 payments_per_episode: int, rho_m: float | None):
+    """Shared outage draw body; returns the batch and the answer uniforms."""
     v, p_true, theta, pi0 = flow.sample(n, rng)
     u_stage = rng.random((n, env.N + 1))
-    t_ans = rng.geometric(env.rho, size=n).astype(np.int64)
+    u_ans = rng.random(n)
+    t_ans = retime_answers_geom(theta, u_ans, env.rho,
+                                env.rho if rho_m is None else rho_m)
     n_ep = (n + payments_per_episode - 1) // payments_per_episode
     paths = np.zeros((n, env.H + 1), dtype=np.int8)
     k = 0
@@ -209,8 +249,9 @@ def draw_outage_batch(env: OutageEnv, flow, n: int, rng,
         for j in range(m_here):
             paths[k + j] = path[offs[j]: offs[j] + env.H + 1]
         k += m_here
-    return OutageDraws(v=v, p_true=p_true, theta=theta, pi0=pi0,
-                       u_stage=u_stage, t_ans=t_ans, paths=paths)
+    d = OutageDraws(v=v, p_true=p_true, theta=theta, pi0=pi0,
+                    u_stage=u_stage, t_ans=t_ans, paths=paths)
+    return d, u_ans
 
 
 def _settle_from(env: OutageEnv, d: OutageDraws, k: int, i: int, t: int) -> int:

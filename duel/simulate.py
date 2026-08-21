@@ -89,28 +89,56 @@ class Draws:
 NEVER = np.iinfo(np.int64).max
 
 
-def draw_batch(ch: Channel, flow, n: int, rng: np.random.Generator) -> Draws:
-    """Pre-draw n payments from a flow on a channel.
+def retime_answers(theta, u_ans, pmf_h, pmf_m, tau):
+    """Answer ticks by inverse-CDF from a fixed uniform, per intent.
 
-    flow must provide sample(n, rng) -> (v, p_true, theta, pi0).
+    The base uniform u_ans is drawn once and held constant across an
+    injection sweep; pushing it through the (possibly perturbed) censored
+    arrival distribution moves each payment's answer time continuously as
+    the response bias changes, so the advantage curve is not shaken by
+    fresh draws.  s = 1..tau answers; anything past the deadline never
+    answers.
     """
+    n = len(theta)
+    t_ans = np.full(n, NEVER, dtype=np.int64)
+    for intent, pmf in ((0, pmf_h), (1, pmf_m)):
+        idx = np.where(theta == intent)[0]
+        if len(idx) == 0:
+            continue
+        cdf = np.cumsum(np.append(pmf, max(0.0, 1.0 - pmf.sum())))
+        cdf = cdf / cdf[-1]                       # guard rounding to 1.0
+        k = np.searchsorted(cdf, u_ans[idx], side="right")
+        t_ans[idx] = np.where(k < tau, k + 1, NEVER)
+    return t_ans
+
+
+def _draw(ch: Channel, flow, n: int, rng: np.random.Generator):
+    """Shared draw body; returns the batch and the fixed answer uniforms."""
     v, p_true, theta, pi0 = flow.sample(n, rng)
     N = ch.N
     u = rng.random((n, N + 1))
     fired = u < ch.f[None, :]
     fail_at = np.where(fired.any(axis=1), fired.argmax(axis=1), N + 1)
-    t_ans = np.full(n, NEVER, dtype=np.int64)
-    for intent, pmf in ((0, ch.pmf_h), (1, ch.pmf_m)):
-        idx = np.where(theta == intent)[0]
-        if len(idx) == 0:
-            continue
-        q = pmf.sum()
-        probs = np.append(pmf, max(0.0, 1.0 - q))
-        s = rng.choice(len(probs), size=len(idx), p=probs / probs.sum())
-        t = np.where(s < ch.tau, s + 1, NEVER)
-        t_ans[idx] = t
-    return Draws(v=v, p_true=p_true, theta=theta, pi0=pi0,
-                 fail_at=fail_at.astype(np.int64), t_ans=t_ans)
+    u_ans = rng.random(n)
+    t_ans = retime_answers(theta, u_ans, ch.pmf_h, ch.pmf_m, ch.tau)
+    d = Draws(v=v, p_true=p_true, theta=theta, pi0=pi0,
+              fail_at=fail_at.astype(np.int64), t_ans=t_ans)
+    return d, u_ans
+
+
+def draw_batch(ch: Channel, flow, n: int, rng: np.random.Generator) -> Draws:
+    """Pre-draw n payments from a flow on a channel.
+
+    flow must provide sample(n, rng) -> (v, p_true, theta, pi0).
+    """
+    return _draw(ch, flow, n, rng)[0]
+
+
+def draw_batch_crn(ch: Channel, flow, n: int, rng: np.random.Generator):
+    """Like draw_batch, but also return the fixed answer uniforms so an
+    injection sweep can re-time answers under a perturbed arrival without
+    redrawing exposures, risks, or intents."""
+    return _draw(ch, flow, n, rng)
 
 
 def _grant_leg(ch: Channel, k: int, d: Draws, stage: int) -> float:
