@@ -27,8 +27,15 @@ def boot_ci(block_sums, block_counts, n_boot: int = 10_000, seed: int = 7,
     counts = np.asarray(block_counts, dtype=float)
     rng = np.random.default_rng(seed)
     n = len(sums)
-    pick = rng.integers(0, n, size=(n_boot, n))
-    means = sums[pick].sum(axis=1) / counts[pick].sum(axis=1)
+    # Draw in chunks: the index matrix is n_boot by n, which for a cell
+    # with a hundred thousand episodes would not fit in memory at once.
+    # The draws and the statistic are unchanged; only the working set is.
+    means = np.empty(n_boot, dtype=float)
+    step = max(1, int(2_000_000 // max(n, 1)))
+    for a in range(0, n_boot, step):
+        b = min(a + step, n_boot)
+        pick = rng.integers(0, n, size=(b - a, n))
+        means[a:b] = sums[pick].sum(axis=1) / counts[pick].sum(axis=1)
     lo_q, hi_q = (1 - level) / 2, 1 - (1 - level) / 2
     return float(np.quantile(means, lo_q)), float(np.quantile(means, hi_q))
 
@@ -42,9 +49,15 @@ def perm_p(block_sums, block_counts, n_perm: int = 10_000, seed: int = 11) -> fl
     obs = abs(float(np.sum(sums)) / total)
     rng = np.random.default_rng(seed)
     n = len(sums)
-    signs = rng.integers(0, 2, size=(n_perm, n)) * 2 - 1
-    null = np.abs((signs * sums).sum(axis=1) / total)
-    return float((1 + int(np.sum(null >= obs))) / (1 + n_perm))
+    # Same chunking as the bootstrap, for the same reason.
+    hits = 0
+    step = max(1, int(2_000_000 // max(n, 1)))
+    for a in range(0, n_perm, step):
+        b = min(a + step, n_perm)
+        signs = rng.integers(0, 2, size=(b - a, n)) * 2 - 1
+        null = np.abs((signs * sums).sum(axis=1) / total)
+        hits += int(np.sum(null >= obs))
+    return float((1 + hits) / (1 + n_perm))
 
 
 def holm(pvals: list[float]) -> list[float]:
