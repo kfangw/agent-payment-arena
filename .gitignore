@@ -29,6 +29,7 @@ _to_delete/
 # only the code and the declared parameters are.
 results/
 results_inject/
+results_s2/
 tables/
 gate_report.json
 run_env.sh
