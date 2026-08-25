@@ -43,7 +43,7 @@ from .flows import make_flows
 from .gate import CW_PER_S, envs_for
 from .outage import (compile_outage, draw_outage_batch, replay_outage,
                      survival, window_AD as outage_window_AD)
-from .policies import default_grids
+from .policies import default_grids, suspicion_grid
 from .report import envelope, jsonable, write_once
 from .run import CHAIN_BLOCK
 from .simulate import Channel, draw_batch, replay
@@ -136,12 +136,16 @@ def _tune_b4(force_fn, ab_grid, k_list, pi0):
     return best, best_val, rows
 
 
-def _block_sums(arr, episodes, uniq):
-    return np.array([float(arr[episodes == e].sum()) for e in uniq])
+def _block_sums(arr, episodes, uniq=None):
+    """Per-episode sums.  Episodes are the contiguous block ids
+    arange(n)//block, so a weighted bincount gives every block sum in one
+    pass; the uniq argument is accepted for call-site compatibility."""
+    return np.bincount(episodes, weights=arr)
 
 
 # ---------------- per-kind runners ----------------
-def run_chain_b4(ch: Channel, flow, n_tune, n_eval, seed, base):
+def run_chain_b4(ch: Channel, flow, n_tune, n_eval, seed, base,
+                 ab_grid=None, tune_on_eval=False, k_list=None):
     rng = np.random.default_rng(seed)
     tune_d = draw_batch(ch, flow, n_tune, rng)
     eval_d = draw_batch(ch, flow, n_eval, rng)
@@ -149,11 +153,14 @@ def run_chain_b4(ch: Channel, flow, n_tune, n_eval, seed, base):
     episodes = np.arange(len(eval_d)) // CHAIN_BLOCK
     uniq = np.unique(episodes)
 
+    if ab_grid is None:
+        ab_grid = default_grids()['B3']
     horizon = ch.N + 1
-    ks = k_grid(horizon)
+    ks = k_grid(horizon) if k_list is None else sorted(set(k_list))
+    tune_src = eval_d if tune_on_eval else tune_d
     best, best_val, rows = _tune_b4(
-        lambda k, act: replay(ch, tune_d, B4Force(k, act), ex),
-        default_grids()['B3'], ks, tune_d.pi0)
+        lambda k, act: replay(ch, tune_src, B4Force(k, act), ex),
+        ab_grid, ks, tune_src.pi0)
     k_star, a_star, b_star = best
 
     b4_pay = replay(ch, eval_d, B4(k_star, a_star, b_star), ex)
@@ -164,7 +171,8 @@ def run_chain_b4(ch: Channel, flow, n_tune, n_eval, seed, base):
                    rows, horizon, ks)
 
 
-def run_outage_b4(env, flow, n_tune, n_eval, seed, base, ppe=PPE):
+def run_outage_b4(env, flow, n_tune, n_eval, seed, base, ppe=PPE,
+                  ab_grid=None, tune_on_eval=False, k_list=None):
     rng = np.random.default_rng(seed)
     tune_d = draw_outage_batch(env, flow, n_tune, rng, payments_per_episode=ppe)
     eval_d = draw_outage_batch(env, flow, n_eval, rng, payments_per_episode=ppe)
@@ -172,12 +180,15 @@ def run_outage_b4(env, flow, n_tune, n_eval, seed, base, ppe=PPE):
     episodes = np.arange(len(eval_d)) // ppe
     uniq = np.unique(episodes)
 
+    if ab_grid is None:
+        ab_grid = default_grids()['B3']
     horizon = env.H
-    ks = k_grid(horizon)
+    ks = k_grid(horizon) if k_list is None else sorted(set(k_list))
+    tune_src = eval_d if tune_on_eval else tune_d
     best, best_val, rows = _tune_b4(
-        lambda k, act: replay_outage(env, tune_d,
+        lambda k, act: replay_outage(env, tune_src,
                                      OB4Force(k, act, env.H, env.N), ex),
-        default_grids()['B3'], ks, tune_d.pi0)
+        ab_grid, ks, tune_src.pi0)
     k_star, a_star, b_star = best
 
     b4_pay = replay_outage(env, eval_d, OB4(k_star, a_star, b_star, env.H, env.N), ex)
@@ -233,7 +244,7 @@ def _base_facts(env_name, flow, seed, results_dir):
     )
 
 
-def _resolved(args, kind, env, rho):
+def _resolved(args, kind, env, rho, ab_grid, k_list, tune_on_eval):
     if kind == 'chain':
         env_d = dict(kind=kind, f=env.f, m=env.m, h=env.h, C=env.C, cw=env.cw,
                      tau=env.tau, rho=rho)
@@ -243,16 +254,21 @@ def _resolved(args, kind, env, rho):
                      tau=env.tau, H=env.H, rho=env.rho, p01=env.p01,
                      p10=env.p10, tick_seconds=env.tick_seconds)
         horizon = env.H
-    return dict(env_name=args.env, cell=f"{args.env}x{args.flow}",
-                flow=args.flow, cw_key=args.cw, cw_per_s=CW_PER_S[args.cw],
-                env=env_d, b3_grid=default_grids()['B3'],
-                k_grid=k_grid(horizon))
+    ks = k_grid(horizon) if k_list is None else sorted(set(k_list))
+    resolved = dict(env_name=args.env, cell=f"{args.env}x{args.flow}",
+                    flow=args.flow, cw_key=args.cw, cw_per_s=CW_PER_S[args.cw],
+                    env=env_d, b3_grid=ab_grid, k_grid=ks)
+    if tune_on_eval:
+        # The oracle tunes on the evaluation split; record it so the digest
+        # separates it from a deployable holdout-tuned run.
+        resolved['tune_split'] = 'eval'
+    return resolved
 
 
 def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument('--env', required=True,
-                    choices=['E-fast', 'E-outage', 'E-slow'])
+                    choices=['E-fast', 'E-outage', 'E-slow', 'E-slow-deep'])
     ap.add_argument('--flow', required=True, choices=['F1', 'F2', 'F3'])
     ap.add_argument('--cw', default='mid', choices=['high', 'mid', 'low'])
     ap.add_argument('--n-eval', type=int, default=5_663_400)
@@ -260,31 +276,50 @@ def main(argv=None):
     ap.add_argument('--seed', type=int, required=True)
     ap.add_argument('--results', default='results')
     ap.add_argument('--out', default='results')
+    ap.add_argument('--b3-n', type=int, default=21,
+                    help='suspicion (a, b) grid resolution; 21 is the default')
+    ap.add_argument('--oracle', action='store_true',
+                    help='tune (k, a, b) on the evaluation split (upper bound)')
+    ap.add_argument('--k-grid', default=None,
+                    help='comma-separated k ladder overriding the default')
+    ap.add_argument('--name', default='b4',
+                    help='output file stem prefix')
     args = ap.parse_args(argv)
 
     kind, env, rho = envs_for(args.cw)[args.env]
     flow = make_flows()[args.flow]
     base = _base_facts(args.env, args.flow, args.seed, args.results)
+    ab_grid = suspicion_grid(args.b3_n)
+    k_list = ([int(x) for x in args.k_grid.split(',')]
+              if args.k_grid else None)
     if kind == 'chain':
         payload = run_chain_b4(env, flow, args.n_tune, args.n_eval,
-                               args.seed, base)
+                               args.seed, base, ab_grid=ab_grid,
+                               tune_on_eval=args.oracle, k_list=k_list)
     else:
         payload = run_outage_b4(env, flow, args.n_tune, args.n_eval,
-                                args.seed, base)
+                                args.seed, base, ab_grid=ab_grid,
+                                tune_on_eval=args.oracle, k_list=k_list)
 
-    if payload['k0_identity_max_gap'] > 0.0:
+    # The base B3 block sums were summed in a different order (a per-episode
+    # loop) than the bincount used here, so an exact match is not expected;
+    # a gap at the floating-point summation-order scale still proves the draws
+    # reproduce, while a real reproduction failure moves a block sum by O(v).
+    if payload['k0_identity_max_gap'] > 1e-8:
         raise SystemExit(f"k=0 identity failed against base B3 block sums: "
                          f"max gap {payload['k0_identity_max_gap']:.3e} "
                          f"(draws did not reproduce)")
 
     payload.update(cw=args.cw, mean_exposure=base['mean_exposure'],
                    base_means=base['base_means'], base_hash=base['base_hash'],
-                   base_code=base['base_code'])
+                   base_code=base['base_code'], b3_n=args.b3_n,
+                   tune_split=('eval' if args.oracle else 'tune'))
     cell = f"{args.env} x {args.flow}"
     obj = envelope('b4', cell, args.seed, args.n_eval, args.n_tune,
-                   _resolved(args, kind, env, rho), payload)
+                   _resolved(args, kind, env, rho, ab_grid, k_list,
+                             args.oracle), payload)
     tag = f"{args.env}_{args.flow}_{args.cw}_s{args.seed}"
-    path = str(Path(args.out) / f"b4_{tag}.json")
+    path = str(Path(args.out) / f"{args.name}_{tag}.json")
     write_once(path, obj)
     amb = payload['a2_minus_b4']
     print(json.dumps(dict(

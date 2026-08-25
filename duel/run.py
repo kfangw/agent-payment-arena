@@ -176,7 +176,7 @@ def _resolved(args, kind, env, rho):
 def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument('--env', required=True,
-                    choices=['E-fast', 'E-outage', 'E-slow'])
+                    choices=['E-fast', 'E-outage', 'E-slow', 'E-slow-deep'])
     ap.add_argument('--flow', required=True, choices=['F1', 'F2', 'F3'])
     ap.add_argument('--cw', default='mid', choices=['high', 'mid', 'low'])
     ap.add_argument('--n-eval', type=int, default=100_000)

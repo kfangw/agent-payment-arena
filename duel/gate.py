@@ -52,6 +52,12 @@ def envs_for(cw_key, m=0.35, h=1.0, C=0.5):
     f_slow = 0.06 * 0.5 ** np.arange(8)
     out['E-slow'] = ('chain', Channel(f=f_slow, m=m, h=h, C=C, cw=cw,
                                       tau=tau, pmf_h=_geom(rho, tau)), rho)
+    # E-slow-deep: the same decaying-hazard chain carried to a deeper
+    # settlement horizon (12 stages) so the watch value that peaks where the
+    # hazard crosses c_w falls inside the chain rather than at its end.
+    f_slow_deep = 0.06 * 0.5 ** np.arange(12)
+    out['E-slow-deep'] = ('chain', Channel(f=f_slow_deep, m=m, h=h, C=C, cw=cw,
+                                           tau=tau, pmf_h=_geom(rho, tau)), rho)
     # E-outage: coarse tick 60 s
     tick = 60.0
     tau_o, rho_o = rho_for(tick)

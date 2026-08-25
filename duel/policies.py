@@ -136,15 +136,21 @@ def tune(make_policy, grid, ch: Channel, tuning: Draws, ex_unit) -> tuple:
     return best, make_policy(best), rows
 
 
+def suspicion_grid(n=21):
+    """The two-threshold (a, b) grid at resolution n: a < b on
+    linspace(0, 1, n).  n = 21 (step 0.05) is the declared default; finer
+    n resolves how much of a cell's edge is grid coarseness."""
+    axis = np.linspace(0.0, 1.0, n)
+    return [(a, b) for a in axis for b in axis if a < b]
+
+
 def default_grids(v_hi=2000.0, n=41):
     """Pre-declared tuning grids; generous by design (the asymmetry that
     favors the baselines is the defense against the strawman charge)."""
     return dict(
         B1=list(np.geomspace(1e-3, v_hi, n)),
         B2=list(np.geomspace(0.5, v_hi, n)),
-        B3=[(a, b)
-            for a in np.linspace(0.0, 1.0, 21)
-            for b in np.linspace(0.0, 1.0, 21) if a < b],
+        B3=suspicion_grid(21),
     )
 
 
