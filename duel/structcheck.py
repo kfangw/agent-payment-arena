@@ -60,36 +60,61 @@ def check_pi(lab, pi_grid, sigma, m, h):
     # c5: direct grant->reject adjacency should sit at pi_hat
     c5 = True
     boundary = None
+    dev = None
     adj = np.where((lab[:-1] == GRANT) & (lab[1:] == REJECT))[0]
-    if len(adj):
+    c5_fired = len(adj) > 0
+    if c5_fired:
         j = int(adj[0])
         boundary = 0.5 * (pi_grid[j] + pi_grid[j + 1])
         ph = _pi_hat(sigma, m, h)
         tol = TOL_STEPS / (npi - 1)
-        c5 = 0.0 <= ph <= 1.0 and abs(boundary - ph) <= tol
+        dev = abs(boundary - ph)
+        c5 = 0.0 <= ph <= 1.0 and dev <= tol
+    present = [bool(len(g)), bool(len(r)), bool(len(ver)), bool(len(w))]
+    single = (len(g) == npi) or (len(r) == npi) or (len(ver) == npi) or (len(w) == npi)
     return dict(c1=bool(c1), c2=bool(c2), c3=bool(c3), c4=bool(c4), c5=bool(c5),
-                boundary=boundary)
+                boundary=boundary, c5_fired=c5_fired, dev=dev, present=present,
+                single=single)
 
 
 def _run_checks(state_iter, checks):
-    """Aggregate checks over a state iterator yielding (key, lab, sigma)."""
+    """Aggregate checks over a state iterator yielding (key, lab, sigma).
+    Also records how strong the check was: single-action rows (where the
+    interval clauses pass trivially), rows where the grant-reject boundary
+    actually fired, the worst boundary deviation, and which of the four
+    actions appear anywhere in the table."""
     names = ["c1", "c2", "c3", "c4", "c5"]
     n_states = 0
     viol = {c: [] for c in names}
+    n_single = 0
+    n_c5_fired = 0
+    max_dev = 0.0
+    presence = [False, False, False, False]
     for key, lab, sigma in state_iter:
         n_states += 1
         res = checks(lab, sigma)
         for c in names:
-            if not res[c]:
-                if len(viol[c]) < 10:
-                    viol[c].append(dict(state=key, sigma=round(float(sigma), 6),
-                                        boundary=res["boundary"]))
-    return n_states, {c: dict(violations=len(v), examples=v) for c, v in viol.items()}
+            if not res[c] and len(viol[c]) < 10:
+                viol[c].append(dict(state=key, sigma=round(float(sigma), 6),
+                                    boundary=res["boundary"]))
+        n_single += int(res["single"])
+        if res["c5_fired"]:
+            n_c5_fired += 1
+            if res["dev"] is not None:
+                max_dev = max(max_dev, res["dev"])
+        presence = [p or q for p, q in zip(presence, res["present"])]
+    summary = {c: dict(violations=len(v), examples=v) for c, v in viol.items()}
+    density = dict(
+        n_single_action=n_single, n_c5_fired=n_c5_fired,
+        max_boundary_dev=max_dev, label_presence=dict(
+            grant=presence[0], reject=presence[1],
+            verify=presence[2], wait=presence[3]))
+    return n_states, summary, density
 
 
-def check_outage(env, seed, n_tune):
+def check_outage(env, flow_name, seed, n_tune):
     rng = np.random.default_rng(seed)
-    tune_d = draw_outage_batch(env, make_flows()["F1"], n_tune, rng,
+    tune_d = draw_outage_batch(env, make_flows()[flow_name], n_tune, rng,
                                payments_per_episode=50)
     q = float((tune_d.t_ans <= env.tau).mean())
     env_hat = OutageEnv(f=env.f, m=env.m, h=env.h, C=env.C, cw=env.cw,
@@ -107,17 +132,19 @@ def check_outage(env, seed, n_tune):
                     for r in (0, 1):
                         yield ((iv, i, l, r), tab[i, l, r, :], sig[i, l, r])
 
-    n, out = _run_checks(it(), lambda lab, s: check_pi(lab, PI_GRID_OUTAGE, s,
-                                                       env.m, env.h))
+    n, out, density = _run_checks(
+        it(), lambda lab, s: check_pi(lab, PI_GRID_OUTAGE, s, env.m, env.h))
     n_ilr = (N + 2) * (H + 1) * 2
-    return dict(kind="outage", n_states_checked=n, n_ilr=n_ilr,
-                n_v=len(pol.v_grid), n_pi=len(PI_GRID_OUTAGE), checks=out,
-                q_hat=q, rho_hat=env_hat.rho)
+    density["max_boundary_dev_steps"] = density["max_boundary_dev"] * (
+        len(PI_GRID_OUTAGE) - 1)
+    return dict(kind="outage", flow_used=flow_name, n_states_checked=n,
+                n_ilr=n_ilr, n_v=len(pol.v_grid), n_pi=len(PI_GRID_OUTAGE),
+                checks=out, density=density, q_hat=q, rho_hat=env_hat.rho)
 
 
-def check_chain(ch, seed, n_tune):
+def check_chain(ch, flow_name, seed, n_tune):
     rng = np.random.default_rng(seed)
-    tune_d = draw_batch(ch, make_flows()["F1"], n_tune, rng)
+    tune_d = draw_batch(ch, make_flows()[flow_name], n_tune, rng)
     q = float((tune_d.t_ans <= ch.tau).mean())
     pol = compile_A(ch, "A", rho=rho_hat_from_q(q, ch.tau))
     sig = sigma_list(ch.f)               # sigma(stage)
@@ -128,11 +155,13 @@ def check_chain(ch, seed, n_tune):
             for st in range(n_stage):
                 yield ((iv, st), pol.tables[iv, st, :], sig[st])
 
-    n, out = _run_checks(it(), lambda lab, s: check_pi(lab, PI_GRID_CHAIN, s,
-                                                       ch.m, ch.h))
-    return dict(kind="chain", n_states_checked=n, n_stage=n_stage,
-                n_v=pol.tables.shape[0], n_pi=len(PI_GRID_CHAIN), checks=out,
-                q_hat=q)
+    n, out, density = _run_checks(
+        it(), lambda lab, s: check_pi(lab, PI_GRID_CHAIN, s, ch.m, ch.h))
+    density["max_boundary_dev_steps"] = density["max_boundary_dev"] * (
+        len(PI_GRID_CHAIN) - 1)
+    return dict(kind="chain", flow_used=flow_name, n_states_checked=n,
+                n_stage=n_stage, n_v=pol.tables.shape[0],
+                n_pi=len(PI_GRID_CHAIN), checks=out, density=density, q_hat=q)
 
 
 def main(argv=None):
@@ -147,9 +176,11 @@ def main(argv=None):
     require_clean_tree()
 
     kind, env, rho = envs_for("mid")[args.env]
-    payload = (check_outage(env, args.seed, args.n_tune) if kind == "outage"
-               else check_chain(env, args.seed, args.n_tune))
+    payload = (check_outage(env, args.flow, args.seed, args.n_tune)
+               if kind == "outage"
+               else check_chain(env, args.flow, args.seed, args.n_tune))
     payload["cell"] = f"{args.env} x {args.flow}"
+    assert payload["flow_used"] == args.flow
     total_viol = sum(payload["checks"][c]["violations"] for c in payload["checks"])
     payload["total_violations"] = total_viol
 
@@ -159,11 +190,13 @@ def main(argv=None):
                    0, args.n_tune, resolved, payload)
     path = str(Path(args.out) / f"u1_{args.env}_{args.flow}_s{args.seed}.json")
     write_once(path, obj)
-    print(json.dumps(dict(cell=payload["cell"], kind=payload["kind"],
+    print(json.dumps(dict(cell=payload["cell"], flow_used=payload["flow_used"],
+                          kind=payload["kind"], q_hat=round(payload["q_hat"], 5),
                           states=payload["n_states_checked"],
                           violations={c: payload["checks"][c]["violations"]
                                       for c in payload["checks"]},
-                          total=total_viol), indent=1))
+                          total=total_viol, density=payload["density"]),
+                     indent=1))
     print(f"wrote {path}")
 
 
