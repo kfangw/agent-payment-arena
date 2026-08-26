@@ -21,6 +21,7 @@ import numpy as np
 
 from .b4_aggregate import CELL_SEED, _tag
 from .design import NINE_CELLS, eps_for
+from .naming import canon_keys
 from .stats import boot_ci, holm, perm_p, ratio_mean, units, verdict
 
 ALPHA = 0.05
@@ -37,13 +38,13 @@ def _load(cell, results, results_b4):
     b4o = json.load(open(Path(results_b4) / f"b4_{env}_{flow}_mid_s{seed}.json"))
     grid = json.load(open(Path(results) / f"duel_gridN_{env}_{flow}_mid_s{seed}.json"))
     bp, gp, op = base["payload"], b4g["payload"], b4o["payload"]
-    a2 = np.asarray(bp["policies"]["A2"]["block_sums"], dtype=float)
+    a2 = np.asarray(canon_keys(bp["policies"])["A"]["block_sums"], dtype=float)
     b4 = np.asarray(gp["b4_block_sums"], dtype=float)
     b4orig = np.asarray(op["b4_block_sums"], dtype=float)
     counts = np.asarray(gp["block_counts"], dtype=float)
     return dict(
         cell=cell, seed=seed, a2=a2, b4=b4, b4orig=b4orig, counts=counts,
-        A2=bp["means"]["A2"], B1=bp["means"]["B1"],
+        A2=canon_keys(bp["means"])["A"], B1=bp["means"]["B1"],
         B4=gp["b4_mean"], k=gp["b4"]["k"], a=gp["b4"]["a"], b=gp["b4"]["b"],
         b3_n=gp.get("b3_n"), k0_gap=gp["k0_identity_max_gap"],
         mean_exposure=gp["mean_exposure"],

@@ -43,6 +43,7 @@ from .flows import make_flows
 from .gate import CW_PER_S, envs_for
 from .outage import (compile_outage, draw_outage_batch, replay_outage,
                      survival, window_AD as outage_window_AD)
+from .naming import canon_keys
 from .policies import default_grids, suspicion_grid
 from .report import envelope, jsonable, write_once
 from .run import CHAIN_BLOCK
@@ -233,13 +234,15 @@ def _base_facts(env_name, flow, seed, results_dir):
     path = Path(results_dir) / f"duel_{env_name}_{flow}_mid_s{seed}.json"
     d = json.load(open(path))
     p = d["payload"]
+    pol = canon_keys(p["policies"])
+    means = canon_keys(p["means"])
     return dict(
-        a2_block_sums=p["policies"]["A2"]["block_sums"],
-        b3_block_sums=p["policies"]["B3"]["block_sums"],
+        a2_block_sums=pol["A"]["block_sums"],
+        b3_block_sums=pol["B3"]["block_sums"],
         block_counts=p["block_counts"],
         b3_params=p["calib"]["b_params"]["B3"],
         mean_exposure=p["mean_exposure"],
-        base_means={k: p["means"][k] for k in ("A2", "B1", "B3")},
+        base_means={k: means[k] for k in ("A", "B1", "B3")},
         base_code=d["code"], base_hash=d["params_hash"], base_path=str(path),
     )
 
@@ -325,7 +328,7 @@ def main(argv=None):
     print(json.dumps(dict(
         cell=cell, k_star=payload['b4']['k'], a=payload['b4']['a'],
         b=payload['b4']['b'], k0_gap=payload['k0_identity_max_gap'],
-        A2=round(base['base_means']['A2'], 6), B3=round(base['base_means']['B3'], 6),
+        A=round(base['base_means']['A'], 6), B3=round(base['base_means']['B3'], 6),
         B4=round(payload['b4_mean'], 6),
         a2_minus_b4=round(amb['mean'], 6),
         ci95=[round(amb['ci95'][0], 6), round(amb['ci95'][1], 6)],

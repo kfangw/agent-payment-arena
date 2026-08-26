@@ -81,10 +81,10 @@ def make_family_A(ch: Channel, tuning: Draws):
     q_hat = calibrate_q(ch, tuning)
     rho_hat = rho_hat_from_q(q_hat, ch.tau)
     return {
-        'A1': compile_A(ch, 'A1', pmf=ch.pmf_h),
-        'A2': compile_A(ch, 'A2', rho=rho_hat),
-        'A2v': compile_A(ch, 'A2v', rho=rho_hat, drop=(VERIFY,)),
-        'A2w': compile_A(ch, 'A2w', rho=rho_hat, drop=(WAIT,)),
+        'A_full': compile_A(ch, 'A_full', pmf=ch.pmf_h),
+        'A': compile_A(ch, 'A', rho=rho_hat),
+        'A_noV': compile_A(ch, 'A_noV', rho=rho_hat, drop=(VERIFY,)),
+        'A_noW': compile_A(ch, 'A_noW', rho=rho_hat, drop=(WAIT,)),
     }, dict(q_hat=q_hat, rho_hat=rho_hat)
 
 

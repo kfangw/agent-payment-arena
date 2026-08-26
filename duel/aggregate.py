@@ -17,15 +17,16 @@ from pathlib import Path
 import numpy as np
 
 from .design import EPS as DEFAULT_EPS, NINE_CELLS
+from .naming import canon_keys
 from .report import write_once
 from .stats import boot_ci, holm, perm_p, ratio_mean, units, verdict
 
 # Comparison layout (spec 3.7): each pair is (minuend, subtrahend).
-CONFIRMATORY = ("A2", "B1")
-MAIN_ROWS = ("A2", "B1", "A1")
-SUB1 = [("A2", "B2"), ("A2", "B3"), ("A2", "A2v"), ("A2", "A2w")]
-SUB2 = [("A1", "A2")]
-APPENDIX = [("A1", "C1"), ("A1", "C2"), ("A1", "C3"), ("A1", "C4")]
+CONFIRMATORY = ("A", "B1")
+MAIN_ROWS = ("A", "B1", "A_full")
+SUB1 = [("A", "B2"), ("A", "B3"), ("A", "A_noV"), ("A", "A_noW")]
+SUB2 = [("A_full", "A")]
+APPENDIX = [("A_full", "C1"), ("A_full", "C2"), ("A_full", "C3"), ("A_full", "C4")]
 
 
 def load_cells(results_dir: str) -> dict:
@@ -43,7 +44,7 @@ def load_cells(results_dir: str) -> dict:
                                           exp_den=0.0, files=0))
         counts = np.asarray(pay["block_counts"], dtype=float)
         rec["counts"].append(counts)
-        for name, obj in pay["policies"].items():
+        for name, obj in canon_keys(pay["policies"]).items():
             rec["sums"].setdefault(name, []).append(
                 np.asarray(obj["block_sums"], dtype=float))
         tot = float(counts.sum())
@@ -114,28 +115,28 @@ def render_md(summary: dict) -> str:
     """Three-tier markdown tables under the denominator rule (spec 3.7)."""
     eps = summary["eps"]
     lines = [f"# Confirmatory comparison (eps = {eps} $/payment)", ""]
-    lines += ["## Main table (advantage = A2 - B1, dollars per 1000)", "",
-              "| cell | A2 | B1 | A1 | adv/1000 | ci95/1000 | p_holm | verdict |",
-              "|---|---|---|---|---|---|---|---|"]
+    lines += ["## Main table (advantage = A - B1, dollars per 1000)", "",
+              "| cell | A | B1 | adv/1000 | ci95/1000 | p_holm | verdict |",
+              "|---|---|---|---|---|---|---|"]
     for cell in NINE_CELLS:
         c = summary["cells"][cell]
         m = c["means"]
         conf = c["confirmatory"]
         ci = [conf["ci95"][0] * 1000, conf["ci95"][1] * 1000]
         lines.append(
-            f"| {cell} | {_fmt(m['A2'])} | {_fmt(m['B1'])} | {_fmt(m['A1'])} "
+            f"| {cell} | {_fmt(m['A'])} | {_fmt(m['B1'])} "
             f"| {_fmt(conf['per_1000'])} | [{_fmt(ci[0])}, {_fmt(ci[1])}] "
             f"| {_fmt(conf['p_holm'], 4)} | {conf['verdict']} |")
 
     lines += ["", "## Subtable 1 (tuned B family and eliminated A family)",
-              "", "| cell | A2-B2/1000 | A2-B3/1000 | A2-A2v/1000 | A2-A2w/1000 |",
+              "", "| cell | A-B2/1000 | A-B3/1000 | A-A_noV/1000 | A-A_noW/1000 |",
               "|---|---|---|---|---|"]
     for cell in NINE_CELLS:
         cols = [f"{r['per_1000']:.3f}" for r in summary["cells"][cell]["sub1"]]
         lines.append(f"| {cell} | " + " | ".join(cols) + " |")
 
-    lines += ["", "## Subtable 2 (identification loss, A1 - A2, per 1000)", "",
-              "| cell | A1-A2/1000 | ci95/1000 |", "|---|---|---|"]
+    lines += ["", "## Subtable 2 (identification loss, A_full - A, per 1000)", "",
+              "| cell | A_full-A/1000 | ci95/1000 |", "|---|---|---|"]
     for cell in NINE_CELLS:
         r = summary["cells"][cell]["sub2"][0]
         ci = [r["ci95"][0] * 1000, r["ci95"][1] * 1000]
@@ -143,7 +144,7 @@ def render_md(summary: dict) -> str:
                      f"| [{_fmt(ci[0])}, {_fmt(ci[1])}] |")
 
     lines += ["", "## Appendix (C family, denominator A1, per 1000)", "",
-              "| cell | A1-C1 | A1-C2 | A1-C3 | A1-C4 |", "|---|---|---|---|---|"]
+              "| cell | A_full-C1 | A_full-C2 | A_full-C3 | A_full-C4 |", "|---|---|---|---|---|"]
     for cell in NINE_CELLS:
         cols = [f"{r['per_1000']:.3f}" for r in summary["cells"][cell]["appendix"]]
         lines.append(f"| {cell} | " + " | ".join(cols) + " |")
@@ -153,13 +154,13 @@ def render_md(summary: dict) -> str:
 def render_tex(summary: dict) -> str:
     """The main table as a tex tabular; the same numbers as the markdown."""
     lines = [r"\begin{tabular}{lrrrrl}", r"\hline",
-             r"cell & A2 & B1 & adv/1000 & $p_{\mathrm{holm}}$ & verdict \\",
+             r"cell & A & B1 & adv/1000 & $p_{\mathrm{holm}}$ & verdict \\",
              r"\hline"]
     for cell in NINE_CELLS:
         c = summary["cells"][cell]
         m, conf = c["means"], c["confirmatory"]
         lines.append(
-            f"{cell} & {m['A2']:.3f} & {m['B1']:.3f} & {conf['per_1000']:.3f} "
+            f"{cell} & {m['A']:.3f} & {m['B1']:.3f} & {conf['per_1000']:.3f} "
             f"& {conf['p_holm']:.4f} & {conf['verdict']} \\\\")
     lines += [r"\hline", r"\end{tabular}"]
     return "\n".join(lines) + "\n"

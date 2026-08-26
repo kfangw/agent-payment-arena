@@ -22,6 +22,7 @@ import numpy as np
 from .gate import envs_for
 from .grid_aggregate import N_BOOT, SIM_LEVEL, build as grid_build
 from .design import eps_for
+from .naming import canon_keys
 from .stats import boot_ci, holm, perm_p, ratio_mean, units, verdict
 
 OUTAGE = ["E-outage x F1", "E-outage x F2", "E-outage x F3"]
@@ -98,7 +99,7 @@ def _diff_blocks(cell, results):
     e, f = (s.strip() for s in cell.split("x"))
     base = json.load(open(Path(results) / f"duel_{e}_{f}_mid_s{seed}.json"))
     grid = json.load(open(Path(results) / f"b4_gridN_{e}_{f}_mid_s{seed}.json"))
-    a2 = np.asarray(base["payload"]["policies"]["A2"]["block_sums"], dtype=float)
+    a2 = np.asarray(canon_keys(base["payload"]["policies"])["A"]["block_sums"], dtype=float)
     b4 = np.asarray(grid["payload"]["b4_block_sums"], dtype=float)
     counts = np.asarray(grid["payload"]["block_counts"], dtype=float)
     mexp = grid["payload"]["mean_exposure"]

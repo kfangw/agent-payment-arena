@@ -33,6 +33,7 @@ from .b4 import OB4, _block_sums
 from .core import rho_hat_from_q
 from .gate import CW_PER_S, envs_for
 from .flows import make_flows
+from .naming import canon_keys
 from .outage import (CompiledOutagePolicy, OutageEnv, PI_GRID_OUTAGE,
                      compile_outage, draw_outage_batch, replay_outage,
                      survival, window_AD)
@@ -160,7 +161,7 @@ def run_cell(env_name, flow_name, seed, n_tune, n_eval, results, results_grid):
     # base A2 block sums (grid-independent) and n=161 B3 from S1's b4_gridN
     base = json.load(open(Path(results) /
                           f"duel_{env_name}_{flow_name}_mid_s{seed}.json"))
-    a2_base = np.asarray(base["payload"]["policies"]["A2"]["block_sums"],
+    a2_base = np.asarray(canon_keys(base["payload"]["policies"])["A"]["block_sums"],
                          dtype=float)
     gridf = json.load(open(Path(results_grid) /
                            f"b4_gridN_{env_name}_{flow_name}_mid_s{seed}.json"))

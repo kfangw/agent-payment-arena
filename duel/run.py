@@ -61,10 +61,10 @@ def run_chain(ch: Channel, rho_true, flow, n_tune, n_eval, seed):
     q_hat = float((tune_d.t_ans <= ch.tau).mean())
     rho_hat = rho_hat_from_q(q_hat, ch.tau)
     A = {
-        'A1': compile_A(ch, 'A1', pmf=ch.pmf_h),
-        'A2': compile_A(ch, 'A2', rho=rho_hat),
-        'A2v': compile_A(ch, 'A2v', rho=rho_hat, drop=(VERIFY,)),
-        'A2w': compile_A(ch, 'A2w', rho=rho_hat, drop=(WAIT,)),
+        'A_full': compile_A(ch, 'A_full', pmf=ch.pmf_h),
+        'A': compile_A(ch, 'A', rho=rho_hat),
+        'A_noV': compile_A(ch, 'A_noV', rho=rho_hat, drop=(VERIFY,)),
+        'A_noW': compile_A(ch, 'A_noW', rho=rho_hat, drop=(WAIT,)),
     }
     grids = default_grids()
     tuned, params = {}, {}
@@ -99,10 +99,10 @@ def run_outage(env: OutageEnv, flow, n_tune, n_eval, seed,
                         p01=env.p01, p10=env.p10,
                         tick_seconds=env.tick_seconds)
     A = {
-        'A1': compile_outage(env, 'A1'),
-        'A2': compile_outage(env_hat, 'A2'),
-        'A2v': compile_outage(env_hat, 'A2v', drop=(VERIFY,)),
-        'A2w': compile_outage(env_hat, 'A2w', drop=(WAIT,)),
+        'A_full': compile_outage(env, 'A_full'),
+        'A': compile_outage(env_hat, 'A'),
+        'A_noV': compile_outage(env_hat, 'A_noV', drop=(VERIFY,)),
+        'A_noW': compile_outage(env_hat, 'A_noW', drop=(WAIT,)),
     }
     grids = default_grids()
     tuned, params = {}, {}
@@ -214,7 +214,7 @@ def main(argv=None):
     tag = f"{args.env}_{args.flow}_{args.cw}_s{args.seed}"
     path = str(Path(args.out) / f"duel_{tag}.json")
     write_once(path, env_obj)
-    diff = out['A2'] - out['B1']
+    diff = out['A'] - out['B1']
     print(json.dumps(dict(cell=cell,
                           means={k: round(float(v.mean()), 6) for k, v in out.items()},
                           a2_minus_b1_mean=round(float(diff.mean()), 6)), indent=1))

@@ -29,6 +29,7 @@ from .core import GRANT, REJECT, VERIFY, WAIT, rho_hat_from_q
 from .gate import CW_PER_S, envs_for
 from .gitcheck import require_clean_tree
 from .flows import make_flows
+from .naming import canon_keys
 from .outage import (CompiledOutagePolicy, OutageEnv, PI_GRID_OUTAGE,
                      draw_outage_batch, replay_outage, survival, window_AD)
 from .report import envelope, git_rev, write_once
@@ -171,7 +172,7 @@ def run_cell(flow_name, seed, n_tune, n_eval, results, results_grid):
     counts = np.bincount(episodes).astype(float)
     base = json.load(open(Path(results) /
                           f"duel_E-outage_{flow_name}_mid_s{seed}.json"))
-    a_base = np.asarray(base["payload"]["policies"]["A2"]["block_sums"],
+    a_base = np.asarray(canon_keys(base["payload"]["policies"])["A"]["block_sums"],
                         dtype=float)
     gridf = json.load(open(Path(results_grid) /
                           f"b4_gridN_E-outage_{flow_name}_mid_s{seed}.json"))

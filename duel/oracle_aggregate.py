@@ -21,6 +21,7 @@ import numpy as np
 from .b4_aggregate import CELL_SEED, _tag
 from .design import NINE_CELLS, eps_for
 from .grid_aggregate import N_BOOT, SIM_LEVEL
+from .naming import canon_keys
 from .stats import boot_ci, holm, perm_p, ratio_mean, units, verdict
 
 
@@ -33,11 +34,11 @@ def _load(cell, results):
     bp, op, hp = base["payload"], orc["payload"], b4["payload"]
     return dict(
         cell=cell, seed=seed,
-        a2=np.asarray(bp["policies"]["A2"]["block_sums"], dtype=float),
+        a2=np.asarray(canon_keys(bp["policies"])["A"]["block_sums"], dtype=float),
         oracle=np.asarray(op["b4_block_sums"], dtype=float),
         b4=np.asarray(hp["b4_block_sums"], dtype=float),
         counts=np.asarray(op["block_counts"], dtype=float),
-        A2=bp["means"]["A2"],
+        A2=canon_keys(bp["means"])["A"],
         B4=hp["b4_mean"], B4_oracle=op["b4_mean"],
         k=op["b4"]["k"], a=op["b4"]["a"], b=op["b4"]["b"],
         k_holdout=hp["b4"]["k"],

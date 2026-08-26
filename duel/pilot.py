@@ -118,7 +118,7 @@ def run_pilot(cell: str, seeds, n_eval: int, n_tune: int, out_dir: str,
             out, d, _, episodes = run_chain(env, rho, flow, n_tune, n_eval, s)
         else:
             out, d, _, episodes = run_outage(env, flow, n_tune, n_eval, s)
-        sums, counts = block_stats(out["A2"] - out["B1"], episodes)
+        sums, counts = block_stats(out["A"] - out["B1"], episodes)
         em = sums / counts
         ep_means.append(em)
         exposures.append(float(np.mean(d.v)))

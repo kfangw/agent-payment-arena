@@ -13,6 +13,7 @@ import json
 from pathlib import Path
 
 from .design import NINE_CELLS, eps_for
+from .naming import canon_keys
 from .stats import holm, units, verdict
 
 # cell -> seed, fixed by the main run's assignment
@@ -35,9 +36,10 @@ def load(cell, results, results_b4):
     b4 = json.load(open(Path(results_b4) / f"b4_{env}_{flow}_mid_s{seed}.json"))
     bp = base["payload"]
     pp = b4["payload"]
+    means = canon_keys(bp["means"])
     return dict(
         cell=cell, seed=seed,
-        A2=bp["means"]["A2"], B1=bp["means"]["B1"], B3=bp["means"]["B3"],
+        A2=means["A"], B1=means["B1"], B3=means["B3"],
         B4=pp["b4_mean"], k=pp["b4"]["k"], a=pp["b4"]["a"], b=pp["b4"]["b"],
         horizon=pp["horizon"], k_grid=pp["k_grid"],
         k0_gap=pp["k0_identity_max_gap"],
