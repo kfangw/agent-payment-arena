@@ -31,6 +31,8 @@ results/
 results_inject/
 results_s2/
 results_r4/
+results_t1/
+results_t2/
 tables/
 gate_report.json
 run_env.sh
