@@ -13,6 +13,7 @@ from pathlib import Path
 from arena import __version__
 from arena.evaluation import load_result, run_attack_suite, run_mcp_demo, run_minimum_suite
 from arena.experiments.artifacts import write_json_once
+from arena.frontier import PolicyGrid, build_frontier, run_policy_grid, write_frontier
 from arena.gateway.contract import Action, ErrorCode, default_code_for
 from arena.report import build_report, render_markdown, write_report
 
@@ -40,6 +41,15 @@ def _build_parser() -> argparse.ArgumentParser:
     report.add_argument("result", type=Path)
     report.add_argument("--json-out", type=Path, required=True)
     report.add_argument("--markdown-out", type=Path, required=True)
+    frontier = subcommands.add_parser("frontier", help="run a policy grid and plot its frontier")
+    frontier.add_argument("--limits", default="25,50,100")
+    frontier.add_argument("--ask-thresholds", default="off,20,50")
+    frontier.add_argument("--bond-thresholds", default="off,50")
+    frontier.add_argument("--repetitions", type=int, default=2)
+    frontier.add_argument("--seed", type=int, default=1)
+    frontier.add_argument("--json-out", type=Path, required=True)
+    frontier.add_argument("--svg-out", type=Path, required=True)
+    frontier.add_argument("--otlp-endpoint")
     return parser
 
 
@@ -92,9 +102,32 @@ def main(argv: Sequence[str] | None = None) -> int:
         write_report(report, args.json_out, args.markdown_out)
         print(args.markdown_out)
         return 0
+    if args.command == "frontier":
+        sink = None
+        if args.otlp_endpoint:
+            from arena.telemetry import OpenTelemetryTraceSink
+
+            sink = OpenTelemetryTraceSink(args.otlp_endpoint)
+        grid = PolicyGrid(
+            tuple(int(value) for value in args.limits.split(",")),
+            _optional_ints(args.ask_thresholds),
+            _optional_ints(args.bond_thresholds),
+        )
+        frontier = build_frontier(
+            run_policy_grid(grid, args.repetitions, args.seed, trace_sink=sink)
+        )
+        write_frontier(frontier, args.json_out, args.svg_out)
+        if sink is not None:
+            sink.close()
+        print(args.svg_out)
+        return 0
 
     # argparse rejects unknown subcommands before reaching here.
     raise AssertionError(f"unhandled command: {args.command!r}")
+
+
+def _optional_ints(raw: str) -> tuple[int | None, ...]:
+    return tuple(None if value.strip() == "off" else int(value) for value in raw.split(","))
 
 
 if __name__ == "__main__":

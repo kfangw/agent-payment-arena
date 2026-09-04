@@ -55,3 +55,29 @@ def test_run_and_report_commands(tmp_path: Path) -> None:
         == 0
     )
     assert report_json.exists() and report_md.exists()
+
+
+def test_frontier_command_writes_json_and_svg(tmp_path: Path) -> None:
+    json_path = tmp_path / "frontier.json"
+    svg_path = tmp_path / "frontier.svg"
+    assert (
+        main(
+            [
+                "frontier",
+                "--limits",
+                "25",
+                "--ask-thresholds",
+                "off",
+                "--bond-thresholds",
+                "off",
+                "--repetitions",
+                "2",
+                "--json-out",
+                str(json_path),
+                "--svg-out",
+                str(svg_path),
+            ]
+        )
+        == 0
+    )
+    assert json_path.exists() and svg_path.exists()

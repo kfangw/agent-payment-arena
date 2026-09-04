@@ -60,10 +60,10 @@ M0 through M5 mark the order.
 
 ## Frontier — M5
 
-- [ ] Policy grid search over the limit, the ask threshold, and the bond requirement
-- [ ] Trade-off curves over unauthorized spend, over-blocking, escalations, and token cost
-- [ ] Repetition and interval reporting applied to every published figure
-- [ ] OpenTelemetry traces for a run, so a single decision can be inspected after the fact
+- [x] Policy grid search over the limit, the ask threshold, and the bond requirement
+- [x] Pareto trade-off artifacts over unauthorized spend, over-blocking, escalations, token cost, and latency
+- [x] Repetition and bootstrap interval reporting applied to every frontier point
+- [x] Optional OpenTelemetry spans for run and payment decisions
 
 ## Deliberately out of scope
 

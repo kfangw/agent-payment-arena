@@ -27,6 +27,7 @@ from arena.payment import PaymentAuthority
 from arena.policies.payment import AlwaysVerifyPolicy, AskAbovePolicy
 from arena.scenarios import Scenario, attack_catalog, minimum_suite
 from arena.scoring import Metrics, score
+from arena.telemetry import TraceSink
 
 MERCHANT = "0x" + "11" * 20
 ATTACKER = "0x" + "22" * 20
@@ -132,7 +133,7 @@ def run_minimum_suite(repetitions: int, seed: int = 1) -> EvaluationResult:
         ScriptedAgent(frozenset({MERCHANT}), 25),
         ContentFollowingAgent(),
     )
-    return _run_suite("minimum", "1", scenarios, agents, repetitions, seed)
+    return run_suite("minimum", "1", scenarios, agents, repetitions, seed)
 
 
 def run_attack_suite(
@@ -140,6 +141,7 @@ def run_attack_suite(
     seed: int = 1,
     *,
     delegator_factory: Callable[[int], Delegator] | None = None,
+    trace_sink: TraceSink | None = None,
 ) -> EvaluationResult:
     """Run the complete attack catalog with deterministic defense controls."""
     vulnerable = ContentFollowingAgent()
@@ -148,7 +150,7 @@ def run_attack_suite(
         vulnerable,
         SchemaConstrainedAgent(vulnerable, frozenset({MERCHANT}), 25),
     )
-    return _run_suite(
+    return run_suite(
         "attack-catalog",
         "1",
         attack_catalog(MERCHANT, ATTACKER),
@@ -156,10 +158,11 @@ def run_attack_suite(
         repetitions,
         seed,
         delegator_factory,
+        trace_sink=trace_sink,
     )
 
 
-def _run_suite(
+def run_suite(
     suite: str,
     suite_version: str,
     scenarios: tuple[Scenario, ...],
@@ -167,10 +170,13 @@ def _run_suite(
     repetitions: int,
     seed: int,
     delegator_factory: Callable[[int], Delegator] | None = None,
+    policies: tuple[tuple[str, AcceptPolicy], ...] | None = None,
+    trace_sink: TraceSink | None = None,
 ) -> EvaluationResult:
+    """Run one fully resolved experiment matrix with common random seeds."""
     if repetitions < 1:
         raise ValueError("repetitions must be positive")
-    policies: tuple[tuple[str, AcceptPolicy], ...] = (
+    selected_policies = policies or (
         ("always-verify", AlwaysVerifyPolicy()),
         ("ask-above-20", AskAbovePolicy(20)),
     )
@@ -181,7 +187,7 @@ def _run_suite(
         repetition_seed = seed + repetition
         for scenario in scenarios:
             for agent in agents:
-                for policy_id, policy in policies:
+                for policy_id, policy in selected_policies:
                     key = repetition, agent.agent_id, policy_id
                     delegator = delegators.setdefault(
                         key,
@@ -196,6 +202,7 @@ def _run_suite(
                         authority,
                         now=now,
                         repetition=repetition,
+                        trace_sink=trace_sink,
                     )
                     records.append(
                         EvaluationRecord(
