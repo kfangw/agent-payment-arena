@@ -99,6 +99,11 @@ jobs:
           docker compose -f stablecoin-x402-gateway/docker-compose.yml logs
           exit 1
 
+      - name: Register reference agent
+        run: |
+          docker compose -f stablecoin-x402-gateway/docker-compose.yml \
+            --profile demo run --rm agent
+
       - name: Differential contract test
         env:
           ARENA_HTTP_GATEWAY_URL: http://localhost:8402
