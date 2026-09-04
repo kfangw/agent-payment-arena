@@ -102,6 +102,11 @@ exclude = ["tests/test_structcheck.py", "src/arena/experiments/settlement"]
 module = ["eth_account.*"]
 ignore_missing_imports = true
 
+[[tool.mypy.overrides]]
+module = ["arena.gateway.schemas"]
+# Pydantic's BaseModel is typed through an Any-valued metaclass in its stubs.
+disable_error_code = ["explicit-any"]
+
 [tool.pytest.ini_options]
 minversion = "8.0"
 testpaths = ["tests"]
