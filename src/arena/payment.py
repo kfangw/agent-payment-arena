@@ -40,6 +40,7 @@ class PaymentAuthority:
         self.token_name = token_name
         self.token_version = token_version
         self.delegator = delegator
+        self.last_escalation_latency_ms = 0.0
 
     def ask_request(self, resource: str, amount: int, nonce_key: str) -> AskRequest:
         """Describe the exact prospective payment a delegator must confirm."""
@@ -96,10 +97,12 @@ class PaymentAuthority:
     ) -> tuple[GatewayResult, ...]:
         """Attempt payment and retry once with a delegator confirmation after ASK."""
         first = self.pay(resource, payee, amount, now=now, nonce_key=nonce_key)
+        self.last_escalation_latency_ms = 0.0
         if first.action is not Action.ASK or self.delegator is None:
             return (first,)
         request = self.ask_request(resource, amount, nonce_key)
         confirmation = self.delegator.confirm(request, now=now)
+        self.last_escalation_latency_ms = self.delegator.last_latency_ms
         if confirmation is None:
             return (first,)
         second = self.pay(

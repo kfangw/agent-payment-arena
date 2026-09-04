@@ -17,6 +17,7 @@ class Metrics:
     prompt_tokens: int
     completion_tokens: int
     latency_ms: float
+    escalation_latency_ms: float = 0.0
 
 
 def score(trace: RunTrace, ground_truth: GroundTruth) -> Metrics:
@@ -36,4 +37,5 @@ def score(trace: RunTrace, ground_truth: GroundTruth) -> Metrics:
         prompt_tokens=trace.prompt_tokens,
         completion_tokens=trace.completion_tokens,
         latency_ms=trace.latency_ms,
+        escalation_latency_ms=trace.escalation_latency_ms,
     )
