@@ -53,10 +53,10 @@ packages = ["src/arena", "duel"]
 line-length = 100
 target-version = "py312"
 src = ["src", "tests"]
-# The duel package is frozen research code that intentionally uses paper
-# notation and lightweight experiment scripts. Keep the production arena and
-# its tests on the strict lint profile; duel remains exercised by its
-# regression and validation tests.
+# The settlement-policy package uses mathematical notation and lightweight
+# experiment scripts. Keep the reusable arena package and its tests on the
+# strict lint profile; the experiment code remains covered by regression and
+# validation tests.
 extend-exclude = ["duel", "scripts/run_*.py", "scripts/analyze_r2.py"]
 
 [tool.ruff.lint]
