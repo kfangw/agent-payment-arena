@@ -62,7 +62,8 @@ someone runs it.
 
 ## Status
 
-Neither backend is implemented. `src/arena/gateway/` holds the contract module
-and the package docstring only. `FakeGateway` lands in M0 and `HttpGateway` in
-M4, and the differential test is written with the fake so the same cases run
-unchanged once the HTTP backend exists.
+Both backends are implemented. `HttpGateway` maps the shared operations to the
+reference server's 402 body and base64 `X-PAYMENT` header. The default test
+suite uses `FakeGateway`; a separate CI job checks out reference revision
+`ddd20fe3ec7c2109a006e1112bcac9fdeabf9b32`, starts its Compose stack, and
+runs the valid signed-payment differential test against a real node.
