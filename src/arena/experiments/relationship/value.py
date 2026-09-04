@@ -8,8 +8,12 @@ from dataclasses import dataclass
 import numpy as np
 from numpy.typing import NDArray
 
-from arena.experiments.relationship.belief import bad_failure_probability
-from arena.experiments.relationship.model import RelationshipAction, RelationshipParameters
+from arena.experiments.relationship.belief import bad_failure_probability, update_belief
+from arena.experiments.relationship.model import (
+    RelationshipAction,
+    RelationshipParameters,
+    Verdict,
+)
 
 
 @dataclass(frozen=True)
@@ -203,6 +207,54 @@ def immediate_action_payoffs(
     return pay, verify, defer
 
 
+def action_at_belief(
+    parameters: RelationshipParameters,
+    solution: ValueSolution,
+    belief: float,
+) -> RelationshipAction:
+    """Choose an action at an off-grid belief using linear value interpolation."""
+    if not 0 <= belief <= 1:
+        raise ValueError("belief must be between zero and one")
+    bad_failure = bad_failure_probability(
+        parameters.alpha,
+        parameters.beta,
+        parameters.bad_cheat_rate,
+    )
+    failure = belief * bad_failure + (1 - belief) * parameters.alpha
+    failed_belief = update_belief(
+        belief,
+        Verdict.FAIL,
+        alpha=parameters.alpha,
+        beta=parameters.beta,
+        cheat_rate=parameters.bad_cheat_rate,
+    )
+    passed_belief = update_belief(
+        belief,
+        Verdict.PASS,
+        alpha=parameters.alpha,
+        beta=parameters.beta,
+        cheat_rate=parameters.bad_cheat_rate,
+    )
+    current_value = float(np.interp(belief, solution.beliefs, solution.values))
+    observed_value = failure * float(
+        np.interp(failed_belief, solution.beliefs, solution.values)
+    ) + (1 - failure) * float(np.interp(passed_belief, solution.beliefs, solution.values))
+    pay, verify, defer = immediate_action_payoffs(parameters, np.asarray([belief]))
+    continuation = parameters.continuation_probability
+    sampling = parameters.public_sampling_rate
+    scalar_values = {
+        RelationshipAction.PAY: float(pay[0])
+        + continuation * ((1 - sampling) * current_value + sampling * observed_value),
+        RelationshipAction.VERIFY: float(verify[0]) + continuation * observed_value,
+        RelationshipAction.DEFER: float(defer[0]) + continuation * observed_value,
+        RelationshipAction.EXIT: 0.0,
+    }
+    return max(
+        _ACTION_TIE_ORDER,
+        key=lambda action: (scalar_values[action], -_ACTION_TIE_ORDER.index(action)),
+    )
+
+
 def finite_lattice_exit_probability(
     *,
     relative_logit: float,
@@ -365,16 +417,10 @@ def _posterior_grid(
 def _select_actions(
     action_values: dict[RelationshipAction, NDArray[np.float64]],
 ) -> tuple[NDArray[np.float64], tuple[RelationshipAction, ...]]:
-    tie_order = (
-        RelationshipAction.EXIT,
-        RelationshipAction.DEFER,
-        RelationshipAction.VERIFY,
-        RelationshipAction.PAY,
-    )
-    stacked = np.stack([action_values[action] for action in tie_order])
+    stacked = np.stack([action_values[action] for action in _ACTION_TIE_ORDER])
     indices = np.argmax(stacked, axis=0)
     selected = stacked[indices, np.arange(stacked.shape[1])]
-    return selected, tuple(tie_order[index] for index in indices)
+    return selected, tuple(_ACTION_TIE_ORDER[index] for index in indices)
 
 
 def _regions(
@@ -390,3 +436,11 @@ def _regions(
             )
             start = index
     return tuple(regions)
+
+
+_ACTION_TIE_ORDER = (
+    RelationshipAction.EXIT,
+    RelationshipAction.DEFER,
+    RelationshipAction.VERIFY,
+    RelationshipAction.PAY,
+)
