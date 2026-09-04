@@ -17,6 +17,10 @@ from arena.experiments.relationship.model import (
     TransactionEvent,
     Verdict,
 )
+from arena.experiments.relationship.policies import (
+    CompiledDepositExitPolicy,
+    compile_deposit_exit_policy,
+)
 from arena.experiments.relationship.simulate import (
     draw_latent_relationship,
     simulate_relationship,
@@ -33,6 +37,7 @@ from arena.experiments.relationship.value import (
 )
 
 __all__ = [
+    "CompiledDepositExitPolicy",
     "DataGrade",
     "E0ValueCheck",
     "LatentRelationship",
@@ -54,6 +59,7 @@ __all__ = [
     "Verdict",
     "analytic_pay_exit_boundary",
     "check_pay_exit_e0",
+    "compile_deposit_exit_policy",
     "draw_latent_relationship",
     "finite_lattice_exit_probability",
     "load_protocol",
