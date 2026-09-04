@@ -15,19 +15,90 @@ that measures it.
 
 ## Status
 
-Early. The scaffolding, the shared decision space, and the contract tests are
-in place; the agents, the attacks, and the report are not. What is built and
-what is not is stated per part in the design notes, and the order of the
-remaining work is in [ROADMAP.md](ROADMAP.md). The results table below is
-empty on purpose and will be filled by generated output rather than by hand.
+The repository contains two related components at different stages.
+
+- `src/arena` is the generic agent-payment evaluation environment. Its shared
+  decision contract and command-line interface are implemented. The agents,
+  attacks, gateway backends, and end-to-end report remain on the
+  [roadmap](ROADMAP.md).
+- `duel` is the implemented CMC policy experiment. It includes the exact
+  model, stochastic replay, policy families, paired statistical analysis,
+  robustness experiments, and validation programs.
+
+Install the project and run its fast checks with:
 
 ```bash
-uv sync
-uv run arena contract   # the decision space and refusal codes both backends are held to
-uv run pytest
+uv sync --all-extras --dev
+uv run arena contract
+uv run pytest -m "not live and not http_gateway"
 ```
 
-## Results
+## CMC experiment
+
+The CMC experiment compares `grant`, `reject`, `verify`, and `wait` policies
+under payment-channel delay and failure. A run draws separate tuning and
+evaluation samples, replays each policy on the same evaluation payments, and
+writes a parameter-hashed JSON envelope. Generated results are ignored by
+Git.
+
+Run one environment-by-flow cell:
+
+```bash
+uv run python -m duel.run \
+  --env E-outage \
+  --flow F2 \
+  --cw mid \
+  --n-tune 50000 \
+  --n-eval 200000 \
+  --seed 8 \
+  --out results
+```
+
+Aggregate completed confirmatory cells:
+
+```bash
+uv run python -m duel.aggregate --results results --out tables
+```
+
+The batch drivers in `scripts/` skip outputs that already exist and write one
+log per process to `reports/_logs/`. Pass the desired worker count as the
+first argument:
+
+```bash
+uv run python scripts/run_s1.py 8
+```
+
+The main validation programs can be run independently:
+
+```bash
+uv run python -m duel.validate_harness
+uv run python -m duel.validate_outage
+uv run python -m duel.validate_stats
+uv run python -m duel.validate_run
+```
+
+## Repository layout
+
+```text
+src/arena/     Generic agent-payment contracts and CLI
+duel/          CMC model, simulation, policies, statistics, and reports
+scripts/       Resumable batch definitions built on duel.runner
+tests/         Fast CI regression tests
+docs/          Scope, threat model, and generic arena design notes
+```
+
+The CMC modules separate the model from the experiment plumbing:
+
+- `duel.core` defines the exact decision model.
+- `duel.simulate` and `duel.outage` generate and replay stochastic channels.
+- `duel.policies` compiles and tunes comparison policies.
+- `duel.run` executes one comparison cell.
+- `duel.stats`, `duel.aggregate`, and `duel.report` perform inference and
+  serialize results.
+- `duel.runner` provides the shared subprocess, logging, and concurrency code
+  used by batch scripts.
+
+## Generic arena results
 
 Not yet populated. When it is, this table is written by `arena report` and
 carries the model identifier, the run date, the repetition count, and an
@@ -47,17 +118,17 @@ deployment. The *instrument* is the scenario, the metrics, and the report:
 everything that knows the ground truth of a run and therefore may not be
 visible to the subject.
 
-### Backends
+### Planned backends
 
-The arena runs against either of two gateway backends.
+The generic arena is designed to run against two gateway backends.
 
-`FakeGateway` is in-memory and is the default. It reproduces the x402
+`FakeGateway` will be in-memory and the default. It will reproduce the x402
 contract, not the gateway implementation, so a clean checkout runs with no
-chain, no node, and no Go toolchain. `HttpGateway` talks to a running
+chain, no node, and no Go toolchain. `HttpGateway` will talk to a running
 [stablecoin-x402-gateway](https://github.com/kfangw/stablecoin-x402-gateway)
 over HTTP.
 
-A contract test runs the same scenarios against both and asserts they agree.
+A contract test will run the same scenarios against both and assert that they agree.
 That test is what makes a result produced against the fake backend worth
 reading.
 

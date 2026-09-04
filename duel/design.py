@@ -22,10 +22,19 @@ SEED_BANDS: dict[str, tuple[int, int]] = {
 ENVS = ("E-fast", "E-slow", "E-outage")
 FLOWS = ("F1", "F2", "F3")
 
+# Stable environment, flow, and seed assignments for the confirmatory runs.
+CONFIRMATORY_RUNS = tuple(
+    (env, flow, seed)
+    for seed, (env, flow) in enumerate(
+        ((env, flow) for env in ENVS for flow in FLOWS),
+        start=1,
+    )
+)
+
 # The confirmatory family: three environments by three flows at the
 # declared waiting-cost cell.  A2 - B1 in each is the only Holm-corrected
 # comparison (spec 3.4).
-NINE_CELLS = [f"{e} x {f}" for e in ENVS for f in FLOWS]
+NINE_CELLS = [f"{env} x {flow}" for env, flow, _ in CONFIRMATORY_RUNS]
 
 # Main-narrative cells for the injection sweep.  The suspicion-blind
 # flows leave the verify band nearly empty, so the cells that carry the
