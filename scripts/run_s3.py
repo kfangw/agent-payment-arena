@@ -32,7 +32,7 @@ def jobs():
                 Job.python(
                     f"injb4_{tag}",
                     "-m",
-                    "duel.inject_b4",
+                    "arena.experiments.settlement.inject_b4",
                     "--cell",
                     f"{env} x {flow}",
                     "--axis",

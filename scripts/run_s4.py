@@ -1,7 +1,7 @@
 """Run S4: the deeper-settlement cell E-slow-deep across the three flows.
 
-Each flow first runs the base comparison (duel.run -> duel_E-slow-deep_*) and
-then B4 on a dense k ladder {0..12} (duel.b4 --k-grid -> b4_E-slow-deep_*),
+Each flow first runs the base comparison (arena.experiments.settlement.run -> settlement_E-slow-deep_*) and
+then B4 on a dense k ladder {0..12} (arena.experiments.settlement.b4 --k-grid -> b4_E-slow-deep_*),
 which must run after its base file exists.  The three flows are independent
 and run in parallel.  Resumable: a stage whose output exists is skipped.
 """
@@ -26,11 +26,11 @@ def jobs():
     for env, flow, seed in CELL_SEED:
         tag = f"{env}_{flow}_mid_s{seed}"
         steps = []
-        if not (ROOT / "results" / f"duel_{tag}.json").exists():
+        if not (ROOT / "results" / f"settlement_{tag}.json").exists():
             steps.append(
                 (
                     "-m",
-                    "duel.run",
+                    "arena.experiments.settlement.run",
                     "--env",
                     env,
                     "--flow",
@@ -51,7 +51,7 @@ def jobs():
             steps.append(
                 (
                     "-m",
-                    "duel.b4",
+                    "arena.experiments.settlement.b4",
                     "--env",
                     env,
                     "--flow",

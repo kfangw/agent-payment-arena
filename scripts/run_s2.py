@@ -1,7 +1,7 @@
 """Run S2 over the nine confirmatory cells in parallel.
 
 Each cell tunes B4 (k, a, b) on the evaluation split and scores it on the
-same split (duel.b4 --oracle --name b4oracle -> b4oracle_*).  This is not a
+same split (arena.experiments.settlement.b4 --oracle --name b4oracle -> b4oracle_*).  This is not a
 deployable rule: it uses no holdout, so it is an upper bound on what any
 search over the declared grid could reach.  Resumable: a cell whose output
 exists is skipped.  Per-cell stdout goes to reports/_logs/.
@@ -13,7 +13,7 @@ import sys
 from pathlib import Path
 
 from arena.experiments.runner import Job, default_workers, run_jobs
-from duel.design import CONFIRMATORY_RUNS
+from arena.experiments.settlement.design import CONFIRMATORY_RUNS
 
 ROOT = Path(__file__).resolve().parent.parent
 LOGS = ROOT / "reports" / "_logs"
@@ -29,7 +29,7 @@ def jobs():
             Job.python(
                 f"b4oracle_{tag}",
                 "-m",
-                "duel.b4",
+                "arena.experiments.settlement.b4",
                 "--env",
                 env,
                 "--flow",

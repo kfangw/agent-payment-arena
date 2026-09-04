@@ -8,9 +8,9 @@ is seconds.  S2, S3, and S4 therefore run at 100,000 eval / 50,000 tune
 ones and the levels are re-anchored to this sample, so each item's identity
 check is against a base computed at the SAME size, not the 5.66M Table 9.
 
-  S2  self-contained in results_s2/: duel.run (reduced base) -> b4 (holdout)
+  S2  self-contained in results_s2/: arena.experiments.settlement.run (reduced base) -> b4 (holdout)
       -> b4 --oracle, all reading that reduced base so the k=0 identity holds.
-  S4  in results/: duel.run E-slow-deep + b4 on the dense k ladder.
+  S4  in results/: arena.experiments.settlement.run E-slow-deep + b4 on the dense k ladder.
   S3  in results_inject/: inject_b4 (builds its own context, no base file).
 
 One pool, numpy threads pinned to one per process, heaviest jobs first.
@@ -23,7 +23,7 @@ import sys
 from pathlib import Path
 
 from arena.experiments.runner import PipelineJob, default_workers, run_jobs
-from duel.design import CONFIRMATORY_RUNS
+from arena.experiments.settlement.design import CONFIRMATORY_RUNS
 
 ROOT = Path(__file__).resolve().parent.parent
 LOGS = ROOT / "reports" / "_logs"
@@ -42,7 +42,7 @@ def _exists(sub, name):
 def _duel(env, flow, seed, out):
     return (
         "-m",
-        "duel.run",
+        "arena.experiments.settlement.run",
         "--env",
         env,
         "--flow",
@@ -71,7 +71,7 @@ def jobs():
             _duel(env, flow, seed, "results_s2"),
             (
                 "-m",
-                "duel.b4",
+                "arena.experiments.settlement.b4",
                 "--env",
                 env,
                 "--flow",
@@ -89,7 +89,7 @@ def jobs():
             ),
             (
                 "-m",
-                "duel.b4",
+                "arena.experiments.settlement.b4",
                 "--env",
                 env,
                 "--flow",
@@ -120,7 +120,7 @@ def jobs():
                         f"s3_{tag}",
                         (
                             "-m",
-                            "duel.inject_b4",
+                            "arena.experiments.settlement.inject_b4",
                             "--cell",
                             f"{env} x {flow}",
                             "--axis",
@@ -140,13 +140,13 @@ def jobs():
     for env, flow, seed in S4_CELLS:
         tag = f"{env}_{flow}_mid_s{seed}"
         steps = []
-        if not _exists("results", f"duel_{tag}"):
+        if not _exists("results", f"settlement_{tag}"):
             steps.append(_duel(env, flow, seed, "results"))
         if not _exists("results", f"b4_{tag}"):
             steps.append(
                 (
                     "-m",
-                    "duel.b4",
+                    "arena.experiments.settlement.b4",
                     "--env",
                     env,
                     "--flow",

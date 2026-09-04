@@ -28,7 +28,7 @@ def jobs():
             Job.python(
                 f"r4_{tag}",
                 "-m",
-                "duel.residual",
+                "arena.experiments.settlement.residual",
                 "--env",
                 env,
                 "--flow",

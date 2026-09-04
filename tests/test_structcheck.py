@@ -1,4 +1,4 @@
-"""Detection regression test for duel.structcheck.
+"""Detection regression test for arena.experiments.settlement.structcheck.
 
 The chain contrast only shows the checks do not false-positive on a table
 that already holds the property.  These tests inject each of the five fault
@@ -10,8 +10,9 @@ no dynamic program is solved.
 from __future__ import annotations
 
 import numpy as np
-from duel.core import GRANT, REJECT, VERIFY
-from duel.structcheck import check_pi
+
+from arena.experiments.settlement.core import GRANT, REJECT, VERIFY
+from arena.experiments.settlement.structcheck import check_pi
 
 NPI = 501
 PI = np.linspace(0.0, 1.0, NPI)
