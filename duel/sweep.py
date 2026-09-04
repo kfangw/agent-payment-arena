@@ -22,7 +22,13 @@ from pathlib import Path
 
 import numpy as np
 
-from .b4 import OB4, OB4Force, _block_sums, _tune_b4, k_grid
+from .watch import (
+    FixedActionOutageWatchPolicy as OB4Force,
+    OutageWatchBandPolicy as OB4,
+    block_sums,
+    horizon_grid as k_grid,
+    tune_watch_policy as tune_b4,
+)
 from .core import derived, rho_hat_from_q, sigma_list
 from .design import eps_for
 from .flows import make_flows
@@ -53,7 +59,7 @@ def run_outage(env, flow, seed, n_tune, n_eval):
     env_hat = replace(env, rho=rho_hat)
     a = compile_outage(env_hat, "A")
     _, _, ex = window_AD(env, survival(env))
-    best, _, _ = _tune_b4(
+    best, _, _ = tune_b4(
         lambda k, act: replay_outage(env, tune_d, OB4Force(k, act, env.H, env.N), ex),
         default_grids()["B3"],
         k_grid(env.H),
@@ -63,7 +69,7 @@ def run_outage(env, flow, seed, n_tune, n_eval):
     a_pay = replay_outage(env, eval_d, a, ex)
     b4_pay = replay_outage(env, eval_d, b4, ex)
     episodes = np.arange(len(eval_d)) // 50
-    diff = _block_sums(a_pay - b4_pay, episodes)
+    diff = block_sums(a_pay - b4_pay, episodes)
     counts = np.bincount(episodes).astype(float)
     return (
         diff,
@@ -87,7 +93,7 @@ def run_chain(env, rho, flow, seed, n_tune, n_eval):
     a_pay = replay(env, eval_d, a, ex)
     b1_pay = replay(env, eval_d, b1, ex)
     episodes = np.arange(len(eval_d)) // CHAIN_BLOCK
-    diff = _block_sums(a_pay - b1_pay, episodes)
+    diff = block_sums(a_pay - b1_pay, episodes)
     counts = np.bincount(episodes).astype(float)
     return (
         diff,

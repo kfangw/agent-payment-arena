@@ -26,7 +26,7 @@ from .core import VERIFY, WAIT
 from .design import eps_for
 from .flows import make_flows
 from .gate import CW_PER_S, envs_for
-from .inject import _chain_ctx, _outage_ctx, parse_cell
+from .inject import chain_context, outage_context, parse_cell, tune_outage_baseline
 from .outage import compile_outage, replay_outage
 from .policies import B1, compile_A, tune
 from .report import envelope, write_once
@@ -62,14 +62,12 @@ def _chain_channels(ctx, level):
 def _outage_channels(ctx, level):
     env, ex = ctx["env"], ctx["ex"]
     eval_d, tune_d = ctx["eval_d"], ctx["tune_d"]
-    from .inject import _tune_outage_b1
-
     d_bar = abs(float(np.mean(env.f)) - env.cw)
     env2 = replace(env, cw=env.cw + level * d_bar)
     a2 = compile_outage(replace(env2, rho=ctx["rho_hat"]), "A2")
     av = compile_outage(replace(env2, rho=ctx["rho_hat"]), "A2v", drop=(VERIFY,))
     aw = compile_outage(replace(env2, rho=ctx["rho_hat"]), "A2w", drop=(WAIT,))
-    b1 = _tune_outage_b1(env2, tune_d, ex, ctx["grid"])
+    b1 = tune_outage_baseline(env2, tune_d, ex, ctx["grid"])
     return dict(
         A=replay_outage(env2, eval_d, a2, ex),
         AV=replay_outage(env2, eval_d, av, ex),
@@ -86,10 +84,10 @@ def run_channels(cell, seed, n_eval, n_tune, out_dir, cw="mid", levels=None, n_b
     levels = list(DELTA_LEVELS if levels is None else levels)
 
     if kind == "chain":
-        ctx = _chain_ctx(env, rho, flow, seed, n_tune, n_eval)
+        ctx = chain_context(env, rho, flow, seed, n_tune, n_eval)
         chan_fn = _chain_channels
     else:
-        ctx = _outage_ctx(env, flow, seed, n_tune, n_eval)
+        ctx = outage_context(env, flow, seed, n_tune, n_eval)
         chan_fn = _outage_channels
     ctx["seed"] = seed
     episodes = ctx["episodes"]

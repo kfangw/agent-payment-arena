@@ -98,7 +98,7 @@ def summary_adv(cells: dict, cell: str) -> float:
     from .stats import ratio_mean
 
     rec = cells[cell]
-    return ratio_mean(rec["sums"]["A2"] - rec["sums"]["B1"], rec["counts"])
+    return ratio_mean(rec["sums"]["A"] - rec["sums"]["B1"], rec["counts"])
 
 
 def cli_writes_files() -> None:

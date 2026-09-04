@@ -30,7 +30,7 @@ from pathlib import Path
 
 import numpy as np
 
-from .b4 import OB4, _block_sums
+from .watch import OutageWatchBandPolicy as OB4, block_sums
 from .core import rho_hat_from_q
 from .gate import CW_PER_S, envs_for
 from .flows import make_flows
@@ -189,10 +189,10 @@ def run_cell(env_name, flow_name, seed, n_tune, n_eval, results, results_grid):
         pol = _policy_from_arr(name, a2.v_grid, tab)
         p = replay_outage(env, eval_d, pol, ex_pos)
         pays[name] = p
-        block[name] = _block_sums(p, episodes)
+        block[name] = block_sums(p, episodes)
     b3 = OB4(0, b3a, b3b, env.H, env.N)
     pay_b3 = replay_outage(env, eval_d, b3, ex_pos)
-    block["B3"] = _block_sums(pay_b3, episodes)
+    block["B3"] = block_sums(pay_b3, episodes)
 
     a_repro_gap = float(np.abs(block["A"] - a2_base).max())
 

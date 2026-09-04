@@ -12,7 +12,7 @@ import numpy as np
 from .core import rho_hat_from_q
 from .flows import make_flows
 from .gate import envs_for
-from .inject import _chain_ctx, _chain_diff, halving, run_axis
+from .inject import chain_context, chain_difference, halving, run_axis
 from .run import run_chain
 from .simulate import retime_answers
 
@@ -51,10 +51,10 @@ def a4_1_identity_matches_exp1() -> None:
     flow = make_flows()["F1"]
     seed, n_tune, n_eval = 5, 15_000, 30_000
     out, _, _, _ = run_chain(env, rho, flow, n_tune, n_eval, seed)
-    exp1 = float((out["A2"] - out["B1"]).mean())
-    ctx = _chain_ctx(env, rho, flow, seed, n_tune, n_eval)
+    exp1 = float((out["A"] - out["B1"]).mean())
+    ctx = chain_context(env, rho, flow, seed, n_tune, n_eval)
     for axis, ident in (("kappa", 1.0), ("lambda", 1.0), ("delta", 0.0)):
-        got = float(_chain_diff(ctx, axis, ident).mean())
+        got = float(chain_difference(ctx, axis, ident).mean())
         assert abs(got - exp1) < 1e-9, f"{axis}: {got} != {exp1}"
     print(f"A4-1 ok: identity == exp1 mean {exp1:.6f} for kappa/lambda/delta")
 
@@ -63,10 +63,10 @@ def a4_3_noise_direction() -> None:
     """A4-3: growing sigma lowers A2's advantage (B1 does not move)."""
     kind, env, rho = envs_for("mid")[CELL.split(" x ")[0]]
     flow = make_flows()["F1"]
-    ctx = _chain_ctx(env, rho, flow, 7, 15_000, 40_000)
+    ctx = chain_context(env, rho, flow, 7, 15_000, 40_000)
     ctx["seed"] = 7
-    a0 = float(_chain_diff(ctx, "noise", 0.0).mean())
-    a_hi = float(_chain_diff(ctx, "noise", 0.7).mean())
+    a0 = float(chain_difference(ctx, "noise", 0.0).mean())
+    a_hi = float(chain_difference(ctx, "noise", 0.7).mean())
     assert a_hi < a0 + 1e-6, f"noise did not degrade A2: {a0} -> {a_hi}"
     print(f"A4-3 ok: advantage {a0:.5f} (sigma 0) -> {a_hi:.5f} (sigma 0.7)")
 
@@ -76,7 +76,7 @@ def a4_4_lambda_identification() -> None:
     lambda, so |q_m - q_h| grows as lambda leaves 1."""
     kind, env, rho = envs_for("mid")[CELL.split(" x ")[0]]
     flow = make_flows()["F1"]
-    ctx = _chain_ctx(env, rho, flow, 9, 1, 200_000)
+    ctx = chain_context(env, rho, flow, 9, 1, 200_000)
     d, u = ctx["eval_d"], ctx["u_eval"]
     mis = d.theta == 1
     q_h = float((d.t_ans[d.theta == 0] <= env.tau).mean())

@@ -23,7 +23,6 @@ from pathlib import Path
 
 import numpy as np
 
-from .b4 import B4, B4Force, OB4, OB4Force, _tune_b4, k_grid
 from .core import rho_hat_from_q
 from .design import eps_for
 from .flows import make_flows
@@ -32,9 +31,9 @@ from .inject import (
     AXIS_GRIDS,
     IDENTITY,
     NOISE_REPLICATES,
-    _chain_ctx,
+    chain_context,
     _geom,
-    _outage_ctx,
+    outage_context,
     parse_cell,
 )
 from .outage import compile_outage, replay_outage, retime_answers_geom
@@ -42,10 +41,18 @@ from .policies import compile_A, default_grids
 from .report import envelope, write_once
 from .simulate import replay, retime_answers
 from .stats import boot_ci, ratio_mean
+from .watch import (
+    FixedActionOutageWatchPolicy as OB4Force,
+    FixedActionWatchPolicy as B4Force,
+    OutageWatchBandPolicy as OB4,
+    WatchBandPolicy as B4,
+    horizon_grid as k_grid,
+    tune_watch_policy as tune_b4,
+)
 
 
 def _tune_chain_b4(env, tune_d, ex):
-    best, _, _ = _tune_b4(
+    best, _, _ = tune_b4(
         lambda k, act: replay(env, tune_d, B4Force(k, act), ex),
         default_grids()["B3"],
         k_grid(env.N + 1),
@@ -55,7 +62,7 @@ def _tune_chain_b4(env, tune_d, ex):
 
 
 def _tune_outage_b4(env, tune_d, ex):
-    best, _, _ = _tune_b4(
+    best, _, _ = tune_b4(
         lambda k, act: replay_outage(env, tune_d, OB4Force(k, act, env.H, env.N), ex),
         default_grids()["B3"],
         k_grid(env.H),
@@ -169,11 +176,11 @@ def run_axis(cell, axis, seed, n_eval, n_tune, out_dir, cw="mid", levels=None, n
     levels = list(AXIS_GRIDS[axis] if levels is None else levels)
 
     if kind == "chain":
-        ctx = _chain_ctx(env, rho, flow, seed, n_tune, n_eval)
+        ctx = chain_context(env, rho, flow, seed, n_tune, n_eval)
         ctx["b4"] = _tune_chain_b4(env, ctx["tune_d"], ctx["ex"])
         diff_fn = _chain_diff_b4
     else:
-        ctx = _outage_ctx(env, flow, seed, n_tune, n_eval)
+        ctx = outage_context(env, flow, seed, n_tune, n_eval)
         ctx["b4"] = _tune_outage_b4(env, ctx["tune_d"], ctx["ex"])
         diff_fn = _outage_diff_b4
     ctx["seed"] = seed

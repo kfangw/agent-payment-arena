@@ -20,7 +20,7 @@ from pathlib import Path
 
 import numpy as np
 
-from .b4_aggregate import CELL_SEED, _tag
+from .b4_aggregate import CELL_SEED, split_cell
 from .design import NINE_CELLS, eps_for
 from .naming import canon_keys
 from .stats import boot_ci, holm, perm_p, ratio_mean, units, verdict
@@ -32,7 +32,7 @@ N_BOOT = 20_000
 
 
 def _load(cell, results, results_b4):
-    env, flow = _tag(cell)
+    env, flow = split_cell(cell)
     seed = CELL_SEED[cell]
     base = json.load(open(Path(results) / f"duel_{env}_{flow}_mid_s{seed}.json"))
     b4g = json.load(open(Path(results_b4) / f"b4_gridN_{env}_{flow}_mid_s{seed}.json"))

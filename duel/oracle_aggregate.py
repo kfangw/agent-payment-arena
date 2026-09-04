@@ -19,7 +19,7 @@ from pathlib import Path
 
 import numpy as np
 
-from .b4_aggregate import CELL_SEED, _tag
+from .b4_aggregate import CELL_SEED, split_cell
 from .design import NINE_CELLS, eps_for
 from .grid_aggregate import N_BOOT, SIM_LEVEL
 from .naming import canon_keys
@@ -27,7 +27,7 @@ from .stats import boot_ci, holm, perm_p, ratio_mean, units, verdict
 
 
 def _load(cell, results):
-    env, flow = _tag(cell)
+    env, flow = split_cell(cell)
     seed = CELL_SEED[cell]
     base = json.load(open(Path(results) / f"duel_{env}_{flow}_mid_s{seed}.json"))
     orc = json.load(open(Path(results) / f"b4oracle_{env}_{flow}_mid_s{seed}.json"))
