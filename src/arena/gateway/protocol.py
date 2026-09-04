@@ -45,6 +45,6 @@ class Gateway(Protocol):
         """Return the payment terms for a protected resource."""
         ...
 
-    def submit(self, payload: PaymentPayload, *, now: datetime) -> GatewayResult:
+    def submit(self, payload: PaymentPayload, *, resource: str, now: datetime) -> GatewayResult:
         """Evaluate and possibly settle one payment."""
         ...

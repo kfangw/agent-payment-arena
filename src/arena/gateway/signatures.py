@@ -5,7 +5,7 @@ from __future__ import annotations
 from eth_account import Account
 from eth_account.messages import SignableMessage, encode_typed_data
 
-from arena.gateway.schemas import AskRequest, Confirmation, Mandate, SignedMandate
+from arena.gateway.schemas import AskRequest, Authorization, Confirmation, Mandate, SignedMandate
 
 DOMAIN_NAME = "stablecoin-x402-gateway mandate"
 DOMAIN_VERSION = "1"
@@ -30,6 +30,14 @@ CONFIRMATION_FIELDS: tuple[dict[str, str], ...] = (
     {"name": "amount", "type": "uint256"},
     {"name": "resource", "type": "string"},
     {"name": "validBefore", "type": "uint256"},
+)
+AUTHORIZATION_FIELDS: tuple[dict[str, str], ...] = (
+    {"name": "from", "type": "address"},
+    {"name": "to", "type": "address"},
+    {"name": "value", "type": "uint256"},
+    {"name": "validAfter", "type": "uint256"},
+    {"name": "validBefore", "type": "uint256"},
+    {"name": "nonce", "type": "bytes32"},
 )
 
 
@@ -134,3 +142,79 @@ def verify_confirmation(confirmation: Confirmation, delegator: str, chain_id: in
         )
     )
     return signer.lower() == delegator.lower()
+
+
+def authorization_message(
+    authorization: Authorization,
+    *,
+    token_name: str,
+    token_version: str,
+    chain_id: int,
+    token_address: str,
+) -> SignableMessage:
+    """Build the EIP-3009 transfer authorization message."""
+    data = authorization.model_dump(by_alias=True, mode="json")
+    for name in ("value", "validAfter", "validBefore"):
+        data[name] = int(data[name])
+    return encode_typed_data(
+        full_message={
+            "types": {
+                "EIP712Domain": [
+                    {"name": "name", "type": "string"},
+                    {"name": "version", "type": "string"},
+                    {"name": "chainId", "type": "uint256"},
+                    {"name": "verifyingContract", "type": "address"},
+                ],
+                "TransferWithAuthorization": list(AUTHORIZATION_FIELDS),
+            },
+            "primaryType": "TransferWithAuthorization",
+            "domain": {
+                "name": token_name,
+                "version": token_version,
+                "chainId": chain_id,
+                "verifyingContract": token_address,
+            },
+            "message": data,
+        }
+    )
+
+
+def sign_authorization(
+    authorization: Authorization,
+    private_key: str,
+    *,
+    token_name: str,
+    token_version: str,
+    chain_id: int,
+    token_address: str,
+) -> str:
+    """Sign an EIP-3009 transfer authorization."""
+    message = authorization_message(
+        authorization,
+        token_name=token_name,
+        token_version=token_version,
+        chain_id=chain_id,
+        token_address=token_address,
+    )
+    return "0x" + str(Account.sign_message(message, private_key).signature.hex())
+
+
+def verify_authorization(
+    authorization: Authorization,
+    signature: str,
+    *,
+    token_name: str,
+    token_version: str,
+    chain_id: int,
+    token_address: str,
+) -> bool:
+    """Return whether the authorization was signed by its payer."""
+    message = authorization_message(
+        authorization,
+        token_name=token_name,
+        token_version=token_version,
+        chain_id=chain_id,
+        token_address=token_address,
+    )
+    signer = str(Account.recover_message(message, signature=bytes.fromhex(signature[2:])))
+    return signer.lower() == authorization.from_address.lower()
