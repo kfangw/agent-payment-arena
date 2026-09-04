@@ -2,10 +2,9 @@
 
 from datetime import UTC, datetime
 
-from tests.test_evaluation_loop import ATTACKER, authority
-
 from arena.mcp_server.tools import PaymentTools
 from arena.scenarios import minimum_suite
+from tests.test_evaluation_loop import ATTACKER, authority
 
 
 def test_tools_expose_terms_and_mandate_without_ground_truth() -> None:
