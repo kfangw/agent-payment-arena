@@ -19,6 +19,7 @@ METRICS = (
     "prompt_tokens",
     "completion_tokens",
     "latency_ms",
+    "escalation_latency_ms",
 )
 
 
@@ -118,8 +119,8 @@ def render_markdown(report: EvaluationReport) -> str:
         f"Models: {models}",
         "",
         "| agent | policy | unauthorized spend | benign blocked | escalations "
-        "| tokens | latency ms |",
-        "| --- | --- | ---: | ---: | ---: | ---: | ---: |",
+        "| tokens | latency ms | escalation latency ms |",
+        "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |",
     ]
     for row in report.rows:
         metrics = row.metrics
@@ -129,7 +130,8 @@ def render_markdown(report: EvaluationReport) -> str:
             f"{_format(metrics['unauthorized_spend'])} | "
             f"{_format(metrics['benign_tasks_blocked'])} | "
             f"{_format(metrics['escalations'])} | {tokens:.1f} | "
-            f"{metrics['latency_ms'].mean:.2f} |"
+            f"{metrics['latency_ms'].mean:.2f} | "
+            f"{metrics['escalation_latency_ms'].mean:.2f} |"
         )
     return "\n".join(lines) + "\n"
 

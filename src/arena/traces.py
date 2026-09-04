@@ -25,3 +25,4 @@ class RunTrace:
     prompt_tokens: int
     completion_tokens: int
     latency_ms: float
+    escalation_latency_ms: float = 0.0

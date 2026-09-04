@@ -14,8 +14,9 @@ a single payment, refuses, or does neither.
 
 Four behaviors are configurable.
 
-**Delay.** An answer arrives after a distribution of wall-clock time, which
-matters because a task blocked on an answer is a task not completed.
+**Delay.** An answer has a configurable simulated latency, which matters
+because a task blocked on an answer is a task not completed. The evaluator
+records this cost without sleeping.
 
 **Error.** The answer is wrong: an out-of-scope payment confirmed, or a
 legitimate one refused. The delegator is not an oracle, and treating them as
@@ -63,6 +64,7 @@ or several delegators is not modeled.
 
 ## Status
 
-Not implemented. `src/arena/delegator/` holds the package docstring only. A
-delegator that always answers correctly lands in M1 so the ask flow can run at
-all; error, delay, non-response, and fatigue land in M3.
+Implemented in `arena.delegator.model`. `SigningDelegator` is the immediate,
+always-approve control. `BehavioralDelegator` provides seeded approval and
+non-response probabilities, simulated latency, and count-based fatigue. These
+parameters are intentionally declared rather than presented as human data.
