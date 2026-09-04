@@ -38,12 +38,12 @@ M0 through M5 mark the order.
 
 ## Attack catalog — M2
 
-- [ ] Prompt injection in at least three variants: direct instruction, induced privilege escalation, and payee substitution with the task left intact
-- [ ] Payee spoofing, priced against both a string comparison and a judgment made by the model
-- [ ] Price inflation: above value, below every absolute limit the mandate sets
-- [ ] Repeat purchase: individually authorized payments that are collectively outside intent
-- [ ] A benign twin for each of the above, so over-blocking is measured in the same run
-- [ ] Two further agents: defended by the system prompt, and constrained by the tool schema so the mandate cannot be exceeded structurally
+- [x] Prompt injection in at least three variants: direct instruction, induced privilege escalation, and payee substitution with the task left intact
+- [x] Payee spoofing, available to both exact comparison and model-judgment subjects
+- [x] Price inflation: above value, below every absolute limit the mandate sets
+- [x] Repeat purchase: individually authorized payments that are collectively outside intent
+- [x] A benign twin for each of the above, so over-blocking is measured in the same run
+- [x] Two further agents: defended by the system prompt, and constrained by the tool schema so the mandate cannot be exceeded structurally
 
 ## Delegator model — M3
 
