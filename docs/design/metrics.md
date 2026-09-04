@@ -8,7 +8,7 @@ policy look good.
 
 ## Behavior
 
-A run produces five quantities.
+A run produces six quantities.
 
 **Unauthorized spend.** Money that moved on a payment the delegator did not
 authorize, measured against the scenario's ground truth rather than against
@@ -27,9 +27,12 @@ optimal.
 **Token cost.** Tokens spent per task, prompt and completion. Omitting this
 makes an arbitrarily elaborate defense free.
 
-**Latency.** Wall-clock time per task, including time blocked on a delegator.
-Omitting this makes a defense that waits for a human on every payment
-indistinguishable from one that does not.
+**Runtime latency.** Measured wall-clock time spent executing a task.
+
+**Escalation latency.** Simulated time spent waiting for delegator responses,
+reported separately so deterministic tests do not have to sleep. Omitting it
+makes a defense that waits for a human on every payment indistinguishable from
+one that does not.
 
 ## Design decisions
 
@@ -71,7 +74,5 @@ delay setting, not of a real person's response time.
 
 ## Status
 
-Not implemented. `src/arena/metrics/` holds the package docstring only. The
-first four quantities land in M1 with the run loop; escalation cost becomes
-meaningful in M3 when the delegator model exists; the frontier over the vector
-lands in M5.
+Implemented by `arena.scoring` and aggregated with intervals by
+`arena.report`. The frontier over the vector remains an M5 item.

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -14,7 +15,7 @@ from eth_account import Account
 from arena.agents.constrained import SchemaConstrainedAgent
 from arena.agents.protocol import EvaluationAgent
 from arena.agents.scripted import ContentFollowingAgent, ScriptedAgent
-from arena.delegator.model import SigningDelegator
+from arena.delegator.model import Delegator, SigningDelegator
 from arena.experiments.artifacts import git_revision
 from arena.gateway.fake import FakeGateway
 from arena.gateway.protocol import AcceptPolicy
@@ -38,7 +39,10 @@ def run_mcp_demo(seed: int = 1) -> tuple[str, ...]:
     """Exercise fetch, pay, ask, and confirmed pay through the MCP tool surface."""
     scenario = minimum_suite(MERCHANT, ATTACKER)[0]
     now = datetime(2026, 1, 1, tzinfo=UTC)
-    tools = PaymentTools(scenario.resource, _authority(scenario, AskAbovePolicy(20), seed), now)
+    delegator = SigningDelegator(DELEGATOR_KEY, 1337)
+    tools = PaymentTools(
+        scenario.resource, _authority(scenario, AskAbovePolicy(20), seed, delegator), now
+    )
     fetched = tools.fetch_resource()
     terms = cast(dict[str, object], fetched["paymentRequired"])
     nonce_key = "mcp-demo"
@@ -131,7 +135,12 @@ def run_minimum_suite(repetitions: int, seed: int = 1) -> EvaluationResult:
     return _run_suite("minimum", "1", scenarios, agents, repetitions, seed)
 
 
-def run_attack_suite(repetitions: int, seed: int = 1) -> EvaluationResult:
+def run_attack_suite(
+    repetitions: int,
+    seed: int = 1,
+    *,
+    delegator_factory: Callable[[int], Delegator] | None = None,
+) -> EvaluationResult:
     """Run the complete attack catalog with deterministic defense controls."""
     vulnerable = ContentFollowingAgent()
     agents: tuple[EvaluationAgent, ...] = (
@@ -140,7 +149,13 @@ def run_attack_suite(repetitions: int, seed: int = 1) -> EvaluationResult:
         SchemaConstrainedAgent(vulnerable, frozenset({MERCHANT}), 25),
     )
     return _run_suite(
-        "attack-catalog", "1", attack_catalog(MERCHANT, ATTACKER), agents, repetitions, seed
+        "attack-catalog",
+        "1",
+        attack_catalog(MERCHANT, ATTACKER),
+        agents,
+        repetitions,
+        seed,
+        delegator_factory,
     )
 
 
@@ -151,6 +166,7 @@ def _run_suite(
     agents: tuple[EvaluationAgent, ...],
     repetitions: int,
     seed: int,
+    delegator_factory: Callable[[int], Delegator] | None = None,
 ) -> EvaluationResult:
     if repetitions < 1:
         raise ValueError("repetitions must be positive")
@@ -159,13 +175,21 @@ def _run_suite(
         ("ask-above-20", AskAbovePolicy(20)),
     )
     records: list[EvaluationRecord] = []
+    delegators: dict[tuple[int, str, str], Delegator] = {}
     now = datetime(2026, 1, 1, tzinfo=UTC)
     for repetition in range(repetitions):
         repetition_seed = seed + repetition
         for scenario in scenarios:
             for agent in agents:
                 for policy_id, policy in policies:
-                    authority = _authority(scenario, policy, repetition_seed)
+                    key = repetition, agent.agent_id, policy_id
+                    delegator = delegators.setdefault(
+                        key,
+                        delegator_factory(repetition_seed)
+                        if delegator_factory
+                        else SigningDelegator(DELEGATOR_KEY, 1337),
+                    )
+                    authority = _authority(scenario, policy, repetition_seed, delegator)
                     trace = run_scenario(
                         scenario,
                         agent,
@@ -198,12 +222,17 @@ def _run_suite(
     )
 
 
-def _authority(scenario: Scenario, policy: AcceptPolicy, repetition_seed: int) -> PaymentAuthority:
-    delegator = Account.from_key(DELEGATOR_KEY)
+def _authority(
+    scenario: Scenario,
+    policy: AcceptPolicy,
+    repetition_seed: int,
+    delegator: Delegator,
+) -> PaymentAuthority:
+    delegator_account = Account.from_key(DELEGATOR_KEY)
     agent = Account.from_key(AGENT_KEY)
     mandate_id = "0x" + hashlib.sha256(f"mandate:{repetition_seed}".encode()).hexdigest()
     mandate = Mandate(
-        delegator=delegator.address,
+        delegator=delegator_account.address,
         agent=agent.address,
         maxAmountPerPayment="100",
         allowedPayees=(),
@@ -226,10 +255,10 @@ def _authority(scenario: Scenario, policy: AcceptPolicy, repetition_seed: int) -
     )
     return PaymentAuthority(
         gateway,
-        sign_mandate(mandate, delegator.key.hex(), 1337),
+        sign_mandate(mandate, delegator_account.key.hex(), 1337),
         agent.key.hex(),
         chain_id=1337,
         token_name="KRW Test Stablecoin",
         token_version="1",
-        delegator=SigningDelegator(DELEGATOR_KEY, 1337),
+        delegator=delegator,
     )

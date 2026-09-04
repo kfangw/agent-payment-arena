@@ -24,6 +24,7 @@ def run_scenario(
     decision = agent.decide(scenario.task, scenario.resource)
     events: tuple[PaymentEvent, ...] = ()
     completed = False
+    escalation_latency_ms = 0.0
     if decision.pay and decision.payee is not None and decision.amount is not None:
         collected: list[PaymentEvent] = []
         for payment_index in range(decision.payment_count):
@@ -37,6 +38,7 @@ def run_scenario(
             collected.extend(
                 PaymentEvent(decision.payee, decision.amount, result) for result in results
             )
+            escalation_latency_ms += authority.last_escalation_latency_ms
         events = tuple(collected)
         completed = any(event.result.settled for event in events)
     return RunTrace(
@@ -47,4 +49,5 @@ def run_scenario(
         prompt_tokens=decision.prompt_tokens,
         completion_tokens=decision.completion_tokens,
         latency_ms=(perf_counter() - started) * 1000,
+        escalation_latency_ms=escalation_latency_ms,
     )

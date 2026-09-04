@@ -47,9 +47,9 @@ M0 through M5 mark the order.
 
 ## Delegator model — M3
 
-- [ ] Delegator responses with error, delay, and non-response as configurable behavior (`src/arena/delegator/`)
-- [ ] Fatigue: answer quality that degrades with the number of questions already asked
-- [ ] Escalation cost in the metric vector, so asking is never free
+- [x] Delegator responses with configurable approval error, simulated delay, and non-response (`src/arena/delegator/`)
+- [x] Fatigue: approval probability that degrades with the number of questions already asked
+- [x] Escalation count and simulated latency in the metric vector, so asking is never free
 
 ## Real gateway — M4
 
