@@ -20,3 +20,28 @@ runs/
 
 # Local secrets
 .env
+
+_to_delete/
+*.md.local
+
+# Generated experiment outputs and local run artifacts. These are produced by
+# the duel runs (regenerable from the declared seeds) and are not committed;
+# only the code and the declared parameters are.
+results/
+results_inject/
+results_s2/
+results_r4/
+results_t1/
+results_t2/
+results_t5/
+results_t6/
+results_t7/
+results_u1/
+results_u1_v1/
+tables/
+gate_report.json
+run_env.sh
+log_*.txt
+
+# Local analysis reports (kept out of the repository text)
+reports/
