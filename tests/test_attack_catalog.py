@@ -10,6 +10,7 @@ from arena.scenarios import Resource, attack_catalog
 
 class RecordingProvider:
     """Provider stub retaining the prompt presented by an agent."""
+
     provider_id = "test"
     model_id = "judge"
 
