@@ -13,6 +13,7 @@ from eth_account import Account
 
 from arena.agents.protocol import EvaluationAgent
 from arena.agents.scripted import ContentFollowingAgent, ScriptedAgent
+from arena.delegator.model import SigningDelegator
 from arena.gateway.fake import FakeGateway
 from arena.gateway.protocol import AcceptPolicy
 from arena.gateway.schemas import Mandate
@@ -156,4 +157,5 @@ def _authority(scenario: Scenario, policy: AcceptPolicy, repetition_seed: int) -
         chain_id=1337,
         token_name="KRW Test Stablecoin",
         token_version="1",
+        delegator=SigningDelegator(DELEGATOR_KEY, 1337),
     )
