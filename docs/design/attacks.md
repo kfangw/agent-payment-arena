@@ -66,6 +66,7 @@ refused by the next, which is one reason results carry a model identifier.
 
 ## Status
 
-Not implemented. `src/arena/attacks/` and `src/arena/benign/` hold package
-docstrings only. One injection variant with its twin lands in M1; the rest of
-the catalog in M2.
+Implemented as the version-one catalog in `arena.scenarios.attack_catalog`.
+The CLI runs all six attack families and their benign twins with
+`arena run --suite attack-catalog`. Extending the catalog requires a version
+change because it changes the meaning of aggregate results.

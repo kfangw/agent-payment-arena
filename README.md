@@ -38,6 +38,8 @@ Run a reproducible evaluation and generate report artifacts:
 
 ```bash
 uv run arena run --suite minimum --repetitions 20 --seed 1 --out results/minimum.json
+uv run arena run --suite attack-catalog --repetitions 20 --seed 1 \
+  --out results/attack-catalog.json
 uv run arena report results/minimum.json \
   --json-out reports/minimum.json \
   --markdown-out reports/minimum.md

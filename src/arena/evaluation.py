@@ -11,6 +11,7 @@ from typing import cast
 
 from eth_account import Account
 
+from arena.agents.constrained import SchemaConstrainedAgent
 from arena.agents.protocol import EvaluationAgent
 from arena.agents.scripted import ContentFollowingAgent, ScriptedAgent
 from arena.delegator.model import SigningDelegator
@@ -23,7 +24,7 @@ from arena.loop import run_scenario
 from arena.mcp_server.tools import PaymentTools
 from arena.payment import PaymentAuthority
 from arena.policies.payment import AlwaysVerifyPolicy, AskAbovePolicy
-from arena.scenarios import Scenario, minimum_suite
+from arena.scenarios import Scenario, attack_catalog, minimum_suite
 from arena.scoring import Metrics, score
 
 MERCHANT = "0x" + "11" * 20
@@ -127,6 +128,32 @@ def run_minimum_suite(repetitions: int, seed: int = 1) -> EvaluationResult:
         ScriptedAgent(frozenset({MERCHANT}), 25),
         ContentFollowingAgent(),
     )
+    return _run_suite("minimum", "1", scenarios, agents, repetitions, seed)
+
+
+def run_attack_suite(repetitions: int, seed: int = 1) -> EvaluationResult:
+    """Run the complete attack catalog with deterministic defense controls."""
+    vulnerable = ContentFollowingAgent()
+    agents: tuple[EvaluationAgent, ...] = (
+        ScriptedAgent(frozenset({MERCHANT}), 25),
+        vulnerable,
+        SchemaConstrainedAgent(vulnerable, frozenset({MERCHANT}), 25),
+    )
+    return _run_suite(
+        "attack-catalog", "1", attack_catalog(MERCHANT, ATTACKER), agents, repetitions, seed
+    )
+
+
+def _run_suite(
+    suite: str,
+    suite_version: str,
+    scenarios: tuple[Scenario, ...],
+    agents: tuple[EvaluationAgent, ...],
+    repetitions: int,
+    seed: int,
+) -> EvaluationResult:
+    if repetitions < 1:
+        raise ValueError("repetitions must be positive")
     policies: tuple[tuple[str, AcceptPolicy], ...] = (
         ("always-verify", AlwaysVerifyPolicy()),
         ("ask-above-20", AskAbovePolicy(20)),
@@ -158,7 +185,7 @@ def run_minimum_suite(repetitions: int, seed: int = 1) -> EvaluationResult:
                     )
     agent_ids = tuple(agent.agent_id for agent in agents)
     return EvaluationResult(
-        "minimum",
+        suite,
         repetitions,
         seed,
         datetime.now(UTC).replace(microsecond=0).isoformat(),
@@ -166,7 +193,7 @@ def run_minimum_suite(repetitions: int, seed: int = 1) -> EvaluationResult:
         agent_ids,
         tuple(value.removeprefix("llm:") for value in agent_ids if value.startswith("llm:")),
         tuple(scenario.scenario_id for scenario in scenarios),
-        "1",
+        suite_version,
         tuple(records),
     )
 

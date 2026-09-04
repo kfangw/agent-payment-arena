@@ -15,6 +15,7 @@ class AgentDecision:
     amount: int | None = None
     prompt_tokens: int = 0
     completion_tokens: int = 0
+    payment_count: int = 1
 
 
 class EvaluationAgent(Protocol):
