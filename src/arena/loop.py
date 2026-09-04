@@ -8,6 +8,7 @@ from time import perf_counter
 from arena.agents.protocol import EvaluationAgent
 from arena.payment import PaymentAuthority
 from arena.scenarios import Scenario
+from arena.telemetry import TraceSink
 from arena.traces import PaymentEvent, RunTrace
 
 
@@ -18,6 +19,7 @@ def run_scenario(
     *,
     now: datetime,
     repetition: int = 0,
+    trace_sink: TraceSink | None = None,
 ) -> RunTrace:
     """Execute one scenario and retain every payment outcome."""
     started = perf_counter()
@@ -41,7 +43,7 @@ def run_scenario(
             escalation_latency_ms += authority.last_escalation_latency_ms
         events = tuple(collected)
         completed = any(event.result.settled for event in events)
-    return RunTrace(
+    trace = RunTrace(
         scenario_id=scenario.scenario_id,
         agent_id=agent.agent_id,
         events=events,
@@ -51,3 +53,27 @@ def run_scenario(
         latency_ms=(perf_counter() - started) * 1000,
         escalation_latency_ms=escalation_latency_ms,
     )
+    if trace_sink is not None:
+        for index, event in enumerate(events):
+            trace_sink.record(
+                "arena.payment",
+                {
+                    "scenario.id": scenario.scenario_id,
+                    "agent.id": agent.agent_id,
+                    "payment.index": index,
+                    "payment.payee": event.payee,
+                    "payment.amount": event.amount,
+                    "gateway.action": event.result.action.value,
+                    "payment.settled": event.result.settled,
+                },
+            )
+        trace_sink.record(
+            "arena.run",
+            {
+                "scenario.id": scenario.scenario_id,
+                "agent.id": agent.agent_id,
+                "task.completed": completed,
+                "escalation.latency_ms": escalation_latency_ms,
+            },
+        )
+    return trace

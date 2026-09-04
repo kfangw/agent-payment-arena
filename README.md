@@ -45,6 +45,22 @@ uv run arena report results/minimum.json \
   --markdown-out reports/minimum.md
 ```
 
+Run the policy grid and write its complete interval estimates, Pareto points,
+and a standalone SVG trade-off plot:
+
+```bash
+uv run arena frontier \
+  --limits 25,50,100 \
+  --ask-thresholds off,20,50 \
+  --bond-thresholds off,50 \
+  --repetitions 20 \
+  --json-out reports/frontier.json \
+  --svg-out reports/frontier.svg
+```
+
+Pass `--otlp-endpoint http://localhost:4318/v1/traces` to export run and
+payment spans. This requires installing the `telemetry` extra.
+
 Result files are never overwritten. The minimum suite is offline and uses no
 provider key or network service. The demo first exercises fetch, payment,
 delegator confirmation, and retry through the MCP-compatible tool surface,
