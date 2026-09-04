@@ -13,11 +13,14 @@ from eth_account import Account
 
 from arena.agents.protocol import EvaluationAgent
 from arena.agents.scripted import ContentFollowingAgent, ScriptedAgent
+from arena.delegator.model import SigningDelegator
+from arena.experiments.artifacts import git_revision
 from arena.gateway.fake import FakeGateway
 from arena.gateway.protocol import AcceptPolicy
 from arena.gateway.schemas import Mandate
 from arena.gateway.signatures import sign_mandate
 from arena.loop import run_scenario
+from arena.mcp_server.tools import PaymentTools
 from arena.payment import PaymentAuthority
 from arena.policies.payment import AlwaysVerifyPolicy, AskAbovePolicy
 from arena.scenarios import Scenario, minimum_suite
@@ -28,6 +31,27 @@ ATTACKER = "0x" + "22" * 20
 TOKEN = "0x" + "33" * 20
 DELEGATOR_KEY = "0x" + "01" * 32
 AGENT_KEY = "0x" + "02" * 32
+
+
+def run_mcp_demo(seed: int = 1) -> tuple[str, ...]:
+    """Exercise fetch, pay, ask, and confirmed pay through the MCP tool surface."""
+    scenario = minimum_suite(MERCHANT, ATTACKER)[0]
+    now = datetime(2026, 1, 1, tzinfo=UTC)
+    tools = PaymentTools(scenario.resource, _authority(scenario, AskAbovePolicy(20), seed), now)
+    fetched = tools.fetch_resource()
+    terms = cast(dict[str, object], fetched["paymentRequired"])
+    nonce_key = "mcp-demo"
+    first = tools.pay(str(terms["payTo"]), int(cast(str, terms["maxAmountRequired"])), nonce_key)
+    confirmation = tools.ask_delegator(scenario.resource.amount, nonce_key)
+    if confirmation is None:
+        raise RuntimeError("demo delegator did not return a confirmation")
+    second = tools.pay(
+        scenario.resource.payee,
+        scenario.resource.amount,
+        nonce_key,
+        confirmation,
+    )
+    return first.action.value, second.action.value
 
 
 @dataclass(frozen=True)
@@ -49,6 +73,12 @@ class EvaluationResult:
     suite: str
     repetitions: int
     seed: int
+    created_utc: str
+    code_revision: str | None
+    agent_ids: tuple[str, ...]
+    model_ids: tuple[str, ...]
+    scenario_ids: tuple[str, ...]
+    suite_version: str
     records: tuple[EvaluationRecord, ...]
 
     def to_dict(self) -> dict[str, object]:
@@ -78,6 +108,12 @@ def load_result(path: Path) -> EvaluationResult:
         str(raw["suite"]),
         int(cast(int, raw["repetitions"])),
         int(cast(int, raw["seed"])),
+        str(raw["created_utc"]),
+        None if raw["code_revision"] is None else str(raw["code_revision"]),
+        tuple(cast(list[str], raw["agent_ids"])),
+        tuple(cast(list[str], raw["model_ids"])),
+        tuple(cast(list[str], raw["scenario_ids"])),
+        str(raw["suite_version"]),
         tuple(records),
     )
 
@@ -120,7 +156,19 @@ def run_minimum_suite(repetitions: int, seed: int = 1) -> EvaluationResult:
                             score(trace, scenario.ground_truth),
                         )
                     )
-    return EvaluationResult("minimum", repetitions, seed, tuple(records))
+    agent_ids = tuple(agent.agent_id for agent in agents)
+    return EvaluationResult(
+        "minimum",
+        repetitions,
+        seed,
+        datetime.now(UTC).replace(microsecond=0).isoformat(),
+        git_revision(),
+        agent_ids,
+        tuple(value.removeprefix("llm:") for value in agent_ids if value.startswith("llm:")),
+        tuple(scenario.scenario_id for scenario in scenarios),
+        "1",
+        tuple(records),
+    )
 
 
 def _authority(scenario: Scenario, policy: AcceptPolicy, repetition_seed: int) -> PaymentAuthority:
@@ -156,4 +204,5 @@ def _authority(scenario: Scenario, policy: AcceptPolicy, repetition_seed: int) -
         chain_id=1337,
         token_name="KRW Test Stablecoin",
         token_version="1",
+        delegator=SigningDelegator(DELEGATOR_KEY, 1337),
     )

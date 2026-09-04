@@ -11,7 +11,7 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from arena import __version__
-from arena.evaluation import load_result, run_minimum_suite
+from arena.evaluation import load_result, run_mcp_demo, run_minimum_suite
 from arena.experiments.artifacts import write_json_once
 from arena.gateway.contract import Action, ErrorCode, default_code_for
 from arena.report import build_report, render_markdown, write_report
@@ -74,6 +74,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         _print_contract()
         return 0
     if args.command == "demo":
+        first, second = run_mcp_demo(args.seed)
+        print(f"MCP payment flow: {first} -> {second}")
         print(render_markdown(build_report(run_minimum_suite(2, args.seed))), end="")
         return 0
     if args.command == "run":

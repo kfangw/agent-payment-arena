@@ -25,15 +25,15 @@ def run_scenario(
     events: tuple[PaymentEvent, ...] = ()
     completed = False
     if decision.pay and decision.payee is not None and decision.amount is not None:
-        result = authority.pay(
+        results = authority.pay_with_escalation(
             scenario.resource.url,
             decision.payee,
             decision.amount,
             now=now,
             nonce_key=f"{scenario.scenario_id}:{agent.agent_id}:{repetition}",
         )
-        events = (PaymentEvent(decision.payee, decision.amount, result),)
-        completed = result.settled
+        events = tuple(PaymentEvent(decision.payee, decision.amount, result) for result in results)
+        completed = results[-1].settled
     return RunTrace(
         scenario_id=scenario.scenario_id,
         agent_id=agent.agent_id,

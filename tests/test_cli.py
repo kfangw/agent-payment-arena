@@ -31,7 +31,9 @@ def test_version_flag_exits_cleanly(capsys: pytest.CaptureFixture[str]) -> None:
 
 def test_demo_runs_without_network(capsys: pytest.CaptureFixture[str]) -> None:
     assert main(["demo"]) == 0
-    assert "Evaluation report: minimum" in capsys.readouterr().out
+    output = capsys.readouterr().out
+    assert "MCP payment flow: ask -> approve" in output
+    assert "Evaluation report: minimum" in output
 
 
 def test_run_and_report_commands(tmp_path: Path) -> None:

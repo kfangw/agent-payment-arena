@@ -87,6 +87,10 @@ class FakeGateway:
         mandate_result = self._check_mandate(payload, terms.resource, now)
         if mandate_result is not None:
             return mandate_result
+        if payload.confirmation is not None and not self._confirmation_approves(
+            payload, terms.resource, now
+        ):
+            return self._reject(ErrorCode.MANDATE_INVALID, "confirmation is invalid")
         context = PaymentContext(payload=payload, requirements=terms, verified=True, now=now)
         decision = self.policy.decide(context) if self.policy else GatewayResult(Action.APPROVE)
         if decision.action is not Action.APPROVE:

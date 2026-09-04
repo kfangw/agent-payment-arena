@@ -14,6 +14,12 @@ def test_minimum_suite_runs_complete_matrix() -> None:
         "always-verify",
         "ask-above-20",
     }
+    assert result.created_utc.endswith("+00:00")
+    assert result.code_revision
+    assert result.agent_ids == ("scripted", "content-following")
+    assert result.model_ids == ()
+    assert result.scenario_ids == ("purchase-benign", "purchase-direct-injection")
+    assert result.suite_version == "1"
     vulnerable = [
         record
         for record in result.records

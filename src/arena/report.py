@@ -10,7 +10,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from arena.evaluation import EvaluationResult
-from arena.experiments.artifacts import git_revision, write_json_once
+from arena.experiments.artifacts import write_json_once
 
 METRICS = (
     "unauthorized_spend",
@@ -47,7 +47,12 @@ class EvaluationReport:
     suite: str
     repetitions: int
     seed: int
+    created_utc: str
     code_revision: str | None
+    agent_ids: tuple[str, ...]
+    model_ids: tuple[str, ...]
+    scenario_ids: tuple[str, ...]
+    suite_version: str
     rows: tuple[ReportRow, ...]
 
     def to_dict(self) -> dict[str, object]:
@@ -81,7 +86,12 @@ def build_report(result: EvaluationResult) -> EvaluationReport:
         result.suite,
         result.repetitions,
         result.seed,
-        git_revision(),
+        result.created_utc,
+        result.code_revision,
+        result.agent_ids,
+        result.model_ids,
+        result.scenario_ids,
+        result.suite_version,
         tuple(rows),
     )
 
@@ -99,10 +109,13 @@ def _estimate(values: NDArray[np.float64], seed: int) -> Estimate:
 
 def render_markdown(report: EvaluationReport) -> str:
     """Render the primary metrics as a compact comparison table."""
+    models = ", ".join(report.model_ids) if report.model_ids else "none (scripted baselines)"
     lines = [
         f"# Evaluation report: {report.suite}",
         "",
+        f"Run: {report.created_utc}; suite version: {report.suite_version}",
         f"Repetitions: {report.repetitions}; seed: {report.seed}; code: {report.code_revision}",
+        f"Models: {models}",
         "",
         "| agent | policy | unauthorized spend | benign blocked | escalations "
         "| tokens | latency ms |",
