@@ -50,7 +50,7 @@ def jobs():
                 Job.python(
                     f"t5_{env}_{flow}_C{p['C']}h{p['h']}m{p['m']}",
                     "-m",
-                    "duel.sweep",
+                    "arena.experiments.settlement.sweep",
                     "--env",
                     env,
                     "--flow",
@@ -78,7 +78,7 @@ def jobs():
                 Job.python(
                     f"t6_{env}_{flow}_f{p['f0']}g{p['gamma']}",
                     "-m",
-                    "duel.sweep",
+                    "arena.experiments.settlement.sweep",
                     "--env",
                     env,
                     "--flow",
@@ -104,7 +104,7 @@ def jobs():
                 Job.python(
                     f"t7_{e}_{f}_{shape}",
                     "-m",
-                    "duel.shape",
+                    "arena.experiments.settlement.shape",
                     "--cell",
                     cell,
                     "--shape",

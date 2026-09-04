@@ -4,17 +4,17 @@ The verify band on the (v) line is [pi_gv, pi_rv] from core.verify_edges;
 it closes when pi_rv drops to pi_gv.  As delta raises the waiting-cost
 rate the band shrinks, so this locates the delta at which verify stops
 paying and cross-checks it against the asking channel measured by
-duel.rshift (asking = A - A\\V goes to zero once the band is empty).
+arena.experiments.settlement.rshift (asking = A - A\\V goes to zero once the band is empty).
 """
 
 from __future__ import annotations
 
 import numpy as np
 
-from duel.core import verify_edges
-from duel.flows import make_flows
-from duel.gate import envs_for
-from duel.simulate import draw_batch
+from arena.experiments.settlement.core import verify_edges
+from arena.experiments.settlement.flows import make_flows
+from arena.experiments.settlement.gate import envs_for
+from arena.experiments.settlement.simulate import draw_batch
 
 DELTAS = [-0.25, 0.0, 0.05, 0.07, 0.09, 0.15, 0.25, 0.5, 1.0, 2.0]
 

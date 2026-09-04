@@ -1,15 +1,16 @@
 """Regression tests for settlement observation policies."""
 
 import numpy as np
-from duel.core import GRANT, REJECT, VERIFY, WAIT
-from duel.watch import (
+from numpy.typing import NDArray
+
+from arena.experiments.settlement.core import GRANT, REJECT, VERIFY, WAIT
+from arena.experiments.settlement.watch import (
     FixedActionWatchPolicy,
     WatchBandPolicy,
     block_sums,
     horizon_grid,
     tune_watch_policy,
 )
-from numpy.typing import NDArray
 
 
 def test_horizon_grid_includes_zero_and_boundary() -> None:

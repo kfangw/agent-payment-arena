@@ -21,9 +21,9 @@ The repository contains two related components at different stages.
   decision contract and command-line interface are implemented. The agents,
   attacks, gateway backends, and end-to-end report remain on the
   [roadmap](ROADMAP.md).
-- `duel` is the implemented settlement-policy experiment. It contains the
-  domain model and command-line entry points while reusing the generic
-  experiment infrastructure under `src/arena/experiments`.
+- `arena.experiments.settlement` is the implemented settlement-policy
+  experiment. It contains the domain model and command-line entry points while
+  reusing the generic experiment infrastructure under `src/arena/experiments`.
 
 Install the project and run its fast checks with:
 
@@ -44,7 +44,7 @@ Git.
 Run one environment-by-flow cell:
 
 ```bash
-uv run python -m duel.run \
+uv run python -m arena.experiments.settlement.run \
   --env E-outage \
   --flow F2 \
   --cw mid \
@@ -57,7 +57,7 @@ uv run python -m duel.run \
 Aggregate completed confirmatory cells:
 
 ```bash
-uv run python -m duel.aggregate --results results --out tables
+uv run python -m arena.experiments.settlement.aggregate --results results --out tables
 ```
 
 The batch drivers in `scripts/` declare independent jobs or ordered pipelines.
@@ -72,17 +72,17 @@ uv run python scripts/run_s1.py 8
 The main validation programs can be run independently:
 
 ```bash
-uv run python -m duel.validate_harness
-uv run python -m duel.validate_outage
-uv run python -m duel.validate_stats
-uv run python -m duel.validate_run
+uv run python -m arena.experiments.settlement.validate_harness
+uv run python -m arena.experiments.settlement.validate_outage
+uv run python -m arena.experiments.settlement.validate_stats
+uv run python -m arena.experiments.settlement.validate_run
 ```
 
 ## Repository layout
 
 ```text
 src/arena/     Generic agent-payment contracts and CLI
-duel/          Settlement model, simulation, policies, and compatibility CLIs
+src/arena/experiments/settlement/  Settlement model, simulation, policies, and CLIs
 scripts/       Resumable batch definitions using shared experiment utilities
 tests/         Fast CI regression tests
 docs/          Scope, threat model, and generic arena design notes
@@ -90,15 +90,17 @@ docs/          Scope, threat model, and generic arena design notes
 
 The settlement-policy modules separate the model from the experiment plumbing:
 
-- `duel.core` defines the exact decision model.
-- `duel.simulate` and `duel.outage` generate and replay stochastic channels.
-- `duel.policies` compiles and tunes comparison policies.
-- `duel.watch` contains the reusable settlement-observation policies and their
-  threshold-and-horizon tuner.
-- `duel.run` executes one comparison cell.
-- `duel.aggregate` turns completed cells into tables; `duel.stats` and
-  `duel.report` preserve the original command-line API as thin compatibility
-  layers.
+- `arena.experiments.settlement.core` defines the exact decision model.
+- `arena.experiments.settlement.simulate` and
+  `arena.experiments.settlement.outage` generate and replay stochastic channels.
+- `arena.experiments.settlement.policies` compiles and tunes comparison policies.
+- `arena.experiments.settlement.watch` contains the reusable
+  settlement-observation policies and their threshold-and-horizon tuner.
+- `arena.experiments.settlement.run` executes one comparison cell.
+- `arena.experiments.settlement.aggregate` turns completed cells into tables.
+- `arena.experiments.settlement.stats` and
+  `arena.experiments.settlement.report` adapt the shared experiment utilities
+  to the settlement result schema.
 - `arena.experiments.statistics` implements paired block inference.
 - `arena.experiments.artifacts` creates reproducible metadata envelopes and
   refuses to overwrite completed results.
@@ -106,8 +108,9 @@ The settlement-policy modules separate the model from the experiment plumbing:
   concurrency code for every batch script and future experiment suites.
 
 Reusable infrastructure belongs under `arena.experiments`; experiment-specific
-models and entry points belong under `duel`. This boundary keeps new evaluation
-suites from depending on the current experiment's names or internal modules.
+models and entry points belong under `arena.experiments.settlement`. This
+boundary keeps new evaluation suites from depending on the current
+experiment's names or internal modules.
 
 ## Generic arena results
 

@@ -38,7 +38,7 @@ def jobs(out: str = "results") -> list[Job]:
             Job.python(
                 f"b4_{tag}",
                 "-m",
-                "duel.b4",
+                "arena.experiments.settlement.b4",
                 "--env",
                 env,
                 "--flow",

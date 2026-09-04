@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 
 from arena.experiments.runner import Job, default_workers, run_jobs
-from duel.design import CONFIRMATORY_RUNS
+from arena.experiments.settlement.design import CONFIRMATORY_RUNS
 
 ROOT = Path(__file__).resolve().parent.parent
 LOGS = ROOT / "reports" / "_logs"
@@ -29,7 +29,7 @@ def jobs():
             Job.python(
                 f"b4_{tag}",
                 "-m",
-                "duel.b4",
+                "arena.experiments.settlement.b4",
                 "--env",
                 env,
                 "--flow",
@@ -49,7 +49,7 @@ def jobs():
             Job.python(
                 f"rshift_{tag}",
                 "-m",
-                "duel.rshift",
+                "arena.experiments.settlement.rshift",
                 "--cell",
                 cell,
                 "--seed",
