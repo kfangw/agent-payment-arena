@@ -6,6 +6,7 @@ rate the band shrinks, so this locates the delta at which verify stops
 paying and cross-checks it against the asking channel measured by
 duel.rshift (asking = A - A\\V goes to zero once the band is empty).
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -59,17 +60,23 @@ def main():
     v = ev.v
     q = 1 - (1 - rho) ** env.tau
     mu = q / rho
-    print(f"E-slow x F2: q={q:.4f} rho={rho:.6f} mu=q/rho={mu:.2f} "
-          f"m={env.m} C={env.C} mean_v={v.mean():.3f}")
-    print(f"cw0={env.cw:.6f}  d_bar={cw_of(env,1.0)[1]:.6f}")
-    for vq, lab in ((np.quantile(v, 0.1), "p10"), (np.median(v), "median"),
-                    (v.mean(), "mean"), (np.quantile(v, 0.9), "p90")):
+    print(
+        f"E-slow x F2: q={q:.4f} rho={rho:.6f} mu=q/rho={mu:.2f} "
+        f"m={env.m} C={env.C} mean_v={v.mean():.3f}"
+    )
+    print(f"cw0={env.cw:.6f}  d_bar={cw_of(env, 1.0)[1]:.6f}")
+    for vq, lab in (
+        (np.quantile(v, 0.1), "p10"),
+        (np.median(v), "median"),
+        (v.mean(), "mean"),
+        (np.quantile(v, 0.9), "p90"),
+    ):
         dc = closing_delta(env, rho, float(vq))
         print(f"  verify closes at delta={dc:+.4f}  (v={vq:8.3f} {lab})")
     print("  fraction of payments with verify band OPEN, by delta:")
     for lv in DELTAS:
         frac, cw = band_open_fraction(env, rho, v, lv)
-        print(f"    delta={lv:+.2f}  cw={cw:.6f}  open={frac*100:6.2f}%")
+        print(f"    delta={lv:+.2f}  cw={cw:.6f}  open={frac * 100:6.2f}%")
 
 
 if __name__ == "__main__":

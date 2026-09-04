@@ -6,6 +6,7 @@ and records the arrival-state disagreement map.  E-outage replay stays
 tractable at the full sample (tau=10), so R4 runs at 5.66M to match the
 residual it explains.  Resumable; numpy threads pinned; logs in reports/_logs.
 """
+
 from __future__ import annotations
 
 import os
@@ -23,15 +24,33 @@ def run_one(env, flow, seed):
     tag = f"{env}_{flow}_mid_s{seed}"
     if (ROOT / "results_r4" / f"r4_{tag}.json").exists():
         return tag, 0
-    penv = dict(os.environ, PYTHONPATH=str(ROOT), OMP_NUM_THREADS="1",
-                VECLIB_MAXIMUM_THREADS="1", OPENBLAS_NUM_THREADS="1")
+    penv = dict(
+        os.environ,
+        PYTHONPATH=str(ROOT),
+        OMP_NUM_THREADS="1",
+        VECLIB_MAXIMUM_THREADS="1",
+        OPENBLAS_NUM_THREADS="1",
+    )
     LOGS.mkdir(parents=True, exist_ok=True)
-    cmd = [sys.executable, "-m", "duel.residual", "--env", env, "--flow", flow,
-           "--seed", str(seed), "--results", "results", "--results-grid",
-           "results", "--out", "results_r4"]
+    cmd = [
+        sys.executable,
+        "-m",
+        "duel.residual",
+        "--env",
+        env,
+        "--flow",
+        flow,
+        "--seed",
+        str(seed),
+        "--results",
+        "results",
+        "--results-grid",
+        "results",
+        "--out",
+        "results_r4",
+    ]
     with (LOGS / f"r4_{tag}.log").open("w") as fh:
-        rc = subprocess.run(cmd, cwd=ROOT, env=penv, stdout=fh,
-                            stderr=subprocess.STDOUT).returncode
+        rc = subprocess.run(cmd, cwd=ROOT, env=penv, stdout=fh, stderr=subprocess.STDOUT).returncode
     return tag, rc
 
 

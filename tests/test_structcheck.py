@@ -6,17 +6,17 @@ kinds into a valid suspicion row and confirm the corresponding check turns
 False, so a real violation cannot pass silently.  Labels are built directly;
 no dynamic program is solved.
 """
+
 from __future__ import annotations
 
 import numpy as np
-
 from duel.core import GRANT, REJECT, VERIFY
 from duel.structcheck import check_pi
 
 NPI = 501
 PI = np.linspace(0.0, 1.0, NPI)
 M, H = 0.35, 1.0
-SIGMA = 1.0                       # pi_hat = m/(m+h) = 0.2593, index ~130
+SIGMA = 1.0  # pi_hat = m/(m+h) = 0.2593, index ~130
 
 
 def _valid_verify_row():
@@ -47,30 +47,30 @@ def test_valid_rows_pass_all():
 
 def test_floating_grant_flags_c1_or_c4():
     lab = _valid_verify_row()
-    lab[400] = GRANT                 # a grant stranded inside reject
+    lab[400] = GRANT  # a grant stranded inside reject
     r = _check(lab)
     assert not (r["c1"] and r["c4"])
 
 
 def test_endpoint_verify_flags_c3():
     lab = _valid_verify_row()
-    lab[NPI - 1] = VERIFY            # verify touches pi = 1
+    lab[NPI - 1] = VERIFY  # verify touches pi = 1
     assert not _check(lab)["c3"]
 
 
 def test_split_grant_flags_c4():
     lab = _valid_verify_row()
-    lab[50] = REJECT                 # split the grant interval in two
+    lab[50] = REJECT  # split the grant interval in two
     assert not _check(lab)["c4"]
 
 
 def test_empty_reject_flags_c2():
     lab = _valid_verify_row()
-    lab[lab == REJECT] = GRANT       # no reject region left
+    lab[lab == REJECT] = GRANT  # no reject region left
     assert not _check(lab)["c2"]
 
 
 def test_shifted_boundary_flags_c5():
     lab = np.full(NPI, REJECT, dtype=np.int8)
-    lab[:150] = GRANT                # boundary ~0.30, pi_hat ~0.26: 20 steps off
+    lab[:150] = GRANT  # boundary ~0.30, pi_hat ~0.26: 20 steps off
     assert not _check(lab)["c5"]

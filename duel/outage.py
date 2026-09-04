@@ -16,6 +16,7 @@ The compiled policy conditions on (i, l, r), all operator-observable:
 outages are public (the chain visibly halts) and validBefore is a
 field of the authorization.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -36,6 +37,7 @@ class OutageEnv:
     rho  : per-tick answer hazard (geometric within the window)
     p01  : P(normal -> outage) per tick;  p10 : P(outage -> normal)
     """
+
     f: np.ndarray
     m: float
     h: float
@@ -61,8 +63,7 @@ class OutageEnv:
 
     def trans(self):
         """P[r, r'] regime transition matrix."""
-        return np.array([[1 - self.p01, self.p01],
-                         [self.p10, 1 - self.p10]])
+        return np.array([[1 - self.p01, self.p01], [self.p10, 1 - self.p10]])
 
 
 # ------------------------------------------------------------ exact DP
@@ -128,8 +129,7 @@ def value_labels(env: OutageEnv, v, pi_grid, drop=()):
                 R = np.zeros(npi)
                 w = min(tau, l)
                 if w > 0:
-                    W = (-env.C - v * D[w, i, l, r]
-                         + (1 - pi) * v * A[w, i, l, r])
+                    W = -env.C - v * D[w, i, l, r] + (1 - pi) * v * A[w, i, l, r]
                 else:
                     W = np.full(npi, -env.C)
                 if l == 0 or i == FIN:
@@ -155,15 +155,17 @@ PI_GRID_OUTAGE = np.linspace(0.0, 1.0, 501)
 class CompiledOutagePolicy:
     name: str
     v_grid: np.ndarray
-    tables: list                    # per v: labels[i, l, r, pi_bin]
+    tables: list  # per v: labels[i, l, r, pi_bin]
+
     def __call__(self, i, l, r, v, pi):
         iv = int(np.argmin(np.abs(np.log(self.v_grid) - np.log(max(v, 1e-12)))))
         ip = int(round(pi * (len(PI_GRID_OUTAGE) - 1)))
         return int(self.tables[iv][i, l, r, ip])
 
 
-def compile_outage(env: OutageEnv, name: str, n_v=41, v_lo=0.5, v_hi=2000.0,
-                   drop=()) -> CompiledOutagePolicy:
+def compile_outage(
+    env: OutageEnv, name: str, n_v=41, v_lo=0.5, v_hi=2000.0, drop=()
+) -> CompiledOutagePolicy:
     v_grid = np.geomspace(v_lo, v_hi, n_v)
     tabs = [value_labels(env, v, PI_GRID_OUTAGE, drop=drop)[0] for v in v_grid]
     return CompiledOutagePolicy(name, v_grid, tabs)
@@ -176,9 +178,10 @@ class OutageDraws:
     p_true: np.ndarray
     theta: np.ndarray
     pi0: np.ndarray
-    u_stage: np.ndarray        # (n, N+1) uniforms for hazard firing
-    t_ans: np.ndarray          # answer delay from query (geometric draw)
-    paths: np.ndarray          # (n, H+1) regime path from arrival tick
+    u_stage: np.ndarray  # (n, N+1) uniforms for hazard firing
+    t_ans: np.ndarray  # answer delay from query (geometric draw)
+    paths: np.ndarray  # (n, H+1) regime path from arrival tick
+
     def __len__(self):
         return len(self.v)
 
@@ -201,9 +204,15 @@ def retime_answers_geom(theta, u_ans, rho_h, rho_m):
     return t
 
 
-def draw_outage_batch(env: OutageEnv, flow, n: int, rng,
-                      episode_len: int = 1440, payments_per_episode: int = 50,
-                      rho_m: float | None = None):
+def draw_outage_batch(
+    env: OutageEnv,
+    flow,
+    n: int,
+    rng,
+    episode_len: int = 1440,
+    payments_per_episode: int = 50,
+    rho_m: float | None = None,
+):
     """Episode-structured common random numbers.  Each episode owns one
     regime path (stationary start); its payments arrive at uniform
     offsets and read the same path, which is what makes regime shocks
@@ -211,27 +220,31 @@ def draw_outage_batch(env: OutageEnv, flow, n: int, rng,
 
     rho_m, if given, is the misuse-intent answer hazard for the response
     bias axis; honest intent keeps env.rho."""
-    return _draw_outage(env, flow, n, rng, episode_len,
-                        payments_per_episode, rho_m)[0]
+    return _draw_outage(env, flow, n, rng, episode_len, payments_per_episode, rho_m)[0]
 
 
-def draw_outage_batch_crn(env: OutageEnv, flow, n: int, rng,
-                          episode_len: int = 1440,
-                          payments_per_episode: int = 50):
+def draw_outage_batch_crn(
+    env: OutageEnv, flow, n: int, rng, episode_len: int = 1440, payments_per_episode: int = 50
+):
     """Like draw_outage_batch, but also return the fixed answer uniforms
     for a response-bias sweep."""
-    return _draw_outage(env, flow, n, rng, episode_len, payments_per_episode,
-                        None)
+    return _draw_outage(env, flow, n, rng, episode_len, payments_per_episode, None)
 
 
-def _draw_outage(env: OutageEnv, flow, n: int, rng, episode_len: int,
-                 payments_per_episode: int, rho_m: float | None):
+def _draw_outage(
+    env: OutageEnv,
+    flow,
+    n: int,
+    rng,
+    episode_len: int,
+    payments_per_episode: int,
+    rho_m: float | None,
+):
     """Shared outage draw body; returns the batch and the answer uniforms."""
     v, p_true, theta, pi0 = flow.sample(n, rng)
     u_stage = rng.random((n, env.N + 1))
     u_ans = rng.random(n)
-    t_ans = retime_answers_geom(theta, u_ans, env.rho,
-                                env.rho if rho_m is None else rho_m)
+    t_ans = retime_answers_geom(theta, u_ans, env.rho, env.rho if rho_m is None else rho_m)
     n_ep = (n + payments_per_episode - 1) // payments_per_episode
     paths = np.zeros((n, env.H + 1), dtype=np.int8)
     k = 0
@@ -247,10 +260,11 @@ def _draw_outage(env: OutageEnv, flow, n: int, rng, episode_len: int,
             path[t] = (1 - r) if flip else r
         offs = rng.integers(0, episode_len, size=m_here)
         for j in range(m_here):
-            paths[k + j] = path[offs[j]: offs[j] + env.H + 1]
+            paths[k + j] = path[offs[j] : offs[j] + env.H + 1]
         k += m_here
-    d = OutageDraws(v=v, p_true=p_true, theta=theta, pi0=pi0,
-                    u_stage=u_stage, t_ans=t_ans, paths=paths)
+    d = OutageDraws(
+        v=v, p_true=p_true, theta=theta, pi0=pi0, u_stage=u_stage, t_ans=t_ans, paths=paths
+    )
     return d, u_ans
 
 
@@ -288,12 +302,11 @@ def replay_outage(env: OutageEnv, d: OutageDraws, policy, ex_pos) -> np.ndarray:
             l = H - t
             r = int(d.paths[k, t])
             if l <= 0 and i < FIN:
-                break                          # expired uncommitted: reject
+                break  # expired uncommitted: reject
             a = policy(i, max(l, 0), r, v, pi)
             if a == GRANT:
                 won = 1 if i == FIN else _settle_from(env, d, k, i, t)
-                payoff += v * ((env.m if d.theta[k] == 0 else -env.h)
-                               if won else -1.0)
+                payoff += v * ((env.m if d.theta[k] == 0 else -env.h) if won else -1.0)
                 break
             if a == REJECT:
                 break
@@ -312,22 +325,22 @@ def replay_outage(env: OutageEnv, d: OutageDraws, policy, ex_pos) -> np.ndarray:
                         break
                     if int(d.paths[k, t]) == 0 and i <= N:
                         if d.u_stage[k, i] < env.f[i]:
-                            break              # failed inside the window
+                            break  # failed inside the window
                         i += 1
                         if i > N:
                             i = FIN
                     t += 1
                     if H - t <= 0:
-                        break                  # expired inside the window
+                        break  # expired inside the window
                 break
             if a == WAIT:
                 payoff -= env.cw * v
                 if r == 0 and i <= N:
                     if d.u_stage[k, i] < env.f[i]:
-                        break                  # failed while waiting
+                        break  # failed while waiting
                     i += 1
                 t += 1
                 continue
-            break                              # defensive: unknown action
+            break  # defensive: unknown action
         out[k] = payoff
     return out

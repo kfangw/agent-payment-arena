@@ -2,6 +2,7 @@
 
 Run:  python -m duel.validate_stats
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -32,7 +33,7 @@ def a5_2_block_widens() -> None:
     than the payment-unit interval that ignores it."""
     rng = np.random.default_rng(2)
     n_ep, per = 100, 50
-    shift = rng.standard_normal(n_ep) * 1.0          # shared per-episode shock
+    shift = rng.standard_normal(n_ep) * 1.0  # shared per-episode shock
     payments = np.repeat(shift, per) + 0.1 * rng.standard_normal(n_ep * per)
     episodes = np.repeat(np.arange(n_ep), per)
     counts = np.full(n_ep, per)
@@ -55,7 +56,7 @@ def a5_3_perm_uniform() -> None:
     counts = np.full(n_ep, per)
     ps = []
     for j in range(m):
-        sums = rng.standard_normal(n_ep) * per * 0.02   # mean 0 episodes
+        sums = rng.standard_normal(n_ep) * per * 0.02  # mean 0 episodes
         ps.append(perm_p(sums, counts, n_perm=2000, seed=5000 + j))
     ps = np.sort(np.asarray(ps))
     fn = np.arange(1, m + 1) / m

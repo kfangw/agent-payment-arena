@@ -47,12 +47,17 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/arena"]
+packages = ["src/arena", "duel"]
 
 [tool.ruff]
 line-length = 100
 target-version = "py312"
 src = ["src", "tests"]
+# The duel package is frozen research code that intentionally uses paper
+# notation and lightweight experiment scripts. Keep the production arena and
+# its tests on the strict lint profile; duel remains exercised by its
+# regression and validation tests.
+extend-exclude = ["duel", "scripts/run_*.py", "scripts/analyze_r2.py"]
 
 [tool.ruff.lint]
 select = [
@@ -79,6 +84,7 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["D103"]
+"tests/test_structcheck.py" = ["ANN", "D"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
@@ -90,6 +96,7 @@ warn_unreachable = true
 disallow_any_explicit = true
 enable_error_code = ["redundant-expr", "possibly-undefined", "truthy-bool"]
 files = ["src", "tests"]
+exclude = ["tests/test_structcheck.py"]
 
 [[tool.mypy.overrides]]
 module = ["eth_account.*"]

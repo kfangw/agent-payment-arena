@@ -14,6 +14,7 @@ is reused, matching the B1 convention.
 
     python -m duel.inject_b4 --cell "E-slow x F2" --axis delta --seed 5
 """
+
 from __future__ import annotations
 
 import argparse
@@ -27,8 +28,15 @@ from .core import rho_hat_from_q
 from .design import eps_for
 from .flows import make_flows
 from .gate import CW_PER_S, envs_for
-from .inject import (AXIS_GRIDS, IDENTITY, NOISE_REPLICATES, _chain_ctx,
-                     _geom, _outage_ctx, parse_cell)
+from .inject import (
+    AXIS_GRIDS,
+    IDENTITY,
+    NOISE_REPLICATES,
+    _chain_ctx,
+    _geom,
+    _outage_ctx,
+    parse_cell,
+)
 from .outage import compile_outage, replay_outage, retime_answers_geom
 from .policies import compile_A, default_grids
 from .report import envelope, write_once
@@ -39,14 +47,20 @@ from .stats import boot_ci, ratio_mean
 def _tune_chain_b4(env, tune_d, ex):
     best, _, _ = _tune_b4(
         lambda k, act: replay(env, tune_d, B4Force(k, act), ex),
-        default_grids()["B3"], k_grid(env.N + 1), tune_d.pi0)
+        default_grids()["B3"],
+        k_grid(env.N + 1),
+        tune_d.pi0,
+    )
     return B4(*best)
 
 
 def _tune_outage_b4(env, tune_d, ex):
     best, _, _ = _tune_b4(
         lambda k, act: replay_outage(env, tune_d, OB4Force(k, act, env.H, env.N), ex),
-        default_grids()["B3"], k_grid(env.H), tune_d.pi0)
+        default_grids()["B3"],
+        k_grid(env.H),
+        tune_d.pi0,
+    )
     return OB4(best[0], best[1], best[2], env.H, env.N)
 
 
@@ -69,10 +83,12 @@ def _chain_diff_b4(ctx, axis, level):
     if axis == "lambda":
         rho_m = min(ctx["rho"] * level, 1.0)
         pmf_m = _geom(rho_m, env.tau)
-        ev = replace(eval_d, t_ans=retime_answers(
-            eval_d.theta, ctx["u_eval"], env.pmf_h, pmf_m, env.tau))
-        tu = replace(tune_d, t_ans=retime_answers(
-            tune_d.theta, ctx["u_tune"], env.pmf_h, pmf_m, env.tau))
+        ev = replace(
+            eval_d, t_ans=retime_answers(eval_d.theta, ctx["u_eval"], env.pmf_h, pmf_m, env.tau)
+        )
+        tu = replace(
+            tune_d, t_ans=retime_answers(tune_d.theta, ctx["u_tune"], env.pmf_h, pmf_m, env.tau)
+        )
         q_hat = float((tu.t_ans <= env.tau).mean())
         a2 = compile_A(env, "A2", rho=rho_hat_from_q(q_hat, env.tau))
         b4 = _tune_chain_b4(env, tu, ex)
@@ -89,14 +105,12 @@ def _chain_noise_diff_b4(ctx, sigma):
         return replay(env, eval_d, ctx["a2"], ex) - b4_pay
     acc = np.zeros(len(eval_d))
     for r in range(NOISE_REPLICATES):
-        rng = np.random.default_rng([ctx.get("seed", 0), 700, r,
-                                     int(sigma * 1000)])
+        rng = np.random.default_rng([ctx.get("seed", 0), 700, r, int(sigma * 1000)])
         z = rng.standard_normal(len(env.f))
         f_hat = np.clip(env.f * np.exp(sigma * z), 0.0, 1.0)
         zq = rng.standard_normal()
         q_hat = float(np.clip(ctx["q_hat"] * np.exp(sigma * zq), 0.0, 1.0))
-        a2 = compile_A(replace(env, f=f_hat), "A2",
-                       rho=rho_hat_from_q(q_hat, env.tau))
+        a2 = compile_A(replace(env, f=f_hat), "A2", rho=rho_hat_from_q(q_hat, env.tau))
         acc += replay(env, eval_d, a2, ex) - b4_pay
     return acc / NOISE_REPLICATES
 
@@ -118,10 +132,8 @@ def _outage_diff_b4(ctx, axis, level):
         return replay_outage(env2, eval_d, a2, ex) - replay_outage(env2, eval_d, b4, ex)
     if axis == "lambda":
         rho_m = min(env.rho * level, 1.0 - 1e-12)
-        ev = replace(eval_d, t_ans=retime_answers_geom(
-            eval_d.theta, ctx["u_eval"], env.rho, rho_m))
-        tu = replace(tune_d, t_ans=retime_answers_geom(
-            tune_d.theta, ctx["u_tune"], env.rho, rho_m))
+        ev = replace(eval_d, t_ans=retime_answers_geom(eval_d.theta, ctx["u_eval"], env.rho, rho_m))
+        tu = replace(tune_d, t_ans=retime_answers_geom(tune_d.theta, ctx["u_tune"], env.rho, rho_m))
         q_hat = float((tu.t_ans <= env.tau).mean())
         a2 = compile_outage(replace(env, rho=rho_hat_from_q(q_hat, env.tau)), "A2")
         b4 = _tune_outage_b4(env, tu, ex)
@@ -138,21 +150,18 @@ def _outage_noise_diff_b4(ctx, sigma):
         return replay_outage(env, eval_d, ctx["a2"], ex) - b4_pay
     acc = np.zeros(len(eval_d))
     for r in range(NOISE_REPLICATES):
-        rng = np.random.default_rng([ctx.get("seed", 0), 700, r,
-                                     int(sigma * 1000)])
+        rng = np.random.default_rng([ctx.get("seed", 0), 700, r, int(sigma * 1000)])
         z = rng.standard_normal(len(env.f))
         f_hat = np.clip(env.f * np.exp(sigma * z), 0.0, 1.0)
         zq = rng.standard_normal()
         q_hat = float(np.clip(ctx["q_hat"] * np.exp(sigma * zq), 0.0, 1.0))
-        a2 = compile_outage(replace(env, f=f_hat,
-                                    rho=rho_hat_from_q(q_hat, env.tau)), "A2")
+        a2 = compile_outage(replace(env, f=f_hat, rho=rho_hat_from_q(q_hat, env.tau)), "A2")
         acc += replay_outage(env, eval_d, a2, ex) - b4_pay
     return acc / NOISE_REPLICATES
 
 
 # ------------------------------------------------------------ driver
-def run_axis(cell, axis, seed, n_eval, n_tune, out_dir, cw="mid",
-             levels=None, n_boot=2000):
+def run_axis(cell, axis, seed, n_eval, n_tune, out_dir, cw="mid", levels=None, n_boot=2000):
     """Run one axis on one cell against B4 and write b4_{cell}_{axis}_s{seed}."""
     env_name, flow_name = parse_cell(cell)
     kind, env, rho = envs_for(cw)[env_name]
@@ -183,23 +192,39 @@ def run_axis(cell, axis, seed, n_eval, n_tune, out_dir, cw="mid",
     advantage = []
     for lv in levels:
         lo, hi = boot_ci(block_sums[lv], counts, n_boot=n_boot, seed=seed + 1)
-        advantage.append(dict(
-            level=lv, mean=curve[lv], ci95=[lo, hi], n_ep=int(len(counts)),
-            retention=(curve[lv] / g0 if g0 != 0 else None)))
+        advantage.append(
+            dict(
+                level=lv,
+                mean=curve[lv],
+                ci95=[lo, hi],
+                n_ep=int(len(counts)),
+                retention=(curve[lv] / g0 if g0 != 0 else None),
+            )
+        )
     lo0, hi0 = boot_ci(block_sums[ident], counts, n_boot=n_boot, seed=seed + 2)
 
     payload = dict(
-        axis=axis, cell=cell, levels=levels, baseline="B4",
+        axis=axis,
+        cell=cell,
+        levels=levels,
+        baseline="B4",
         advantage=advantage,
         no_injection=dict(mean=g0, ci95=[lo0, hi0]),
-        eps=eps_for(mean_exposure), mean_exposure=mean_exposure,
+        eps=eps_for(mean_exposure),
+        mean_exposure=mean_exposure,
         replicates=NOISE_REPLICATES if axis == "noise" else 1,
-        b4_level0=dict(k=int(ctx["b4"].k), a=float(ctx["b4"].a),
-                       b=float(ctx["b4"].b)),
+        b4_level0=dict(k=int(ctx["b4"].k), a=float(ctx["b4"].a), b=float(ctx["b4"].b)),
     )
-    resolved = dict(cell=cell, axis=axis, cw=cw, cw_per_s=CW_PER_S[cw],
-                    levels=levels, flow=flow_name, baseline="B4",
-                    replicates=payload["replicates"])
+    resolved = dict(
+        cell=cell,
+        axis=axis,
+        cw=cw,
+        cw_per_s=CW_PER_S[cw],
+        levels=levels,
+        flow=flow_name,
+        baseline="B4",
+        replicates=payload["replicates"],
+    )
     obj = envelope("inject_b4", cell, seed, n_eval, n_tune, resolved, payload)
     path = str(Path(out_dir) / f"b4_{env_name}_{flow_name}_{axis}_s{seed}.json")
     write_once(path, obj)
@@ -216,8 +241,7 @@ def main(argv=None):
     ap.add_argument("--seed", type=int, required=True)
     ap.add_argument("--out", default="results_inject")
     args = ap.parse_args(argv)
-    path = run_axis(args.cell, args.axis, args.seed, args.n_eval, args.n_tune,
-                    args.out, cw=args.cw)
+    path = run_axis(args.cell, args.axis, args.seed, args.n_eval, args.n_tune, args.out, cw=args.cw)
     print(f"wrote {path}")
 
 

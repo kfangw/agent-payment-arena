@@ -2,6 +2,7 @@
 
 Run:  python -m duel.validate_report
 """
+
 from __future__ import annotations
 
 import tempfile
@@ -26,7 +27,8 @@ def jsonable_is_total() -> None:
     """jsonable leaves no numpy types behind."""
     out = jsonable(dict(x=np.arange(3), y=(np.float32(2.0), True, "s")))
     import json
-    json.dumps(out)                       # would raise on a stray numpy type
+
+    json.dumps(out)  # would raise on a stray numpy type
     assert out["x"] == [0, 1, 2]
     assert out["y"][1] is True
     print("jsonable ok: nested numpy fully coerced")
@@ -34,10 +36,18 @@ def jsonable_is_total() -> None:
 
 def envelope_has_fields() -> None:
     """envelope carries every common field."""
-    env = envelope("duel", "E-fast x F1", 1, 200000, 50000,
-                   dict(cw=0.01), dict(means={"A2": 0.3}))
-    for key in ("kind", "cell", "seed", "n_eval", "n_tune", "params_hash",
-                "code", "created_utc", "payload"):
+    env = envelope("duel", "E-fast x F1", 1, 200000, 50000, dict(cw=0.01), dict(means={"A2": 0.3}))
+    for key in (
+        "kind",
+        "cell",
+        "seed",
+        "n_eval",
+        "n_tune",
+        "params_hash",
+        "code",
+        "created_utc",
+        "payload",
+    ):
         assert key in env, f"missing field {key}"
     assert env["kind"] == "duel"
     print("envelope ok: all common fields present")

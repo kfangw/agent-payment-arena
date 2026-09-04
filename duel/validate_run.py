@@ -3,6 +3,7 @@ mean, and the output is a write-once envelope.
 
 Run:  python -m duel.validate_run
 """
+
 from __future__ import annotations
 
 import json
@@ -31,14 +32,26 @@ def run_writes_envelope() -> None:
     """A small chain cell writes one envelope with block sums, and a
     second write to the same path is refused."""
     with tempfile.TemporaryDirectory() as d:
-        argv = ["--env", "E-fast", "--flow", "F1", "--cw", "mid",
-                "--n-eval", "4000", "--n-tune", "2000", "--seed", "1",
-                "--out", d]
+        argv = [
+            "--env",
+            "E-fast",
+            "--flow",
+            "F1",
+            "--cw",
+            "mid",
+            "--n-eval",
+            "4000",
+            "--n-tune",
+            "2000",
+            "--seed",
+            "1",
+            "--out",
+            d,
+        ]
         main(argv)
         path = next(Path(d).glob("duel_*.json"))
         env = json.loads(path.read_text())
-        for key in ("kind", "cell", "params_hash", "code", "created_utc",
-                    "payload"):
+        for key in ("kind", "cell", "params_hash", "code", "created_utc", "payload"):
             assert key in env, f"missing {key}"
         assert env["kind"] == "duel"
         pol = env["payload"]["policies"]

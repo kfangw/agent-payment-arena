@@ -3,20 +3,37 @@ regime-switching DP, policy by policy, at Monte Carlo precision.
 
 Run:  python -m duel.validate_outage
 """
+
 from __future__ import annotations
 
 import numpy as np
 
 from .core import GRANT, REJECT, VERIFY, WAIT
 from .flows import Flow, MixD, LogNormalV
-from .outage import (OutageEnv, compile_outage, draw_outage_batch,
-                     replay_outage, survival, value_labels, window_AD)
+from .outage import (
+    OutageEnv,
+    compile_outage,
+    draw_outage_batch,
+    replay_outage,
+    survival,
+    value_labels,
+    window_AD,
+)
 
 
 def draft_env(**kw):
-    base = dict(f=np.array([0.005] + [3e-5] * 16), m=0.35, h=1.0, C=0.5,
-                cw=0.006, tau=10, H=30, rho=0.1294,
-                p01=4.63e-5, p10=1.0 / 60.0)
+    base = dict(
+        f=np.array([0.005] + [3e-5] * 16),
+        m=0.35,
+        h=1.0,
+        C=0.5,
+        cw=0.006,
+        tau=10,
+        H=30,
+        rho=0.1294,
+        p01=4.63e-5,
+        p10=1.0 / 60.0,
+    )
     base.update(kw)
     return OutageEnv(**base)
 
@@ -34,8 +51,10 @@ class OReject:
 
 class OVerify:
     """Verify at arrival, terminal reject if somehow asked again."""
+
     def __init__(self):
         self.asked = False
+
     def __call__(self, i, l, r, v, pi):
         return VERIFY
 
@@ -43,6 +62,7 @@ class OVerify:
 class OWaitGrant:
     def __init__(self, FIN):
         self.FIN = FIN
+
     def __call__(self, i, l, r, v, pi):
         return GRANT if i >= self.FIN else WAIT
 
@@ -78,7 +98,7 @@ def main():
     A, D, ex = window_AD(env, sig)
     alpha, beta = affine_wait_chain(env)
 
-    flow = Flow('F1cal', MixD(0.05), LogNormalV(30.0, 1.0, 0.5, 2000.0))
+    flow = Flow("F1cal", MixD(0.05), LogNormalV(30.0, 1.0, 0.5, 2000.0))
     n = 300_000
     d = draw_outage_batch(env, flow, n, rng)
     r0 = d.paths[:, 0].astype(int)
@@ -86,19 +106,19 @@ def main():
     w0 = min(env.tau, env.H)
 
     exact = {
-        'C1': d.v * (sig[0, env.H, r0] * kappa - 1.0),
-        'C2': np.zeros(n),
-        'C3': (-env.C - d.v * D[w0, 0, env.H, r0]
-               + (1 - d.p_true) * d.v * A[w0, 0, env.H, r0]),
-        'C4': d.v * (alpha[0, env.H, r0] * kappa + beta[0, env.H, r0]),
+        "C1": d.v * (sig[0, env.H, r0] * kappa - 1.0),
+        "C2": np.zeros(n),
+        "C3": (-env.C - d.v * D[w0, 0, env.H, r0] + (1 - d.p_true) * d.v * A[w0, 0, env.H, r0]),
+        "C4": d.v * (alpha[0, env.H, r0] * kappa + beta[0, env.H, r0]),
     }
-    pols = {'C1': OGrant(), 'C2': OReject(), 'C3': OVerify(),
-            'C4': OWaitGrant(FIN)}
+    pols = {"C1": OGrant(), "C2": OReject(), "C3": OVerify(), "C4": OWaitGrant(FIN)}
 
-    print(f"E-outage draft env: N={env.N} H={env.H} tau={env.tau} "
-          f"stationary outage={env.stationary_outage:.4%}")
+    print(
+        f"E-outage draft env: N={env.N} H={env.H} tau={env.tau} "
+        f"stationary outage={env.stationary_outage:.4%}"
+    )
     print(f"[n={n}]  (realized vs exact, per payment, dollars)")
-    for name in ('C1', 'C2', 'C3', 'C4'):
+    for name in ("C1", "C2", "C3", "C4"):
         r = replay_outage(env, d, pols[name], ex)
         e = exact[name].mean()
         diff = r - exact[name]
@@ -109,7 +129,7 @@ def main():
 
     # optimal policy at a fixed exposure: exact DP value vs replay
     v_fix = 30.0
-    flow_fix = Flow('F1fix', MixD(0.05), LogNormalV(v_fix, 1e-9, v_fix, v_fix))
+    flow_fix = Flow("F1fix", MixD(0.05), LogNormalV(v_fix, 1e-9, v_fix, v_fix))
     n2 = 60_000
     d2 = draw_outage_batch(env, flow_fix, n2, rng)
     r02 = d2.paths[:, 0].astype(int)
@@ -119,7 +139,9 @@ def main():
     class ExactPol:
         """Reads the label table by the payment's own column index, so
         each payment is played by its exact optimal policy."""
+
         idx = 0
+
         def __call__(self, i, l, r, v, pi):
             return int(lab[i, l, r, self.idx])
 
@@ -128,27 +150,31 @@ def main():
     for k in range(n2):
         ep.idx = k
         one = OutageDrawsView(d2, k)
-        real[k] = replay_outage(env, one, ep, parts['ex'])[0]
+        real[k] = replay_outage(env, one, ep, parts["ex"])[0]
     diff = real - e_opt
     se = diff.std(ddof=1) / np.sqrt(n2)
-    print(f"  OPT(v=30): realized {real.mean():+8.5f}  exact {e_opt.mean():+8.5f}"
-          f"  z={diff.mean() / se:+.2f}")
+    print(
+        f"  OPT(v=30): realized {real.mean():+8.5f}  exact {e_opt.mean():+8.5f}"
+        f"  z={diff.mean() / se:+.2f}"
+    )
     assert abs(diff.mean() / se) < 4.0
 
 
 class OutageDrawsView:
     """Single-payment view for per-payment exact-policy replay."""
+
     def __init__(self, d, k):
-        self.v = d.v[k:k + 1]
-        self.p_true = d.p_true[k:k + 1]
-        self.theta = d.theta[k:k + 1]
-        self.pi0 = d.pi0[k:k + 1]
-        self.u_stage = d.u_stage[k:k + 1]
-        self.t_ans = d.t_ans[k:k + 1]
-        self.paths = d.paths[k:k + 1]
+        self.v = d.v[k : k + 1]
+        self.p_true = d.p_true[k : k + 1]
+        self.theta = d.theta[k : k + 1]
+        self.pi0 = d.pi0[k : k + 1]
+        self.u_stage = d.u_stage[k : k + 1]
+        self.t_ans = d.t_ans[k : k + 1]
+        self.paths = d.paths[k : k + 1]
+
     def __len__(self):
         return 1
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

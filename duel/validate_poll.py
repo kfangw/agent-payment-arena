@@ -2,6 +2,7 @@
 
 Run:  python -m duel.validate_poll
 """
+
 from __future__ import annotations
 
 import tempfile
@@ -10,26 +11,37 @@ from pathlib import Path
 
 import numpy as np
 
-from .poll import (reorgs, stall_runs, stalls, summarize, summarize_dir,
-                   supervise)
+from .poll import reorgs, stall_runs, stalls, summarize, summarize_dir, supervise
 
 PERIOD = 2.0
 
 
-def _sample(provider: str, t_ms: int, unsafe_h: int | None, unsafe_x: str | None,
-            error: str | None = None, mono_ms: int | None = None) -> dict:
-    return dict(t_ms=t_ms, mono_ms=t_ms if mono_ms is None else mono_ms,
-                provider=provider,
-                height=dict(unsafe=unsafe_h, safe=unsafe_h, finalized=unsafe_h),
-                hash=dict(unsafe=unsafe_x, safe=unsafe_x, finalized=unsafe_x),
-                rtt_ms=1.0, error=error)
+def _sample(
+    provider: str,
+    t_ms: int,
+    unsafe_h: int | None,
+    unsafe_x: str | None,
+    error: str | None = None,
+    mono_ms: int | None = None,
+) -> dict:
+    return dict(
+        t_ms=t_ms,
+        mono_ms=t_ms if mono_ms is None else mono_ms,
+        provider=provider,
+        height=dict(unsafe=unsafe_h, safe=unsafe_h, finalized=unsafe_h),
+        hash=dict(unsafe=unsafe_x, safe=unsafe_x, finalized=unsafe_x),
+        rtt_ms=1.0,
+        error=error,
+    )
 
 
 def _chain(provider: str, n: int, start_ms: int = 0, hashes: dict | None = None):
     """A cleanly advancing unsafe chain, one advance per tick."""
     hashes = hashes or {}
-    return [_sample(provider, start_ms + i * int(PERIOD * 1000), i,
-                    hashes.get(i, f"x{i}")) for i in range(n)]
+    return [
+        _sample(provider, start_ms + i * int(PERIOD * 1000), i, hashes.get(i, f"x{i}"))
+        for i in range(n)
+    ]
 
 
 def a6_1_synthetic_reorg() -> None:
@@ -47,8 +59,7 @@ def a6_1_synthetic_reorg() -> None:
     assert r["blocks"] > 0
     assert abs(r["point"] - 1.0 / r["blocks"]) < 1e-12
     assert abs(r["upper95"] - 3.0 / r["blocks"]) < 1e-12
-    print(f"A6-1 ok: depth=2 k=1 n={r['blocks']} point={r['point']:.4g} "
-          f"upper95={r['upper95']:.4g}")
+    print(f"A6-1 ok: depth=2 k=1 n={r['blocks']} point={r['point']:.4g} upper95={r['upper95']:.4g}")
 
 
 def a6_2_provider_separation() -> None:
@@ -62,8 +73,7 @@ def a6_2_provider_separation() -> None:
     for j in range(15):
         b.append(_sample("b", t0 + (j + 1) * 2000, freeze_h, f"x{freeze_h}"))
     for j in range(15, 30):
-        b.append(_sample("b", t0 + (j + 1) * 2000, freeze_h + 1 + (j - 15),
-                         f"y{j}"))
+        b.append(_sample("b", t0 + (j + 1) * 2000, freeze_h + 1 + (j - 15), f"y{j}"))
     out = stalls({"a": a, "b": b}, t_stall_s=20.0)
     assert out["count"] == 0, f"one-sided stall wrongly confirmed: {out}"
     assert out["provider_only"] >= 1, out
@@ -76,8 +86,7 @@ def a6_2_provider_separation() -> None:
         b2.append(_sample("b", b2[-1]["t_ms"] + 2000, hf, f"x{hf}"))
     out2 = stalls({"a": a2, "b": b2}, t_stall_s=20.0)
     assert out2["count"] >= 1, f"simultaneous stall not confirmed: {out2}"
-    print(f"A6-2 ok: one-sided provider_only={out['provider_only']} "
-          f"confirmed_both={out2['count']}")
+    print(f"A6-2 ok: one-sided provider_only={out['provider_only']} confirmed_both={out2['count']}")
 
 
 def a6_3_rule_of_three() -> None:
@@ -96,7 +105,7 @@ def a6_4_missing_tolerance() -> None:
     the middle of the log does not inflate the window."""
     a = _chain("a", 50)
     b = _chain("b", 50)
-    samples = a + b                       # 100 samples, no gap
+    samples = a + b  # 100 samples, no gap
     s1 = summarize(samples, period_s=PERIOD)
     # drop a contiguous block from the wall clock but keep 100 samples by
     # shifting later timestamps forward: span grows, count is unchanged
@@ -104,13 +113,15 @@ def a6_4_missing_tolerance() -> None:
     for s in samples:
         s = dict(s)
         if s["t_ms"] > 40 * 2000:
-            s["t_ms"] += 3_600_000        # a one-hour gap
+            s["t_ms"] += 3_600_000  # a one-hour gap
         shifted.append(s)
     s2 = summarize(shifted, period_s=PERIOD)
     assert s1["window"]["seconds"] == s2["window"]["seconds"], (s1, s2)
     assert s1["window"]["seconds"] == 50 * PERIOD
-    print(f"A6-4 ok: seconds={s2['window']['seconds']} from "
-          f"{s2['window']['samples']} samples, span-independent")
+    print(
+        f"A6-4 ok: seconds={s2['window']['seconds']} from "
+        f"{s2['window']['samples']} samples, span-independent"
+    )
 
 
 def a6_stall_duration() -> None:
@@ -136,7 +147,7 @@ def a6_gap_not_inflated() -> None:
     for j in range(10):
         t += 2000
         stream.append(_sample("a", t, hf, f"x{hf}"))
-    t += 3_600_000                                  # one-hour gap
+    t += 3_600_000  # one-hour gap
     for j in range(10):
         t += 2000
         stream.append(_sample("a", t, hf, f"x{hf}"))
@@ -155,32 +166,43 @@ def a6_supervisor_restarts() -> None:
         if provider == "a" and calls["n"] in (3, 4):
             raise ConnectionError("injected outage")
         h = calls["n"] // 2
-        return _sample(provider, t_ms, h, f"x{h}",
-                       mono_ms=int(time.monotonic() * 1000))
+        return _sample(provider, t_ms, h, f"x{h}", mono_ms=int(time.monotonic() * 1000))
 
     with tempfile.TemporaryDirectory() as d:
-        path = supervise({"a": "u", "b": "u"}, d, seconds=0.4, period_s=0.02,
-                         poll_fn=flaky_poll, watchdog_s=1.0, backoff_s=0.02)
+        path = supervise(
+            {"a": "u", "b": "u"},
+            d,
+            seconds=0.4,
+            period_s=0.02,
+            poll_fn=flaky_poll,
+            watchdog_s=1.0,
+            backoff_s=0.02,
+        )
         events = Path(d) / "poll_events.jsonl"
         assert events.exists()
-        kinds = [json_line(line)["kind"] for line in
-                 events.read_text().splitlines() if line.strip()]
+        kinds = [
+            json_line(line)["kind"] for line in events.read_text().splitlines() if line.strip()
+        ]
         assert "start" in kinds and "restart" in kinds and "stop" in kinds, kinds
         assert (Path(d) / "poll_a.jsonl").exists()
         assert (Path(d) / "poll_b.jsonl").exists()
         summ = json_load(path)
         assert summ["restarts"] >= 1, summ["restarts"]
-        print(f"A6 supervisor ok: restarts={summ['restarts']}, "
-              f"persistent files kept, events {sorted(set(kinds))}")
+        print(
+            f"A6 supervisor ok: restarts={summ['restarts']}, "
+            f"persistent files kept, events {sorted(set(kinds))}"
+        )
 
 
 def json_line(line: str) -> dict:
     import json
+
     return json.loads(line)
 
 
 def json_load(path: str) -> dict:
     import json
+
     return json.loads(Path(path).read_text())
 
 

@@ -12,6 +12,7 @@ floor and v* so the manuscript table can be checked.
     python -m duel.sweep --env E-outage --flow F2 --seed 8 --C 0.25 --competitor B4
     python -m duel.sweep --env E-slow --flow F2 --seed 5 --f0 0.015 --gamma 0.3 --competitor B1
 """
+
 from __future__ import annotations
 
 import argparse
@@ -27,8 +28,7 @@ from .design import eps_for
 from .flows import make_flows
 from .gate import CW_PER_S, envs_for
 from .gitcheck import require_clean_tree
-from .outage import (compile_outage, draw_outage_batch, replay_outage,
-                     survival, window_AD)
+from .outage import compile_outage, draw_outage_batch, replay_outage, survival, window_AD
 from .policies import B1, compile_A, default_grids, tune
 from .report import envelope, write_once
 from .run import CHAIN_BLOCK, OB
@@ -55,15 +55,23 @@ def run_outage(env, flow, seed, n_tune, n_eval):
     _, _, ex = window_AD(env, survival(env))
     best, _, _ = _tune_b4(
         lambda k, act: replay_outage(env, tune_d, OB4Force(k, act, env.H, env.N), ex),
-        default_grids()["B3"], k_grid(env.H), tune_d.pi0)
+        default_grids()["B3"],
+        k_grid(env.H),
+        tune_d.pi0,
+    )
     b4 = OB4(best[0], best[1], best[2], env.H, env.N)
     a_pay = replay_outage(env, eval_d, a, ex)
     b4_pay = replay_outage(env, eval_d, b4, ex)
     episodes = np.arange(len(eval_d)) // 50
     diff = _block_sums(a_pay - b4_pay, episodes)
     counts = np.bincount(episodes).astype(float)
-    return diff, counts, float(np.mean(eval_d.v)), dict(k=best[0], a=best[1], b=best[2]), \
-        _closed_form(env_hat, rho_hat, env.tau)
+    return (
+        diff,
+        counts,
+        float(np.mean(eval_d.v)),
+        dict(k=best[0], a=best[1], b=best[2]),
+        _closed_form(env_hat, rho_hat, env.tau),
+    )
 
 
 def run_chain(env, rho, flow, seed, n_tune, n_eval):
@@ -81,14 +89,18 @@ def run_chain(env, rho, flow, seed, n_tune, n_eval):
     episodes = np.arange(len(eval_d)) // CHAIN_BLOCK
     diff = _block_sums(a_pay - b1_pay, episodes)
     counts = np.bincount(episodes).astype(float)
-    return diff, counts, float(np.mean(eval_d.v)), dict(theta=b1.theta), \
-        _closed_form(env, rho_hat, env.tau)
+    return (
+        diff,
+        counts,
+        float(np.mean(eval_d.v)),
+        dict(theta=b1.theta),
+        _closed_form(env, rho_hat, env.tau),
+    )
 
 
 def main(argv=None):
     ap = argparse.ArgumentParser()
-    ap.add_argument("--env", required=True,
-                    choices=["E-outage", "E-slow"])
+    ap.add_argument("--env", required=True, choices=["E-outage", "E-slow"])
     ap.add_argument("--flow", required=True, choices=["F1", "F2", "F3"])
     ap.add_argument("--seed", type=int, required=True)
     ap.add_argument("--C", type=float, default=BASE["C"])
@@ -108,39 +120,60 @@ def main(argv=None):
     if args.env == "E-slow":
         env = replace(env, f=args.f0 * args.gamma ** np.arange(8))
     if kind == "outage":
-        diff, counts, mexp, comp, cf = run_outage(env, flow, args.seed,
-                                                   args.n_tune, args.n_eval)
+        diff, counts, mexp, comp, cf = run_outage(env, flow, args.seed, args.n_tune, args.n_eval)
     else:
-        diff, counts, mexp, comp, cf = run_chain(env, rho, flow, args.seed,
-                                                 args.n_tune, args.n_eval)
+        diff, counts, mexp, comp, cf = run_chain(
+            env, rho, flow, args.seed, args.n_tune, args.n_eval
+        )
 
     mean = ratio_mean(diff, counts)
     lo, hi = boot_ci(diff, counts, n_boot=20_000, seed=args.seed, level=0.95)
     eps = eps_for(mexp)
     payload = dict(
-        cell=f"{args.env} x {args.flow}", competitor=args.competitor,
+        cell=f"{args.env} x {args.flow}",
+        competitor=args.competitor,
         constants=dict(C=args.C, h=args.h, m=args.m, f0=args.f0, gamma=args.gamma),
         adv=dict(mean=mean, ci95=[lo, hi], bp=units(mean, mexp)["bp"]),
-        eps=eps, above_margin=bool(lo > eps), mean_exposure=mexp,
-        competitor_params=comp, closed_form=cf, block_counts=counts,
+        eps=eps,
+        above_margin=bool(lo > eps),
+        mean_exposure=mexp,
+        competitor_params=comp,
+        closed_form=cf,
+        block_counts=counts,
         diff_block_sums=diff,
     )
-    resolved = dict(cell=f"{args.env}x{args.flow}", flow=args.flow,
-                    competitor=args.competitor, cw_per_s=CW_PER_S["mid"],
-                    constants=payload["constants"])
-    obj = envelope("sweep", f"{args.env} x {args.flow}", args.seed, args.n_eval,
-                   args.n_tune, resolved, payload)
-    tag = (f"{args.env}_{args.flow}_C{args.C}_h{args.h}_m{args.m}"
-           f"_f{args.f0}_g{args.gamma}_s{args.seed}")
+    resolved = dict(
+        cell=f"{args.env}x{args.flow}",
+        flow=args.flow,
+        competitor=args.competitor,
+        cw_per_s=CW_PER_S["mid"],
+        constants=payload["constants"],
+    )
+    obj = envelope(
+        "sweep", f"{args.env} x {args.flow}", args.seed, args.n_eval, args.n_tune, resolved, payload
+    )
+    tag = (
+        f"{args.env}_{args.flow}_C{args.C}_h{args.h}_m{args.m}"
+        f"_f{args.f0}_g{args.gamma}_s{args.seed}"
+    )
     path = str(Path(args.out) / f"sweep_{tag}.json")
     write_once(path, obj)
-    print(json.dumps(dict(cell=payload["cell"], comp=args.competitor,
-                          const=payload["constants"], adv=round(mean, 6),
-                          ci=[round(lo, 6), round(hi, 6)],
-                          bp=round(payload["adv"]["bp"], 2),
-                          above_margin=payload["above_margin"],
-                          floor=round(cf["floor"], 4),
-                          vstar=round(cf["vstar"], 2)), indent=1))
+    print(
+        json.dumps(
+            dict(
+                cell=payload["cell"],
+                comp=args.competitor,
+                const=payload["constants"],
+                adv=round(mean, 6),
+                ci=[round(lo, 6), round(hi, 6)],
+                bp=round(payload["adv"]["bp"], 2),
+                above_margin=payload["above_margin"],
+                floor=round(cf["floor"], 4),
+                vstar=round(cf["vstar"], 2),
+            ),
+            indent=1,
+        )
+    )
     print(f"wrote {path}")
 
 

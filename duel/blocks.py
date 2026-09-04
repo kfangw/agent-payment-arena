@@ -11,6 +11,7 @@ rearrangement of the same sums and does not move; only the interval can.
 
     python -m duel.blocks --results results
 """
+
 from __future__ import annotations
 
 import argparse
@@ -59,12 +60,15 @@ def outage_runs(seed, n_ep, env, chunk=4000):
                 n_out += len(starts)
         done += m
     runs = np.asarray(runs)
-    return dict(n_events=int(n_out), n_episodes=int(n_ep),
-                median=float(np.median(runs)) if len(runs) else 0.0,
-                p90=float(np.quantile(runs, 0.90)) if len(runs) else 0.0,
-                p99=float(np.quantile(runs, 0.99)) if len(runs) else 0.0,
-                max=int(runs.max()) if len(runs) else 0,
-                episode_ticks=EPISODE_LEN)
+    return dict(
+        n_events=int(n_out),
+        n_episodes=int(n_ep),
+        median=float(np.median(runs)) if len(runs) else 0.0,
+        p90=float(np.quantile(runs, 0.90)) if len(runs) else 0.0,
+        p99=float(np.quantile(runs, 0.99)) if len(runs) else 0.0,
+        max=int(runs.max()) if len(runs) else 0,
+        episode_ticks=EPISODE_LEN,
+    )
 
 
 def _group(sums, counts, g):
@@ -121,26 +125,29 @@ def build(results="results", g_list=(4, 16), b_moving=8):
         # episode block (current)
         schemes["episode"] = dict(
             ci=list(boot_ci(diff, counts, n_boot=N_BOOT, seed=seed, level=SIM_LEVEL)),
-            perm=perm_p(diff, counts, seed=seed + 1))
+            perm=perm_p(diff, counts, seed=seed + 1),
+        )
         # enlarged fixed blocks
         for g in g_list:
             gs, gc = _group(diff, counts, g)
             schemes[f"fixed_x{g}"] = dict(
                 ci=list(boot_ci(gs, gc, n_boot=N_BOOT, seed=seed, level=SIM_LEVEL)),
-                perm=perm_p(gs, gc, seed=seed + 1))
+                perm=perm_p(gs, gc, seed=seed + 1),
+            )
         # moving block of b episodes
         schemes[f"moving_{b_moving}"] = dict(
             ci=list(_moving_ci(diff, counts, b_moving, seed, SIM_LEVEL, N_BOOT)),
-            perm=perm_p(*_group(diff, counts, b_moving), seed=seed + 1))
-        out[cell] = dict(cell=cell, mean=mean, bp=units(mean, mexp)["bp"],
-                         eps=eps, seed=seed, schemes=schemes)
+            perm=perm_p(*_group(diff, counts, b_moving), seed=seed + 1),
+        )
+        out[cell] = dict(
+            cell=cell, mean=mean, bp=units(mean, mexp)["bp"], eps=eps, seed=seed, schemes=schemes
+        )
 
     # verdicts: Holm each scheme's outage perm p with the chain family
     for scheme in next(iter(out.values()))["schemes"]:
-        pvals = [chain_p[c] for c in chain_p] + [out[c]["schemes"][scheme]["perm"]
-                                                 for c in OUTAGE]
+        pvals = [chain_p[c] for c in chain_p] + [out[c]["schemes"][scheme]["perm"] for c in OUTAGE]
         adj = holm(pvals)
-        adj_out = adj[len(chain_p):]
+        adj_out = adj[len(chain_p) :]
         for c, ph in zip(OUTAGE, adj_out):
             s = out[c]["schemes"][scheme]
             s["holm_p"] = ph
@@ -153,16 +160,17 @@ def main(argv=None):
     ap.add_argument("--results", default="results")
     args = ap.parse_args(argv)
 
-    print("== outage duration (ticks; episode spans "
-          f"{EPISODE_LEN} ticks = {PPE} payments) ==")
+    print(f"== outage duration (ticks; episode spans {EPISODE_LEN} ticks = {PPE} payments) ==")
     for cell in OUTAGE:
         seed = CELL_SEED[cell]
         _, env, _ = envs_for("mid")["E-outage"]
         # n_ep matches the confirmatory eval (5,663,400 / 50)
         st = outage_runs(seed, 5_663_400 // PPE, env)
-        print(f"{cell}: events={st['n_events']} over {st['n_episodes']} episodes "
-              f"| median={st['median']:.0f} p90={st['p90']:.0f} p99={st['p99']:.0f} "
-              f"max={st['max']} ticks  (p99 = {st['p99']/EPISODE_LEN:.3f} episode)")
+        print(
+            f"{cell}: events={st['n_events']} over {st['n_episodes']} episodes "
+            f"| median={st['median']:.0f} p90={st['p90']:.0f} p99={st['p99']:.0f} "
+            f"max={st['max']} ticks  (p99 = {st['p99'] / EPISODE_LEN:.3f} episode)"
+        )
 
     out = build(args.results)
     print(f"\n== A-B4 under re-blocking (nine-cell simultaneous {SIM_LEVEL:.4f}) ==")
@@ -172,8 +180,10 @@ def main(argv=None):
         print(f"\n{cell}: mean={r['mean']:.5f} ({r['bp']:.1f} bp), eps={r['eps']:.6f}")
         for s in schemes:
             sc = r["schemes"][s]
-            print(f"  {s:11} ci=[{sc['ci'][0]:.6f}, {sc['ci'][1]:.6f}] "
-                  f"holm_p={sc['holm_p']:.4f}  {sc['verdict']}")
+            print(
+                f"  {s:11} ci=[{sc['ci'][0]:.6f}, {sc['ci'][1]:.6f}] "
+                f"holm_p={sc['holm_p']:.4f}  {sc['verdict']}"
+            )
 
 
 if __name__ == "__main__":

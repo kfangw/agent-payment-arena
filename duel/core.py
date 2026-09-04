@@ -16,6 +16,7 @@ Window recursion (tick order: pay wait cost, test arrival, transition):
   D(j,t) = c_w*v + (1-rho)(1-f_j)D(j+1,t-1)
 Settled closed forms: A_F = q*v*m, D_F = c_w*v*q/rho, q = 1-(1-rho)^tau.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -88,7 +89,7 @@ def action_values(f, v, pi_grid, p=DEFAULT, pmf=None):
     """Per-stage arrays of the four action values and V on a pi grid.
     pmf = None uses the geometric arrival with p['rho']; otherwise the
     censored pmf is used for the window and rho is ignored there."""
-    m, h, C, cw, rho, tau = (p['m'], p['h'], p['C'], p['cw'], p['rho'], p['tau'])
+    m, h, C, cw, rho, tau = (p["m"], p["h"], p["C"], p["cw"], p["rho"], p["tau"])
     N = len(f) - 1
     FIN = N + 1
     sig = sigma_list(f)
@@ -116,14 +117,14 @@ def best_action(f, v, pi_grid, p=DEFAULT, pmf=None):
     N = len(f) - 1
     lab = np.zeros((N + 2, len(np.atleast_1d(pi_grid))), dtype=np.int8)
     for i in range(N + 2):
-        stack = np.vstack([out['G'][i], out['R'][i], out['W'][i], out['Wait'][i]])
+        stack = np.vstack([out["G"][i], out["R"][i], out["W"][i], out["Wait"][i]])
         lab[i] = np.argmax(stack, axis=0)
     return lab, out
 
 
 # ---------- settled-state closed forms ----------
 def derived(p=DEFAULT):
-    m, h, C, cw, rho, tau = (p['m'], p['h'], p['C'], p['cw'], p['rho'], p['tau'])
+    m, h, C, cw, rho, tau = (p["m"], p["h"], p["C"], p["cw"], p["rho"], p["tau"])
     q = 1 - (1 - rho) ** tau
     mt = m * h / (m + h)
     vstar = C / (q * (mt - cw / rho)) if mt > cw / rho else np.inf
@@ -134,7 +135,7 @@ def derived(p=DEFAULT):
 
 
 def settled_lines(v, pi, p=DEFAULT):
-    m, h, C, cw, rho, tau = (p['m'], p['h'], p['C'], p['cw'], p['rho'], p['tau'])
+    m, h, C, cw, rho, tau = (p["m"], p["h"], p["C"], p["cw"], p["rho"], p["tau"])
     q = 1 - (1 - rho) ** tau
     G = v * ((1 - pi) * m - pi * h)
     W = -C - cw * v * q / rho + (1 - pi) * q * v * m
@@ -142,7 +143,7 @@ def settled_lines(v, pi, p=DEFAULT):
 
 
 def verify_edges(v, p=DEFAULT):
-    m, h, C, cw, rho, tau = (p['m'], p['h'], p['C'], p['cw'], p['rho'], p['tau'])
+    m, h, C, cw, rho, tau = (p["m"], p["h"], p["C"], p["cw"], p["rho"], p["tau"])
     q = 1 - (1 - rho) ** tau
     pgv = (m * (1 - q) + C / v + cw * q / rho) / ((m + h) - q * m)
     prv = 1 - (C / v + cw * q / rho) / (q * m)

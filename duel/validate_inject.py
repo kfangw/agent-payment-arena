@@ -2,6 +2,7 @@
 
 Run:  python -m duel.validate_inject
 """
+
 from __future__ import annotations
 
 import tempfile
@@ -11,7 +12,7 @@ import numpy as np
 from .core import rho_hat_from_q
 from .flows import make_flows
 from .gate import envs_for
-from .inject import (_chain_ctx, _chain_diff, halving, run_axis)
+from .inject import _chain_ctx, _chain_diff, halving, run_axis
 from .run import run_chain
 from .simulate import retime_answers
 
@@ -81,8 +82,12 @@ def a4_4_lambda_identification() -> None:
     q_h = float((d.t_ans[d.theta == 0] <= env.tau).mean())
     qs = []
     for lam in [0.5, 2 / 3, 1.0, 1.5, 2.0]:
-        pmf_m = np.array([min(rho * lam, 1.0) * (1 - min(rho * lam, 1.0)) ** (s - 1)
-                          for s in range(1, env.tau + 1)])
+        pmf_m = np.array(
+            [
+                min(rho * lam, 1.0) * (1 - min(rho * lam, 1.0)) ** (s - 1)
+                for s in range(1, env.tau + 1)
+            ]
+        )
         t = retime_answers(d.theta, u, env.pmf_h, pmf_m, env.tau)
         qs.append(float((t[mis] <= env.tau).mean()))
     assert all(a <= b + 1e-9 for a, b in zip(qs, qs[1:])), qs
@@ -94,10 +99,10 @@ def a4_4_lambda_identification() -> None:
 def outage_smoke() -> None:
     """The regime-cell path runs end to end and writes an envelope."""
     with tempfile.TemporaryDirectory() as dd:
-        path = run_axis("E-outage x F1", "lambda", 2001, 3_000, 2_000, dd,
-                        n_boot=200)
+        path = run_axis("E-outage x F1", "lambda", 2001, 3_000, 2_000, dd, n_boot=200)
         import json
         from pathlib import Path
+
         env = json.loads(Path(path).read_text())
         assert env["kind"] == "inject"
         assert env["payload"]["axis"] == "lambda"

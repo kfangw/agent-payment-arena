@@ -11,6 +11,7 @@ bootstrap interval (episode blocks in the regime-switching cell), and
 the run's metadata.  The sample size is whatever the caller passes; the
 equivalence margin is decided elsewhere, from a pilot.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -22,14 +23,19 @@ import numpy as np
 from .core import GRANT, REJECT, VERIFY, WAIT, sigma_list, rho_hat_from_q
 from .flows import FLOW_SPEC, make_flows
 from .gate import CW_PER_S, envs_for
-from .outage import (OutageEnv, compile_outage, draw_outage_batch,
-                     replay_outage, survival, window_AD as outage_window_AD)
-from .policies import (B1, B2, B3, compile_A, default_grids, make_family_C,
-                       tune)
+from .outage import (
+    OutageEnv,
+    compile_outage,
+    draw_outage_batch,
+    replay_outage,
+    survival,
+    window_AD as outage_window_AD,
+)
+from .policies import B1, B2, B3, compile_A, default_grids, make_family_C, tune
 from .report import envelope, jsonable, write_once
 from .simulate import Channel, draw_batch, replay
 
-CHAIN_BLOCK = 1000     # payments per episode for the independent chain cells
+CHAIN_BLOCK = 1000  # payments per episode for the independent chain cells
 
 
 # ---------------- adapters: outage signature for B and C families ----
@@ -37,8 +43,10 @@ class OB:
     """Wrap a (stage, v, pi) rule for the (i, l, r, v, pi) signature.
     Terminal rules ignore the extra state; the B3 verify fires once at
     the arrival tick, matching its chain-env semantics."""
+
     def __init__(self, pol):
         self.pol = pol
+
     def __call__(self, i, l, r, v, pi):
         return self.pol(0 if (i == 0 and l > 0) else i, v, pi)
 
@@ -46,6 +54,7 @@ class OB:
 class OWaitGrant:
     def __init__(self, FIN):
         self.FIN = FIN
+
     def __call__(self, i, l, r, v, pi):
         return GRANT if i >= self.FIN else WAIT
 
@@ -61,17 +70,18 @@ def run_chain(ch: Channel, rho_true, flow, n_tune, n_eval, seed):
     q_hat = float((tune_d.t_ans <= ch.tau).mean())
     rho_hat = rho_hat_from_q(q_hat, ch.tau)
     A = {
-        'A_full': compile_A(ch, 'A_full', pmf=ch.pmf_h),
-        'A': compile_A(ch, 'A', rho=rho_hat),
-        'A_noV': compile_A(ch, 'A_noV', rho=rho_hat, drop=(VERIFY,)),
-        'A_noW': compile_A(ch, 'A_noW', rho=rho_hat, drop=(WAIT,)),
+        "A_full": compile_A(ch, "A_full", pmf=ch.pmf_h),
+        "A": compile_A(ch, "A", rho=rho_hat),
+        "A_noV": compile_A(ch, "A_noV", rho=rho_hat, drop=(VERIFY,)),
+        "A_noW": compile_A(ch, "A_noW", rho=rho_hat, drop=(WAIT,)),
     }
     grids = default_grids()
     tuned, params = {}, {}
     for name, make, grid in (
-            ('B1', lambda t: B1(t, ch.h), grids['B1']),
-            ('B2', lambda t: B2(t), grids['B2']),
-            ('B3', lambda ab: B3(*ab), grids['B3'])):
+        ("B1", lambda t: B1(t, ch.h), grids["B1"]),
+        ("B2", lambda t: B2(t), grids["B2"]),
+        ("B3", lambda ab: B3(*ab), grids["B3"]),
+    ):
         best, pol, _ = tune(make, grid, ch, tune_d, ex_unit)
         tuned[name] = pol
         params[name] = best
@@ -82,34 +92,41 @@ def run_chain(ch: Channel, rho_true, flow, n_tune, n_eval, seed):
     return out, eval_d, meta, episodes
 
 
-def run_outage(env: OutageEnv, flow, n_tune, n_eval, seed,
-               payments_per_episode=50):
+def run_outage(env: OutageEnv, flow, n_tune, n_eval, seed, payments_per_episode=50):
     rng = np.random.default_rng(seed)
-    tune_d = draw_outage_batch(env, flow, n_tune, rng,
-                               payments_per_episode=payments_per_episode)
-    eval_d = draw_outage_batch(env, flow, n_eval, rng,
-                               payments_per_episode=payments_per_episode)
+    tune_d = draw_outage_batch(env, flow, n_tune, rng, payments_per_episode=payments_per_episode)
+    eval_d = draw_outage_batch(env, flow, n_eval, rng, payments_per_episode=payments_per_episode)
     sig = survival(env)
     _, _, ex = outage_window_AD(env, sig)
 
     q_hat = float((tune_d.t_ans <= env.tau).mean())
     rho_hat = rho_hat_from_q(q_hat, env.tau)
-    env_hat = OutageEnv(f=env.f, m=env.m, h=env.h, C=env.C, cw=env.cw,
-                        tau=env.tau, H=env.H, rho=rho_hat,
-                        p01=env.p01, p10=env.p10,
-                        tick_seconds=env.tick_seconds)
+    env_hat = OutageEnv(
+        f=env.f,
+        m=env.m,
+        h=env.h,
+        C=env.C,
+        cw=env.cw,
+        tau=env.tau,
+        H=env.H,
+        rho=rho_hat,
+        p01=env.p01,
+        p10=env.p10,
+        tick_seconds=env.tick_seconds,
+    )
     A = {
-        'A_full': compile_outage(env, 'A_full'),
-        'A': compile_outage(env_hat, 'A'),
-        'A_noV': compile_outage(env_hat, 'A_noV', drop=(VERIFY,)),
-        'A_noW': compile_outage(env_hat, 'A_noW', drop=(WAIT,)),
+        "A_full": compile_outage(env, "A_full"),
+        "A": compile_outage(env_hat, "A"),
+        "A_noV": compile_outage(env_hat, "A_noV", drop=(VERIFY,)),
+        "A_noW": compile_outage(env_hat, "A_noW", drop=(WAIT,)),
     }
     grids = default_grids()
     tuned, params = {}, {}
     for name, make, grid in (
-            ('B1', lambda t: OB(B1(t, env.h)), grids['B1']),
-            ('B2', lambda t: OB(B2(t)), grids['B2']),
-            ('B3', lambda ab: OB(B3(*ab)), grids['B3'])):
+        ("B1", lambda t: OB(B1(t, env.h)), grids["B1"]),
+        ("B2", lambda t: OB(B2(t)), grids["B2"]),
+        ("B3", lambda ab: OB(B3(*ab)), grids["B3"]),
+    ):
         best, best_pol = None, None
         best_val = -np.inf
         for g in grid:
@@ -119,8 +136,12 @@ def run_outage(env: OutageEnv, flow, n_tune, n_eval, seed,
                 best, best_pol, best_val = g, pol, val
         tuned[name] = best_pol
         params[name] = best
-    C = {'C1': OB(lambda s, v, pi: GRANT), 'C2': OB(lambda s, v, pi: REJECT),
-         'C3': OB(lambda s, v, pi: VERIFY), 'C4': OWaitGrant(env.N + 1)}
+    C = {
+        "C1": OB(lambda s, v, pi: GRANT),
+        "C2": OB(lambda s, v, pi: REJECT),
+        "C3": OB(lambda s, v, pi: VERIFY),
+        "C4": OWaitGrant(env.N + 1),
+    }
     pols = dict(A, **tuned, **C)
     out = {k: replay_outage(env, eval_d, p, ex) for k, p in pols.items()}
     meta = dict(q_hat=q_hat, rho_hat=rho_hat, b_params=jsonable(params))
@@ -160,39 +181,52 @@ def paired_ci(diff, episodes=None, n_boot=10_000, seed=7, level=0.95):
 def _resolved(args, kind, env, rho):
     """The resolved parameter dict that params_hash digests: environment
     constants, the flow spec, and the tuning grids."""
-    if kind == 'chain':
-        env_d = dict(kind=kind, f=env.f, m=env.m, h=env.h, C=env.C, cw=env.cw,
-                     tau=env.tau, rho=rho)
+    if kind == "chain":
+        env_d = dict(kind=kind, f=env.f, m=env.m, h=env.h, C=env.C, cw=env.cw, tau=env.tau, rho=rho)
     else:
-        env_d = dict(kind=kind, f=env.f, m=env.m, h=env.h, C=env.C, cw=env.cw,
-                     tau=env.tau, H=env.H, rho=env.rho, p01=env.p01,
-                     p10=env.p10, tick_seconds=env.tick_seconds)
-    return dict(env_name=args.env, cell=f"{args.env}x{args.flow}",
-                flow=args.flow, flow_spec=FLOW_SPEC, cw_key=args.cw,
-                cw_per_s=CW_PER_S[args.cw], env=env_d,
-                grids=default_grids())
+        env_d = dict(
+            kind=kind,
+            f=env.f,
+            m=env.m,
+            h=env.h,
+            C=env.C,
+            cw=env.cw,
+            tau=env.tau,
+            H=env.H,
+            rho=env.rho,
+            p01=env.p01,
+            p10=env.p10,
+            tick_seconds=env.tick_seconds,
+        )
+    return dict(
+        env_name=args.env,
+        cell=f"{args.env}x{args.flow}",
+        flow=args.flow,
+        flow_spec=FLOW_SPEC,
+        cw_key=args.cw,
+        cw_per_s=CW_PER_S[args.cw],
+        env=env_d,
+        grids=default_grids(),
+    )
 
 
 def main(argv=None):
     ap = argparse.ArgumentParser()
-    ap.add_argument('--env', required=True,
-                    choices=['E-fast', 'E-outage', 'E-slow', 'E-slow-deep'])
-    ap.add_argument('--flow', required=True, choices=['F1', 'F2', 'F3'])
-    ap.add_argument('--cw', default='mid', choices=['high', 'mid', 'low'])
-    ap.add_argument('--n-eval', type=int, default=100_000)
-    ap.add_argument('--n-tune', type=int, default=50_000)
-    ap.add_argument('--seed', type=int, default=1)
-    ap.add_argument('--out', default='results')
+    ap.add_argument("--env", required=True, choices=["E-fast", "E-outage", "E-slow", "E-slow-deep"])
+    ap.add_argument("--flow", required=True, choices=["F1", "F2", "F3"])
+    ap.add_argument("--cw", default="mid", choices=["high", "mid", "low"])
+    ap.add_argument("--n-eval", type=int, default=100_000)
+    ap.add_argument("--n-tune", type=int, default=50_000)
+    ap.add_argument("--seed", type=int, default=1)
+    ap.add_argument("--out", default="results")
     args = ap.parse_args(argv)
 
     kind, env, rho = envs_for(args.cw)[args.env]
     flow = make_flows()[args.flow]
-    if kind == 'chain':
-        out, d, meta, episodes = run_chain(env, rho, flow,
-                                           args.n_tune, args.n_eval, args.seed)
+    if kind == "chain":
+        out, d, meta, episodes = run_chain(env, rho, flow, args.n_tune, args.n_eval, args.seed)
     else:
-        out, d, meta, episodes = run_outage(env, flow,
-                                            args.n_tune, args.n_eval, args.seed)
+        out, d, meta, episodes = run_outage(env, flow, args.n_tune, args.n_eval, args.seed)
 
     # Per-policy episode block sums with shared counts; downstream forms any
     # paired difference by subtracting sums (spec 0: the interchange format).
@@ -203,23 +237,35 @@ def main(argv=None):
         policies[name] = dict(block_sums=sums)
         counts = cnts
     payload = dict(
-        cw=args.cw, policies=policies, block_counts=counts,
-        n_episodes=int(len(counts)), mean_exposure=float(np.mean(d.v)),
-        means={k: float(v.mean()) for k, v in out.items()}, calib=meta,
+        cw=args.cw,
+        policies=policies,
+        block_counts=counts,
+        n_episodes=int(len(counts)),
+        mean_exposure=float(np.mean(d.v)),
+        means={k: float(v.mean()) for k, v in out.items()},
+        calib=meta,
     )
     cell = f"{args.env} x {args.flow}"
-    env_obj = envelope('duel', cell, args.seed, args.n_eval, args.n_tune,
-                       _resolved(args, kind, env, rho), payload)
+    env_obj = envelope(
+        "duel", cell, args.seed, args.n_eval, args.n_tune, _resolved(args, kind, env, rho), payload
+    )
 
     tag = f"{args.env}_{args.flow}_{args.cw}_s{args.seed}"
     path = str(Path(args.out) / f"duel_{tag}.json")
     write_once(path, env_obj)
-    diff = out['A'] - out['B1']
-    print(json.dumps(dict(cell=cell,
-                          means={k: round(float(v.mean()), 6) for k, v in out.items()},
-                          a2_minus_b1_mean=round(float(diff.mean()), 6)), indent=1))
+    diff = out["A"] - out["B1"]
+    print(
+        json.dumps(
+            dict(
+                cell=cell,
+                means={k: round(float(v.mean()), 6) for k, v in out.items()},
+                a2_minus_b1_mean=round(float(diff.mean()), 6),
+            ),
+            indent=1,
+        )
+    )
     print(f"wrote {path}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

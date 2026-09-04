@@ -5,6 +5,7 @@ evaluation size, so the no-injection level reproduces the Table 9 A2 - B4.
 Eight jobs run in parallel; a job whose output exists is skipped.  Per-job
 stdout goes to reports/_logs/.
 """
+
 from __future__ import annotations
 
 import os
@@ -28,10 +29,24 @@ def jobs():
             tag = f"{env}_{flow}_{axis}_s{seed}"
             if (ROOT / "results_inject" / f"b4_{tag}.json").exists():
                 continue
-            out.append((f"injb4_{tag}",
-                        [sys.executable, "-m", "duel.inject_b4", "--cell",
-                         f"{env} x {flow}", "--axis", axis, "--seed",
-                         str(seed), "--out", "results_inject"]))
+            out.append(
+                (
+                    f"injb4_{tag}",
+                    [
+                        sys.executable,
+                        "-m",
+                        "duel.inject_b4",
+                        "--cell",
+                        f"{env} x {flow}",
+                        "--axis",
+                        axis,
+                        "--seed",
+                        str(seed),
+                        "--out",
+                        "results_inject",
+                    ],
+                )
+            )
     return out
 
 
@@ -40,8 +55,7 @@ def run_one(name, cmd):
     LOGS.mkdir(parents=True, exist_ok=True)
     log = LOGS / f"{name}.log"
     with log.open("w") as fh:
-        rc = subprocess.run(cmd, cwd=ROOT, env=env, stdout=fh,
-                            stderr=subprocess.STDOUT).returncode
+        rc = subprocess.run(cmd, cwd=ROOT, env=env, stdout=fh, stderr=subprocess.STDOUT).returncode
     return name, rc
 
 
@@ -55,8 +69,7 @@ def main():
         for fut in as_completed(futs):
             name, rc = fut.result()
             (ok if rc == 0 else bad).append(name)
-            print(f"done {name} rc={rc}  ({len(ok)+len(bad)}/{len(todo)})",
-                  flush=True)
+            print(f"done {name} rc={rc}  ({len(ok) + len(bad)}/{len(todo)})", flush=True)
     print(f"\ncompleted ok={len(ok)} failed={len(bad)}", flush=True)
     if bad:
         print("FAILED:", bad, flush=True)

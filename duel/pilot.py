@@ -6,6 +6,7 @@ over on a disjoint seed band.
 
 Run:  python -m duel.pilot --cell "E-outage x F1" --seeds 1000 1001 1002
 """
+
 from __future__ import annotations
 
 import argparse
@@ -59,8 +60,9 @@ def block_len_from_acf(acf, threshold: float = 0.05) -> int:
     return len(acf)
 
 
-def sample_size(s_hi: float, eps: float, ep_size: int,
-                safety: float = SAFETY, z: float = Z95) -> dict:
+def sample_size(
+    s_hi: float, eps: float, ep_size: int, safety: float = SAFETY, z: float = Z95
+) -> dict:
     """Episodes k and payments needed for a CI half-width at or below
     eps/2, then multiplied by the safety factor."""
     k = (2.0 * z * s_hi / eps) ** 2
@@ -82,6 +84,7 @@ def pick_K(curve) -> int:
 def _coarse_K(cell, seed, n_eval, n_tune, cw, axis="lambda") -> int:
     """A coarse three-point sweep to gauge the curve's bend for pick_K."""
     from .inject import _chain_ctx, _chain_diff, _outage_ctx, _outage_diff
+
     env_name, flow_name = parse_cell(cell)
     kind, env, rho = envs_for(cw)[env_name]
     flow = make_flows()[flow_name]
@@ -98,8 +101,9 @@ def _coarse_K(cell, seed, n_eval, n_tune, cw, axis="lambda") -> int:
     return pick_K(curve)
 
 
-def run_pilot(cell: str, seeds, n_eval: int, n_tune: int, out_dir: str,
-              cw: str = "mid", k_sweep: bool = True) -> dict:
+def run_pilot(
+    cell: str, seeds, n_eval: int, n_tune: int, out_dir: str, cw: str = "mid", k_sweep: bool = True
+) -> dict:
     """Run the pilot, decide the design parameters, and write everything
     under out_dir/pilot/."""
     for s in seeds:
@@ -128,7 +132,7 @@ def run_pilot(cell: str, seeds, n_eval: int, n_tune: int, out_dir: str,
     ep_all = np.concatenate(ep_means)
     sd = episode_sd(ep_all, seed=1000)
     mean_exposure = float(np.mean(exposures))
-    eps = eps_for(mean_exposure)                     # frozen anchor, not a pilot output
+    eps = eps_for(mean_exposure)  # frozen anchor, not a pilot output
     size = sample_size(sd["upper95"], eps, ep_size)
     acf = autocorr(first_series)
     block_len = block_len_from_acf(acf)
@@ -137,19 +141,34 @@ def run_pilot(cell: str, seeds, n_eval: int, n_tune: int, out_dir: str,
         k_by_axis["lambda"] = _coarse_K(cell, seeds[0], n_eval, n_tune, cw)
 
     decisions = dict(
-        eps_per_payment=eps, eps_per_1000=eps * 1000.0,
-        n_eval=size["n_payments"], n_episodes=size["n_episodes"],
-        block_len=block_len, ep_size=ep_size, K=k_by_axis,
+        eps_per_payment=eps,
+        eps_per_1000=eps * 1000.0,
+        n_eval=size["n_payments"],
+        n_episodes=size["n_episodes"],
+        block_len=block_len,
+        ep_size=ep_size,
+        K=k_by_axis,
     )
     summary = dict(
-        pilot_cell=cell, episode_sd=sd, autocorr=acf,
-        decisions=decisions, safety_factor=SAFETY, mean_exposure=mean_exposure,
+        pilot_cell=cell,
+        episode_sd=sd,
+        autocorr=acf,
+        decisions=decisions,
+        safety_factor=SAFETY,
+        mean_exposure=mean_exposure,
     )
     pilot_dir = Path(out_dir) / "pilot"
     resolved = dict(cell=cell, cw=cw, seeds=list(seeds))
     for s in seeds:
-        obj = envelope("pilot", cell, s, n_eval, n_tune, resolved,
-                       dict(note="pilot draw, excluded from the main analysis"))
+        obj = envelope(
+            "pilot",
+            cell,
+            s,
+            n_eval,
+            n_tune,
+            resolved,
+            dict(note="pilot draw, excluded from the main analysis"),
+        )
         write_once(str(pilot_dir / f"pilot_{env_name}_{flow_name}_s{s}.json"), obj)
     write_once(str(pilot_dir / "pilot_summary.json"), summary)
     return summary
@@ -165,9 +184,9 @@ def main(argv: list[str] | None = None) -> None:
     ap.add_argument("--n-tune", type=int, default=10_000)
     ap.add_argument("--out", default="results")
     args = ap.parse_args(argv)
-    summary = run_pilot(args.cell, args.seeds, args.n_eval, args.n_tune,
-                        args.out, cw=args.cw)
+    summary = run_pilot(args.cell, args.seeds, args.n_eval, args.n_tune, args.out, cw=args.cw)
     import json
+
     print(json.dumps(summary["decisions"], indent=1))
 
 

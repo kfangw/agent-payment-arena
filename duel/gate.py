@@ -11,6 +11,7 @@ constants are declared once, with sources, before anything is run.
 
 Run:  python -m duel.gate            (writes gate_report.json)
 """
+
 from __future__ import annotations
 
 import json
@@ -26,7 +27,7 @@ PI_GRID = np.linspace(0.0, 1.0, 501)
 V_GRID = np.geomspace(0.5, 2000.0, 61)
 
 # c_w candidates: sustained marginal delay-cost rate, declared per second
-CW_PER_S = dict(high=1e-3, mid=1e-4, low=1e-5)   # 0.1%/s, 0.01%/s, 0.001%/s
+CW_PER_S = dict(high=1e-3, mid=1e-4, low=1e-5)  # 0.1%/s, 0.01%/s, 0.001%/s
 
 # answer channel (push/mobile draft): q = 0.75 within tau = 10 min
 TAU_S = 600.0
@@ -46,26 +47,47 @@ def envs_for(cw_key, m=0.35, h=1.0, C=0.5):
     tau, rho = rho_for(tick)
     cw = CW_PER_S[cw_key] * tick
     f_fast = np.array([0.005] + [1e-6] * 39)
-    out['E-fast'] = ('chain', Channel(f=f_fast, m=m, h=h, C=C, cw=cw,
-                                      tau=tau, pmf_h=_geom(rho, tau)), rho)
+    out["E-fast"] = (
+        "chain",
+        Channel(f=f_fast, m=m, h=h, C=C, cw=cw, tau=tau, pmf_h=_geom(rho, tau)),
+        rho,
+    )
     # E-slow: depth-decaying hazard chain (fallback shape)
     f_slow = 0.06 * 0.5 ** np.arange(8)
-    out['E-slow'] = ('chain', Channel(f=f_slow, m=m, h=h, C=C, cw=cw,
-                                      tau=tau, pmf_h=_geom(rho, tau)), rho)
+    out["E-slow"] = (
+        "chain",
+        Channel(f=f_slow, m=m, h=h, C=C, cw=cw, tau=tau, pmf_h=_geom(rho, tau)),
+        rho,
+    )
     # E-slow-deep: the same decaying-hazard chain carried to a deeper
     # settlement horizon (12 stages) so the watch value that peaks where the
     # hazard crosses c_w falls inside the chain rather than at its end.
     f_slow_deep = 0.06 * 0.5 ** np.arange(12)
-    out['E-slow-deep'] = ('chain', Channel(f=f_slow_deep, m=m, h=h, C=C, cw=cw,
-                                           tau=tau, pmf_h=_geom(rho, tau)), rho)
+    out["E-slow-deep"] = (
+        "chain",
+        Channel(f=f_slow_deep, m=m, h=h, C=C, cw=cw, tau=tau, pmf_h=_geom(rho, tau)),
+        rho,
+    )
     # E-outage: coarse tick 60 s
     tick = 60.0
     tau_o, rho_o = rho_for(tick)
     cw_o = CW_PER_S[cw_key] * tick
-    out['E-outage'] = ('outage', OutageEnv(
-        f=np.array([0.005] + [3e-5] * 16), m=m, h=h, C=C, cw=cw_o,
-        tau=tau_o, H=30, rho=rho_o,
-        p01=2.0 / (30 * 24 * 60), p10=1.0 / 60.0), rho_o)
+    out["E-outage"] = (
+        "outage",
+        OutageEnv(
+            f=np.array([0.005] + [3e-5] * 16),
+            m=m,
+            h=h,
+            C=C,
+            cw=cw_o,
+            tau=tau_o,
+            H=30,
+            rho=rho_o,
+            p01=2.0 / (30 * 24 * 60),
+            p10=1.0 / 60.0,
+        ),
+        rho_o,
+    )
     return out
 
 
@@ -108,8 +130,7 @@ def maps_outage(env: OutageEnv):
 def _v_bins(v):
     iv = np.clip(np.searchsorted(V_GRID, v), 0, len(V_GRID) - 1)
     lo = np.maximum(iv - 1, 0)
-    pick_lo = (np.abs(np.log(V_GRID[lo]) - np.log(v))
-               < np.abs(np.log(V_GRID[iv]) - np.log(v)))
+    pick_lo = np.abs(np.log(V_GRID[lo]) - np.log(v)) < np.abs(np.log(V_GRID[iv]) - np.log(v))
     return np.where(pick_lo, lo, iv)
 
 
@@ -128,7 +149,7 @@ def flow_masses(init, v_any, w_any, v, pi0, p_out=None):
     return shares, float(v_any[iv, ip].mean()), float(w_any[iv, ip].mean())
 
 
-ACT_NAMES = ['grant', 'reject', 'verify', 'wait']
+ACT_NAMES = ["grant", "reject", "verify", "wait"]
 
 # Coverage thresholds (provisional): a cell is verify-ACTIVE when at
 # least 1% of its flow mass sits where verify is optimal somewhere, and
@@ -142,11 +163,11 @@ def run(n_flow=200_000, seed=20260822):
     flows = make_flows()
     samples = {fn: fl.sample(n_flow, rng) for fn, fl in flows.items()}
     report = {}
-    for cw_key in ('high', 'mid', 'low'):
+    for cw_key in ("high", "mid", "low"):
         envs = envs_for(cw_key)
         cells = {}
         for en, (kind, env, rho) in envs.items():
-            if kind == 'chain':
+            if kind == "chain":
                 init, v_any, w_any = maps_chain(env, rho)
                 p_out = None
             else:
@@ -157,34 +178,43 @@ def run(n_flow=200_000, seed=20260822):
                 sh, mv, mw = flow_masses(init, v_any, w_any, v, pi0, p_out)
                 cells[f"{en}x{fn}"] = dict(
                     {ACT_NAMES[a]: round(float(sh[a]), 5) for a in range(4)},
-                    verify_any=round(mv, 5), wait_any=round(mw, 5))
-        act = {c: m['verify_any'] >= ACTIVE_MIN for c, m in cells.items()}
-        dead = {c: m['verify_any'] <= DEAD_MAX for c, m in cells.items()}
-        n_active_slow = sum(act[c] for c in act
-                            if c.startswith(('E-outage', 'E-slow')))
+                    verify_any=round(mv, 5),
+                    wait_any=round(mw, 5),
+                )
+        act = {c: m["verify_any"] >= ACTIVE_MIN for c, m in cells.items()}
+        dead = {c: m["verify_any"] <= DEAD_MAX for c, m in cells.items()}
+        n_active_slow = sum(act[c] for c in act if c.startswith(("E-outage", "E-slow")))
         report[cw_key] = dict(
-            cw_per_s=CW_PER_S[cw_key], cells=cells,
-            coverage=dict(active=[c for c, x in act.items() if x],
-                          dead=[c for c, x in dead.items() if x],
-                          active_outage_slow=n_active_slow,
-                          passes=(n_active_slow >= 2 and any(dead.values())
-                                  and any(act.values()))))
+            cw_per_s=CW_PER_S[cw_key],
+            cells=cells,
+            coverage=dict(
+                active=[c for c, x in act.items() if x],
+                dead=[c for c, x in dead.items() if x],
+                active_outage_slow=n_active_slow,
+                passes=(n_active_slow >= 2 and any(dead.values()) and any(act.values())),
+            ),
+        )
     return report
 
 
 def main():
     report = run()
-    with open('gate_report.json', 'w') as fh:
+    with open("gate_report.json", "w") as fh:
         json.dump(report, fh, indent=1)
     for k, r in report.items():
-        cov = r['coverage']
-        print(f"\n== cw = {r['cw_per_s']:.0e}/s ({k}) "
-              f"passes={cov['passes']} active(outage/slow)={cov['active_outage_slow']}")
-        for c, m in r['cells'].items():
-            print(f"  {c:16s} " + "  ".join(f"{a}={m[a]:.3f}" for a in ACT_NAMES)
-                  + f"  | any: verify={m['verify_any']:.3f} wait={m['wait_any']:.3f}")
+        cov = r["coverage"]
+        print(
+            f"\n== cw = {r['cw_per_s']:.0e}/s ({k}) "
+            f"passes={cov['passes']} active(outage/slow)={cov['active_outage_slow']}"
+        )
+        for c, m in r["cells"].items():
+            print(
+                f"  {c:16s} "
+                + "  ".join(f"{a}={m[a]:.3f}" for a in ACT_NAMES)
+                + f"  | any: verify={m['verify_any']:.3f} wait={m['wait_any']:.3f}"
+            )
     print("\nwrote gate_report.json")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

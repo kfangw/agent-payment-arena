@@ -8,6 +8,7 @@ denominator rule.  It refuses to run on fewer than the nine cells.
 
 Run:  python -m duel.aggregate --results results --out tables
 """
+
 from __future__ import annotations
 
 import argparse
@@ -40,13 +41,11 @@ def load_cells(results_dir: str) -> dict:
             continue
         cell = env["cell"]
         pay = env["payload"]
-        rec = cells.setdefault(cell, dict(sums={}, counts=[], exp_num=0.0,
-                                          exp_den=0.0, files=0))
+        rec = cells.setdefault(cell, dict(sums={}, counts=[], exp_num=0.0, exp_den=0.0, files=0))
         counts = np.asarray(pay["block_counts"], dtype=float)
         rec["counts"].append(counts)
         for name, obj in canon_keys(pay["policies"]).items():
-            rec["sums"].setdefault(name, []).append(
-                np.asarray(obj["block_sums"], dtype=float))
+            rec["sums"].setdefault(name, []).append(np.asarray(obj["block_sums"], dtype=float))
         tot = float(counts.sum())
         rec["exp_num"] += pay["mean_exposure"] * tot
         rec["exp_den"] += tot
@@ -68,8 +67,15 @@ def _compare(rec: dict, a: str, b: str, seed: int) -> dict:
     lo, hi = boot_ci(diff, counts, seed=seed)
     p = perm_p(diff, counts, seed=seed + 1)
     u = units(mean, rec["mean_exposure"])
-    return dict(minuend=a, subtrahend=b, mean=mean, ci95=[lo, hi],
-                p_raw=p, per_1000=u["per_1000"], bp=u["bp"])
+    return dict(
+        minuend=a,
+        subtrahend=b,
+        mean=mean,
+        ci95=[lo, hi],
+        p_raw=p,
+        per_1000=u["per_1000"],
+        bp=u["bp"],
+    )
 
 
 def analyze(cells: dict, eps: float) -> dict:
@@ -89,14 +95,13 @@ def analyze(cells: dict, eps: float) -> dict:
         conf_p.append(conf["p_raw"])
         means = {k: ratio_mean(v, rec["counts"]) for k, v in rec["sums"].items()}
         per_cell[cell] = dict(
-            means=means, mean_exposure=rec["mean_exposure"],
-            n_episodes=rec["n_episodes"], confirmatory=conf,
-            sub1=[_compare(rec, x, y, seed + 2 + 2 * j)
-                  for j, (x, y) in enumerate(SUB1)],
-            sub2=[_compare(rec, x, y, seed + 20 + 2 * j)
-                  for j, (x, y) in enumerate(SUB2)],
-            appendix=[_compare(rec, x, y, seed + 30 + 2 * j)
-                      for j, (x, y) in enumerate(APPENDIX)],
+            means=means,
+            mean_exposure=rec["mean_exposure"],
+            n_episodes=rec["n_episodes"],
+            confirmatory=conf,
+            sub1=[_compare(rec, x, y, seed + 2 + 2 * j) for j, (x, y) in enumerate(SUB1)],
+            sub2=[_compare(rec, x, y, seed + 20 + 2 * j) for j, (x, y) in enumerate(SUB2)],
+            appendix=[_compare(rec, x, y, seed + 30 + 2 * j) for j, (x, y) in enumerate(APPENDIX)],
         )
     p_holm = holm(conf_p)
     for cell, ph in zip(NINE_CELLS, p_holm):
@@ -115,9 +120,12 @@ def render_md(summary: dict) -> str:
     """Three-tier markdown tables under the denominator rule (spec 3.7)."""
     eps = summary["eps"]
     lines = [f"# Confirmatory comparison (eps = {eps} $/payment)", ""]
-    lines += ["## Main table (advantage = A - B1, dollars per 1000)", "",
-              "| cell | A | B1 | adv/1000 | ci95/1000 | p_holm | verdict |",
-              "|---|---|---|---|---|---|---|"]
+    lines += [
+        "## Main table (advantage = A - B1, dollars per 1000)",
+        "",
+        "| cell | A | B1 | adv/1000 | ci95/1000 | p_holm | verdict |",
+        "|---|---|---|---|---|---|---|",
+    ]
     for cell in NINE_CELLS:
         c = summary["cells"][cell]
         m = c["means"]
@@ -126,25 +134,39 @@ def render_md(summary: dict) -> str:
         lines.append(
             f"| {cell} | {_fmt(m['A'])} | {_fmt(m['B1'])} "
             f"| {_fmt(conf['per_1000'])} | [{_fmt(ci[0])}, {_fmt(ci[1])}] "
-            f"| {_fmt(conf['p_holm'], 4)} | {conf['verdict']} |")
+            f"| {_fmt(conf['p_holm'], 4)} | {conf['verdict']} |"
+        )
 
-    lines += ["", "## Subtable 1 (tuned B family and eliminated A family)",
-              "", "| cell | A-B2/1000 | A-B3/1000 | A-A_noV/1000 | A-A_noW/1000 |",
-              "|---|---|---|---|---|"]
+    lines += [
+        "",
+        "## Subtable 1 (tuned B family and eliminated A family)",
+        "",
+        "| cell | A-B2/1000 | A-B3/1000 | A-A_noV/1000 | A-A_noW/1000 |",
+        "|---|---|---|---|---|",
+    ]
     for cell in NINE_CELLS:
         cols = [f"{r['per_1000']:.3f}" for r in summary["cells"][cell]["sub1"]]
         lines.append(f"| {cell} | " + " | ".join(cols) + " |")
 
-    lines += ["", "## Subtable 2 (identification loss, A_full - A, per 1000)", "",
-              "| cell | A_full-A/1000 | ci95/1000 |", "|---|---|---|"]
+    lines += [
+        "",
+        "## Subtable 2 (identification loss, A_full - A, per 1000)",
+        "",
+        "| cell | A_full-A/1000 | ci95/1000 |",
+        "|---|---|---|",
+    ]
     for cell in NINE_CELLS:
         r = summary["cells"][cell]["sub2"][0]
         ci = [r["ci95"][0] * 1000, r["ci95"][1] * 1000]
-        lines.append(f"| {cell} | {_fmt(r['per_1000'])} "
-                     f"| [{_fmt(ci[0])}, {_fmt(ci[1])}] |")
+        lines.append(f"| {cell} | {_fmt(r['per_1000'])} | [{_fmt(ci[0])}, {_fmt(ci[1])}] |")
 
-    lines += ["", "## Appendix (C family, denominator A1, per 1000)", "",
-              "| cell | A_full-C1 | A_full-C2 | A_full-C3 | A_full-C4 |", "|---|---|---|---|---|"]
+    lines += [
+        "",
+        "## Appendix (C family, denominator A1, per 1000)",
+        "",
+        "| cell | A_full-C1 | A_full-C2 | A_full-C3 | A_full-C4 |",
+        "|---|---|---|---|---|",
+    ]
     for cell in NINE_CELLS:
         cols = [f"{r['per_1000']:.3f}" for r in summary["cells"][cell]["appendix"]]
         lines.append(f"| {cell} | " + " | ".join(cols) + " |")
@@ -153,15 +175,19 @@ def render_md(summary: dict) -> str:
 
 def render_tex(summary: dict) -> str:
     """The main table as a tex tabular; the same numbers as the markdown."""
-    lines = [r"\begin{tabular}{lrrrrl}", r"\hline",
-             r"cell & A & B1 & adv/1000 & $p_{\mathrm{holm}}$ & verdict \\",
-             r"\hline"]
+    lines = [
+        r"\begin{tabular}{lrrrrl}",
+        r"\hline",
+        r"cell & A & B1 & adv/1000 & $p_{\mathrm{holm}}$ & verdict \\",
+        r"\hline",
+    ]
     for cell in NINE_CELLS:
         c = summary["cells"][cell]
         m, conf = c["means"], c["confirmatory"]
         lines.append(
             f"{cell} & {m['A']:.3f} & {m['B1']:.3f} & {conf['per_1000']:.3f} "
-            f"& {conf['p_holm']:.4f} & {conf['verdict']} \\\\")
+            f"& {conf['p_holm']:.4f} & {conf['verdict']} \\\\"
+        )
     lines += [r"\hline", r"\end{tabular}"]
     return "\n".join(lines) + "\n"
 
@@ -176,11 +202,10 @@ def main(argv: list[str] | None = None) -> None:
     cells = load_cells(args.results)
     summary = analyze(cells, args.eps)
     out = Path(args.out)
-    write_once(str(out / "summary.json"), summary)   # refuses to overwrite
+    write_once(str(out / "summary.json"), summary)  # refuses to overwrite
     (out / "tables.md").write_text(render_md(summary))
     (out / "tables.tex").write_text(render_tex(summary))
-    print(f"aggregated {summary['n_cells']} cells -> {out}/summary.json, "
-          f"tables.md, tables.tex")
+    print(f"aggregated {summary['n_cells']} cells -> {out}/summary.json, tables.md, tables.tex")
 
 
 if __name__ == "__main__":

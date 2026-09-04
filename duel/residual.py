@@ -21,6 +21,7 @@ region of the state space rather than stored per payment.
 
     python -m duel.residual --env E-outage --flow F2 --seed 8 --out results_r4
 """
+
 from __future__ import annotations
 
 import argparse
@@ -34,9 +35,16 @@ from .core import rho_hat_from_q
 from .gate import CW_PER_S, envs_for
 from .flows import make_flows
 from .naming import canon_keys
-from .outage import (CompiledOutagePolicy, OutageEnv, PI_GRID_OUTAGE,
-                     compile_outage, draw_outage_batch, replay_outage,
-                     survival, window_AD)
+from .outage import (
+    CompiledOutagePolicy,
+    OutageEnv,
+    PI_GRID_OUTAGE,
+    compile_outage,
+    draw_outage_batch,
+    replay_outage,
+    survival,
+    window_AD,
+)
 from .report import envelope, write_once
 
 PPE = 50
@@ -60,18 +68,29 @@ def _compile_a2(env: OutageEnv, tune_d):
     policy, the stacked label array, and the exercise sign map."""
     q_hat = float((tune_d.t_ans <= env.tau).mean())
     rho_hat = rho_hat_from_q(q_hat, env.tau)
-    env_hat = OutageEnv(f=env.f, m=env.m, h=env.h, C=env.C, cw=env.cw,
-                        tau=env.tau, H=env.H, rho=rho_hat, p01=env.p01,
-                        p10=env.p10, tick_seconds=env.tick_seconds)
+    env_hat = OutageEnv(
+        f=env.f,
+        m=env.m,
+        h=env.h,
+        C=env.C,
+        cw=env.cw,
+        tau=env.tau,
+        H=env.H,
+        rho=rho_hat,
+        p01=env.p01,
+        p10=env.p10,
+        tick_seconds=env.tick_seconds,
+    )
     a2 = compile_outage(env_hat, "A2")
     _, _, ex = window_AD(env, survival(env))
     ex_pos = ex > 0.0
-    arr = np.stack(a2.tables).astype(np.int8)     # (iv, i, l, r, ip)
+    arr = np.stack(a2.tables).astype(np.int8)  # (iv, i, l, r, ip)
     return a2, arr, ex_pos, dict(q_hat=q_hat, rho_hat=rho_hat)
 
 
 class _Recorder:
     """Wrap the compiled A to count (iv, i, l, r, ip) queries into N."""
+
     def __init__(self, a2: CompiledOutagePolicy, N):
         self.tabs = a2.tables
         self.logv = np.log(a2.v_grid)
@@ -97,13 +116,11 @@ def _marginalize(arr, N, hidden):
     broadcast back to the full shape."""
     if not hidden:
         return arr
-    wsum = np.stack([(N * (arr == a)).sum(axis=hidden, keepdims=True)
-                     for a in range(4)], axis=0)
+    wsum = np.stack([(N * (arr == a)).sum(axis=hidden, keepdims=True) for a in range(4)], axis=0)
     marg = wsum.argmax(axis=0)
     seen = wsum.sum(axis=0) > 0
     if not bool(seen.all()):
-        usum = np.stack([(arr == a).sum(axis=hidden, keepdims=True)
-                         for a in range(4)], axis=0)
+        usum = np.stack([(arr == a).sum(axis=hidden, keepdims=True) for a in range(4)], axis=0)
         marg = np.where(seen, marg, usum.argmax(axis=0))
     return np.broadcast_to(marg, arr.shape).astype(np.int8).copy()
 
@@ -114,8 +131,7 @@ def _policy_from_arr(name, v_grid, arr):
 
 # --------------------------------------------------------------- binning
 def _v_bins(v, edges):
-    return np.clip(np.digitize(np.log(np.maximum(v, 1e-12)), edges), 0,
-                   len(edges)).astype(np.int64)
+    return np.clip(np.digitize(np.log(np.maximum(v, 1e-12)), edges), 0, len(edges)).astype(np.int64)
 
 
 def _nearest_iv(v, v_grid):
@@ -138,9 +154,9 @@ def _arrival_actions_A(arr, v, pi0, r0, v_grid, H):
 
 def _arrival_actions_B3(pi0, a, b):
     """B3's arrival action: grant<a, reject>b, else verify."""
-    out = np.full(len(pi0), 2, dtype=np.int8)      # VERIFY
-    out[pi0 < a] = 0                               # GRANT
-    out[pi0 > b] = 1                               # REJECT
+    out = np.full(len(pi0), 2, dtype=np.int8)  # VERIFY
+    out[pi0 < a] = 0  # GRANT
+    out[pi0 > b] = 1  # REJECT
     return out
 
 
@@ -159,12 +175,11 @@ def run_cell(env_name, flow_name, seed, n_tune, n_eval, results, results_grid):
     counts = np.bincount(episodes).astype(float)
 
     # base A2 block sums (grid-independent) and n=161 B3 from S1's b4_gridN
-    base = json.load(open(Path(results) /
-                          f"duel_{env_name}_{flow_name}_mid_s{seed}.json"))
-    a2_base = np.asarray(canon_keys(base["payload"]["policies"])["A"]["block_sums"],
-                         dtype=float)
-    gridf = json.load(open(Path(results_grid) /
-                           f"b4_gridN_{env_name}_{flow_name}_mid_s{seed}.json"))
+    base = json.load(open(Path(results) / f"duel_{env_name}_{flow_name}_mid_s{seed}.json"))
+    a2_base = np.asarray(canon_keys(base["payload"]["policies"])["A"]["block_sums"], dtype=float)
+    gridf = json.load(
+        open(Path(results_grid) / f"b4_gridN_{env_name}_{flow_name}_mid_s{seed}.json")
+    )
     b3a, b3b = gridf["payload"]["b4"]["a"], gridf["payload"]["b4"]["b"]
 
     # R4a: replay every ablation on eval
@@ -182,12 +197,10 @@ def run_cell(env_name, flow_name, seed, n_tune, n_eval, results, results_grid):
     a_repro_gap = float(np.abs(block["A"] - a2_base).max())
 
     # R4b: arrival-state disagreement map, aggregated by cell
-    v_edges = np.quantile(np.log(np.maximum(eval_d.v, 1e-12)),
-                          np.linspace(0, 1, 9)[1:-1])
+    v_edges = np.quantile(np.log(np.maximum(eval_d.v, 1e-12)), np.linspace(0, 1, 9)[1:-1])
     pi_edges = np.quantile(eval_d.pi0, np.linspace(0, 1, 21)[1:-1])
     r0 = eval_d.paths[:, 0].astype(np.int64)
-    vb = np.clip(np.digitize(np.log(np.maximum(eval_d.v, 1e-12)), v_edges),
-                 0, 7).astype(np.int64)
+    vb = np.clip(np.digitize(np.log(np.maximum(eval_d.v, 1e-12)), v_edges), 0, 7).astype(np.int64)
     pb = np.clip(np.digitize(eval_d.pi0, pi_edges), 0, 19).astype(np.int64)
     aA = _arrival_actions_A(arr, eval_d.v, eval_d.pi0, r0, a2.v_grid, env.H)
     aB = _arrival_actions_B3(eval_d.pi0, b3a, b3b)
@@ -201,46 +214,84 @@ def run_cell(env_name, flow_name, seed, n_tune, n_eval, results, results_grid):
     cell_pB = np.bincount(inv, weights=pay_b3)
     # decode keys
     kk = uniq.copy()
-    d_aB = kk % 4; kk //= 4
-    d_aA = kk % 4; kk //= 4
-    d_pb = kk % 20; kk //= 20
-    d_vb = kk % 8; kk //= 8
+    d_aB = kk % 4
+    kk //= 4
+    d_aA = kk % 4
+    kk //= 4
+    d_pb = kk % 20
+    kk //= 20
+    d_vb = kk % 8
+    kk //= 8
     d_r0 = kk
-    cells = [dict(r=int(d_r0[j]), v_bin=int(d_vb[j]), pi_bin=int(d_pb[j]),
-                  a_A=int(d_aA[j]), a_B3=int(d_aB[j]), n=int(cell_cnt[j]),
-                  sum_diff=float(cell_diff[j]), sum_A=float(cell_pA[j]),
-                  sum_B3=float(cell_pB[j])) for j in range(len(uniq))]
+    cells = [
+        dict(
+            r=int(d_r0[j]),
+            v_bin=int(d_vb[j]),
+            pi_bin=int(d_pb[j]),
+            a_A=int(d_aA[j]),
+            a_B3=int(d_aB[j]),
+            n=int(cell_cnt[j]),
+            sum_diff=float(cell_diff[j]),
+            sum_A=float(cell_pA[j]),
+            sum_B3=float(cell_pB[j]),
+        )
+        for j in range(len(uniq))
+    ]
     disagree = aA != aB
     diag_gap = float(abs(cell_diff.sum() - diff.sum()))
 
     payload = dict(
-        cell=f"{env_name} x {flow_name}", ablations=list(ABLATIONS),
+        cell=f"{env_name} x {flow_name}",
+        ablations=list(ABLATIONS),
         block_sums={k: v for k, v in block.items()},
-        block_counts=counts, mean_exposure=float(np.mean(eval_d.v)),
-        a2_base_repro_gap=a_repro_gap, b3_params=[b3a, b3b], calib=calib,
-        r4b=dict(cells=cells, diag_gap=diag_gap,
-                 disagree_mass=float(disagree.mean()),
-                 disagree_resid=float(diff[disagree].sum()),
-                 total_resid=float(diff.sum()),
-                 v_edges=[float(x) for x in v_edges],
-                 pi_edges=[float(x) for x in pi_edges]),
+        block_counts=counts,
+        mean_exposure=float(np.mean(eval_d.v)),
+        a2_base_repro_gap=a_repro_gap,
+        b3_params=[b3a, b3b],
+        calib=calib,
+        r4b=dict(
+            cells=cells,
+            diag_gap=diag_gap,
+            disagree_mass=float(disagree.mean()),
+            disagree_resid=float(diff[disagree].sum()),
+            total_resid=float(diff.sum()),
+            v_edges=[float(x) for x in v_edges],
+            pi_edges=[float(x) for x in pi_edges],
+        ),
     )
     return payload
 
 
 def _resolved(env_name, flow_name, env, ns=161):
-    env_d = dict(kind="outage", f=env.f, m=env.m, h=env.h, C=env.C, cw=env.cw,
-                 tau=env.tau, H=env.H, rho=env.rho, p01=env.p01, p10=env.p10,
-                 tick_seconds=env.tick_seconds)
-    return dict(env_name=env_name, cell=f"{env_name}x{flow_name}",
-                flow=flow_name, cw_key="mid", cw_per_s=CW_PER_S["mid"],
-                env=env_d, ablations=list(ABLATIONS), b3_grid_n=ns)
+    env_d = dict(
+        kind="outage",
+        f=env.f,
+        m=env.m,
+        h=env.h,
+        C=env.C,
+        cw=env.cw,
+        tau=env.tau,
+        H=env.H,
+        rho=env.rho,
+        p01=env.p01,
+        p10=env.p10,
+        tick_seconds=env.tick_seconds,
+    )
+    return dict(
+        env_name=env_name,
+        cell=f"{env_name}x{flow_name}",
+        flow=flow_name,
+        cw_key="mid",
+        cw_per_s=CW_PER_S["mid"],
+        env=env_d,
+        ablations=list(ABLATIONS),
+        b3_grid_n=ns,
+    )
 
 
 def main(argv=None):
     ap = argparse.ArgumentParser()
-    ap.add_argument("--env", default="E-outage",
-                    choices=["E-fast", "E-outage", "E-slow"])
+    ap.add_argument("--env", default="E-outage", choices=["E-fast", "E-outage", "E-slow"])
     ap.add_argument("--flow", required=True, choices=["F1", "F2", "F3"])
     ap.add_argument("--n-eval", type=int, default=5_663_400)
     ap.add_argument("--n-tune", type=int, default=200_000)
@@ -251,18 +302,28 @@ def main(argv=None):
     args = ap.parse_args(argv)
 
     kind, env, rho = envs_for("mid")[args.env]
-    payload = run_cell(args.env, args.flow, args.seed, args.n_tune,
-                       args.n_eval, args.results, args.results_grid)
+    payload = run_cell(
+        args.env, args.flow, args.seed, args.n_tune, args.n_eval, args.results, args.results_grid
+    )
     if payload["a2_base_repro_gap"] > 1e-9:
-        raise SystemExit(f"A reproduction failed: gap "
-                         f"{payload['a2_base_repro_gap']:.3e} (lookup path changed)")
+        raise SystemExit(
+            f"A reproduction failed: gap {payload['a2_base_repro_gap']:.3e} (lookup path changed)"
+        )
     if payload["r4b"]["diag_gap"] > 1e-6:
-        raise SystemExit(f"R4b instrumentation gap {payload['r4b']['diag_gap']:.3e} "
-                         f"(cell sums disagree with replay)")
+        raise SystemExit(
+            f"R4b instrumentation gap {payload['r4b']['diag_gap']:.3e} "
+            f"(cell sums disagree with replay)"
+        )
 
-    obj = envelope("residual", f"{args.env} x {args.flow}", args.seed,
-                   args.n_eval, args.n_tune, _resolved(args.env, args.flow, env),
-                   payload)
+    obj = envelope(
+        "residual",
+        f"{args.env} x {args.flow}",
+        args.seed,
+        args.n_eval,
+        args.n_tune,
+        _resolved(args.env, args.flow, env),
+        payload,
+    )
     tag = f"{args.env}_{args.flow}_mid_s{args.seed}"
     path = str(Path(args.out) / f"r4_{tag}.json")
     write_once(path, obj)
@@ -270,13 +331,21 @@ def main(argv=None):
     cnt = payload["block_counts"]
     tot = np.sum(cnt)
     amb3 = (b["A"] - b["B3"]).sum() / tot
-    print(json.dumps(dict(
-        cell=payload["cell"], a_repro_gap=payload["a2_base_repro_gap"],
-        diag_gap=payload["r4b"]["diag_gap"],
-        A_minus_B3=round(amb3, 6),
-        losses={k: round(float((b["A"] - b[k]).sum() / tot), 6)
-                for k in ABLATIONS if k != "A"},
-        disagree_mass=round(payload["r4b"]["disagree_mass"], 4)), indent=1))
+    print(
+        json.dumps(
+            dict(
+                cell=payload["cell"],
+                a_repro_gap=payload["a2_base_repro_gap"],
+                diag_gap=payload["r4b"]["diag_gap"],
+                A_minus_B3=round(amb3, 6),
+                losses={
+                    k: round(float((b["A"] - b[k]).sum() / tot), 6) for k in ABLATIONS if k != "A"
+                },
+                disagree_mass=round(payload["r4b"]["disagree_mass"], 4),
+            ),
+            indent=1,
+        )
+    )
     print(f"wrote {path}")
 
 

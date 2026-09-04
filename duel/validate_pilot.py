@@ -2,6 +2,7 @@
 
 Run:  python -m duel.validate_pilot
 """
+
 from __future__ import annotations
 
 import tempfile
@@ -11,7 +12,7 @@ import numpy as np
 
 from .aggregate import load_cells
 from .design import band_of, in_band
-from .pilot import (episode_sd, pick_K, run_pilot, sample_size)
+from .pilot import episode_sd, pick_K, run_pilot, sample_size
 from .stats import boot_ci
 
 
@@ -46,8 +47,7 @@ def pick_K_bends() -> None:
 def a7_2_aggregator_skips_pilot() -> None:
     """A7-2: run_pilot writes under pilot/, which the aggregator ignores."""
     with tempfile.TemporaryDirectory() as d:
-        summary = run_pilot("E-outage x F1", [1000, 1001], 3_000, 2_000, d,
-                            k_sweep=False)
+        summary = run_pilot("E-outage x F1", [1000, 1001], 3_000, 2_000, d, k_sweep=False)
         pilot_dir = Path(d) / "pilot"
         assert (pilot_dir / "pilot_summary.json").exists()
         assert list(pilot_dir.glob("pilot_*_s1000.json"))
@@ -56,8 +56,10 @@ def a7_2_aggregator_skips_pilot() -> None:
         assert cells == {}, f"pilot files leaked into aggregator input: {cells}"
         dec = summary["decisions"]
         assert dec["n_eval"] > 0 and dec["block_len"] >= 1
-        print(f"A7-2 ok: pilot under pilot/, aggregator sees 0 cells; "
-              f"block_len={dec['block_len']} n_eval={dec['n_eval']}")
+        print(
+            f"A7-2 ok: pilot under pilot/, aggregator sees 0 cells; "
+            f"block_len={dec['block_len']} n_eval={dec['n_eval']}"
+        )
 
 
 def a7_3_seed_bands_disjoint() -> None:
@@ -75,6 +77,7 @@ def a7_3_seed_bands_disjoint() -> None:
     assert band_of(1500) == "pilot" and band_of(9001) == "verify"
     # pilot band shares no seed with exp1 or exp2
     from .design import SEED_BANDS
+
     p = set(range(*(SEED_BANDS["pilot"][0], SEED_BANDS["pilot"][1] + 1)))
     e1 = set(range(*(SEED_BANDS["exp1"][0], SEED_BANDS["exp1"][1] + 1)))
     e2 = set(range(*(SEED_BANDS["exp2"][0], SEED_BANDS["exp2"][1] + 1)))

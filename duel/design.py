@@ -7,6 +7,7 @@ the exposure scale, so it is known as soon as the flow is fixed, and the
 pilot only sizes the sample that resolves it.  Keeping the anchor here
 means a single place decides it for every consumer.
 """
+
 from __future__ import annotations
 
 # Non-overlapping seed bands (spec 1.2).  Pilot data never enters the

@@ -5,6 +5,7 @@ move answer times monotonically as the response bias grows.
 
 Run:  python -m duel.validate_crn
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -23,11 +24,12 @@ def draw_batch_distribution_preserved() -> None:
     the inverse-CDF refactor did not change the distribution."""
     _, ch, rho = envs_for("mid")["E-slow"]
     from .flows import make_flows
+
     flow = make_flows()["F1"]
     d, u = draw_batch_crn(ch, flow, 200_000, np.random.default_rng(9001))
     assert u.shape == (200_000,)
     q_emp = float((d.t_ans <= ch.tau).mean())
-    q_target = float(ch.pmf_h.sum())            # honest-intent within-deadline mass
+    q_target = float(ch.pmf_h.sum())  # honest-intent within-deadline mass
     # most payments are honest; empirical q close to the honest target
     assert abs(q_emp - q_target) < 0.02, (q_emp, q_target)
     print(f"draw_batch ok: within-deadline rate {q_emp:.3f} ~ target {q_target:.3f}")
@@ -38,6 +40,7 @@ def a4_2_chain_monotone() -> None:
     time changes grows monotonically with the level spacing."""
     _, ch, rho = envs_for("mid")["E-slow"]
     from .flows import make_flows
+
     flow = make_flows()["F1"]
     d, u_ans = draw_batch_crn(ch, flow, 200_000, np.random.default_rng(9002))
     tau = ch.tau
@@ -54,8 +57,7 @@ def a4_2_chain_monotone() -> None:
         else:
             mis = d.theta == 1
             frac_changed.append(float((t[mis] != base[mis]).mean()))
-    assert all(x <= y + 1e-9 for x, y in zip(frac_changed, frac_changed[1:])), \
-        frac_changed
+    assert all(x <= y + 1e-9 for x, y in zip(frac_changed, frac_changed[1:])), frac_changed
     # honest answers never move (only misuse intent is perturbed)
     rho_m = min(rho * 2.0, 1.0)
     t2 = retime_answers(d.theta, u_ans, ch.pmf_h, _geom(rho_m, tau), tau)
@@ -69,9 +71,9 @@ def a4_2_outage_monotone() -> None:
     and identity at lambda = 1."""
     _, env, rho = envs_for("mid")["E-outage"]
     from .flows import make_flows
+
     flow = make_flows()["F1"]
-    d, u_ans = draw_outage_batch_crn(env, flow, 120_000,
-                                     np.random.default_rng(9003))
+    d, u_ans = draw_outage_batch_crn(env, flow, 120_000, np.random.default_rng(9003))
     base = retime_answers_geom(d.theta, u_ans, env.rho, env.rho)
     assert np.array_equal(base, d.t_ans), "lambda=1 must reproduce the base"
     frac = []

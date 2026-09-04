@@ -2,6 +2,7 @@
 
 Run:  python -m duel.validate_aggregate
 """
+
 from __future__ import annotations
 
 import json
@@ -26,9 +27,11 @@ def _write_cell(results: Path, cell: str, seed: int, advantage: float) -> None:
     base = {p: rng.standard_normal(n_ep) * per * 0.01 for p in POLICIES}
     base["A2"] = base["B1"] + advantage * per + rng.standard_normal(n_ep) * per * 0.002
     payload = dict(
-        cw="mid", block_counts=[int(c) for c in counts],
+        cw="mid",
+        block_counts=[int(c) for c in counts],
         policies={p: dict(block_sums=[float(x) for x in base[p]]) for p in POLICIES},
-        n_episodes=n_ep, mean_exposure=50.0,
+        n_episodes=n_ep,
+        mean_exposure=50.0,
         means={p: float(base[p].sum() / counts.sum()) for p in POLICIES},
         calib={},
     )
@@ -50,7 +53,7 @@ def full_nine_render() -> None:
         for cell in NINE_CELLS:
             c = summary["cells"][cell]["confirmatory"]
             assert "p_holm" in c and "verdict" in c
-            assert c["p_holm"] >= c["p_raw"] - 1e-12   # holm never shrinks p
+            assert c["p_holm"] >= c["p_raw"] - 1e-12  # holm never shrinks p
         md, tex = render_md(summary), render_tex(summary)
         assert "Main table" in md and "Subtable 1" in md and "Appendix" in md
         assert r"\begin{tabular}" in tex
@@ -64,7 +67,7 @@ def refuses_partial() -> None:
     """Fewer than nine cells refuses with the missing cells named."""
     with tempfile.TemporaryDirectory() as d:
         results = Path(d) / "results"
-        for i, cell in enumerate(NINE_CELLS[:-1]):     # drop one
+        for i, cell in enumerate(NINE_CELLS[:-1]):  # drop one
             _write_cell(results, cell, 2000 + i, advantage=0.004)
         cells = load_cells(str(results))
         try:
@@ -83,7 +86,7 @@ def excludes_pilot_dir() -> None:
         for i, cell in enumerate(NINE_CELLS):
             _write_cell(results, cell, 2000 + i, advantage=0.004)
         pilot = results / "pilot"
-        _write_cell(pilot, NINE_CELLS[0], 1000, advantage=99.0)   # pilot band
+        _write_cell(pilot, NINE_CELLS[0], 1000, advantage=99.0)  # pilot band
         cells = load_cells(str(results))
         # the pilot file (huge advantage) must not perturb the cell
         adv = summary_adv(cells, NINE_CELLS[0])
@@ -93,6 +96,7 @@ def excludes_pilot_dir() -> None:
 
 def summary_adv(cells: dict, cell: str) -> float:
     from .stats import ratio_mean
+
     rec = cells[cell]
     return ratio_mean(rec["sums"]["A2"] - rec["sums"]["B1"], rec["counts"])
 

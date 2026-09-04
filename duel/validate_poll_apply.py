@@ -2,6 +2,7 @@
 
 Run:  python -m duel.validate_poll_apply
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -11,8 +12,10 @@ from .poll_apply import N_FAST, fast_hazards, rewrite
 
 def _summary() -> dict:
     return dict(
-        reorgs=[dict(depth=1, count=0, blocks=40000, point=0.0, upper95=7.5e-5),
-                dict(depth=2, count=1, blocks=39000, point=2.6e-5, upper95=7.7e-5)],
+        reorgs=[
+            dict(depth=1, count=0, blocks=40000, point=0.0, upper95=7.5e-5),
+            dict(depth=2, count=1, blocks=39000, point=2.6e-5, upper95=7.7e-5),
+        ],
         regime=dict(tick_s=60.0, p01=1.3e-4, p10=1.0 / 55.0, source="observed"),
     )
 
@@ -33,10 +36,10 @@ def rewrite_replaces_and_compiles() -> None:
     with the E-fast array and regime rates changed exactly once each."""
     src = Path("duel/gate.py").read_text()
     out = rewrite(src, _summary())
-    assert "p01=0.00013" in out, out[out.index("p01="):out.index("p01=") + 20]
+    assert "p01=0.00013" in out, out[out.index("p01=") : out.index("p01=") + 20]
     assert "7.5e-05" in out
     assert out != src
-    compile(out, "gate_rewritten.py", "exec")     # still valid Python
+    compile(out, "gate_rewritten.py", "exec")  # still valid Python
     # idempotence guard: a second rewrite with the same summary is stable
     assert rewrite(out, _summary()) == out
     print("rewrite ok: new constants present, source compiles, stable")

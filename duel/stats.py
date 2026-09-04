@@ -8,6 +8,7 @@ bootstrap gives the interval (size), the sign-flip permutation gives the
 p value (significance), and Holm controls the family of confirmatory
 comparisons.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -19,8 +20,9 @@ def ratio_mean(block_sums: np.ndarray, block_counts: np.ndarray) -> float:
     return float(np.sum(block_sums) / np.sum(block_counts))
 
 
-def boot_ci(block_sums, block_counts, n_boot: int = 10_000, seed: int = 7,
-            level: float = 0.95) -> tuple[float, float]:
+def boot_ci(
+    block_sums, block_counts, n_boot: int = 10_000, seed: int = 7, level: float = 0.95
+) -> tuple[float, float]:
     """Percentile bootstrap CI of the paired mean, resampling by episode
     block.  block_sums holds per-episode diff sums."""
     sums = np.asarray(block_sums, dtype=float)
@@ -72,8 +74,7 @@ def holm(pvals: list[float]) -> list[float]:
     return adj
 
 
-def verdict(low: float, high: float, p_holm: float, eps: float,
-            alpha: float = 0.05) -> str:
+def verdict(low: float, high: float, p_holm: float, eps: float, alpha: float = 0.05) -> str:
     """One of superior / inferior / equivalent / undetermined (spec 3.5),
     tested in that priority order."""
     if low > 0 and p_holm < alpha:
@@ -88,5 +89,6 @@ def verdict(low: float, high: float, p_holm: float, eps: float,
 def units(mean_diff: float, mean_exposure: float) -> dict:
     """Advantage in the two reported units: dollars per 1000 payments and
     basis points of exposure."""
-    return dict(per_1000=mean_diff * 1000.0,
-                bp=(mean_diff / mean_exposure * 1e4) if mean_exposure else None)
+    return dict(
+        per_1000=mean_diff * 1000.0, bp=(mean_diff / mean_exposure * 1e4) if mean_exposure else None
+    )

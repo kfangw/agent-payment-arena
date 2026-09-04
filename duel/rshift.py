@@ -13,6 +13,7 @@ the decomposition is run on E-slow x F2 and E-outage x F2.
 
     python -m duel.rshift --cell "E-slow x F2" --seed 2004
 """
+
 from __future__ import annotations
 
 import argparse
@@ -49,30 +50,36 @@ def _chain_channels(ctx, level):
     av = compile_A(env2, "A2v", rho=ctx["rho_hat"], drop=(VERIFY,))
     aw = compile_A(env2, "A2w", rho=ctx["rho_hat"], drop=(WAIT,))
     _, b1, _ = tune(lambda t: B1(t, env2.h), ctx["grid"], env2, tune_d, ex)
-    return dict(A=replay(env2, eval_d, a2, ex),
-                AV=replay(env2, eval_d, av, ex),
-                AW=replay(env2, eval_d, aw, ex),
-                B1=replay(env2, eval_d, b1, ex), cw=env2.cw)
+    return dict(
+        A=replay(env2, eval_d, a2, ex),
+        AV=replay(env2, eval_d, av, ex),
+        AW=replay(env2, eval_d, aw, ex),
+        B1=replay(env2, eval_d, b1, ex),
+        cw=env2.cw,
+    )
 
 
 def _outage_channels(ctx, level):
     env, ex = ctx["env"], ctx["ex"]
     eval_d, tune_d = ctx["eval_d"], ctx["tune_d"]
     from .inject import _tune_outage_b1
+
     d_bar = abs(float(np.mean(env.f)) - env.cw)
     env2 = replace(env, cw=env.cw + level * d_bar)
     a2 = compile_outage(replace(env2, rho=ctx["rho_hat"]), "A2")
     av = compile_outage(replace(env2, rho=ctx["rho_hat"]), "A2v", drop=(VERIFY,))
     aw = compile_outage(replace(env2, rho=ctx["rho_hat"]), "A2w", drop=(WAIT,))
     b1 = _tune_outage_b1(env2, tune_d, ex, ctx["grid"])
-    return dict(A=replay_outage(env2, eval_d, a2, ex),
-                AV=replay_outage(env2, eval_d, av, ex),
-                AW=replay_outage(env2, eval_d, aw, ex),
-                B1=replay_outage(env2, eval_d, b1, ex), cw=env2.cw)
+    return dict(
+        A=replay_outage(env2, eval_d, a2, ex),
+        AV=replay_outage(env2, eval_d, av, ex),
+        AW=replay_outage(env2, eval_d, aw, ex),
+        B1=replay_outage(env2, eval_d, b1, ex),
+        cw=env2.cw,
+    )
 
 
-def run_channels(cell, seed, n_eval, n_tune, out_dir, cw="mid",
-                 levels=None, n_boot=2000):
+def run_channels(cell, seed, n_eval, n_tune, out_dir, cw="mid", levels=None, n_boot=2000):
     env_name, flow_name = parse_cell(cell)
     kind, env, rho = envs_for(cw)[env_name]
     flow = make_flows()[flow_name]
@@ -95,34 +102,40 @@ def run_channels(cell, seed, n_eval, n_tune, out_dir, cw="mid",
     for lv in levels:
         c = chan_fn(ctx, lv)
         # channel differences, per-payment, on shared draws
-        d_amv = c["A"] - c["AV"]        # A - A\V : asking / verify channel
-        d_amw = c["A"] - c["AW"]        # A - A\W : waiting channel
-        d_amb1 = c["A"] - c["B1"]       # advantage curve (cross-check)
+        d_amv = c["A"] - c["AV"]  # A - A\V : asking / verify channel
+        d_amw = c["A"] - c["AW"]  # A - A\W : waiting channel
+        d_amb1 = c["A"] - c["B1"]  # advantage curve (cross-check)
         s_a = _blocks(c["A"], episodes, uniq)
         s_amv = _blocks(d_amv, episodes, uniq)
         s_amw = _blocks(d_amw, episodes, uniq)
         s_amb1 = _blocks(d_amb1, episodes, uniq)
         row = dict(
-            level=lv, cw=float(c["cw"]),
+            level=lv,
+            cw=float(c["cw"]),
             A=ratio_mean(s_a, counts),
-            A_no_V=float(c["AV"].mean()), A_no_W=float(c["AW"].mean()),
+            A_no_V=float(c["AV"].mean()),
+            A_no_W=float(c["AW"].mean()),
             B1=float(c["B1"].mean()),
-            asking=ratio_mean(s_amv, counts),      # A - A\V
-            waiting=ratio_mean(s_amw, counts),      # A - A\W
-            advantage=ratio_mean(s_amb1, counts),   # A - B1
+            asking=ratio_mean(s_amv, counts),  # A - A\V
+            waiting=ratio_mean(s_amw, counts),  # A - A\W
+            advantage=ratio_mean(s_amb1, counts),  # A - B1
         )
-        row["asking_ci95"] = list(boot_ci(s_amv, counts, n_boot=n_boot,
-                                           seed=seed + 1))
-        row["waiting_ci95"] = list(boot_ci(s_amw, counts, n_boot=n_boot,
-                                            seed=seed + 2))
-        row["advantage_ci95"] = list(boot_ci(s_amb1, counts, n_boot=n_boot,
-                                              seed=seed + 3))
+        row["asking_ci95"] = list(boot_ci(s_amv, counts, n_boot=n_boot, seed=seed + 1))
+        row["waiting_ci95"] = list(boot_ci(s_amw, counts, n_boot=n_boot, seed=seed + 2))
+        row["advantage_ci95"] = list(boot_ci(s_amb1, counts, n_boot=n_boot, seed=seed + 3))
         rows.append(row)
 
-    payload = dict(axis="delta", cell=cell, levels=levels, rows=rows,
-                   eps=eps, mean_exposure=mean_exposure)
-    resolved = dict(cell=cell, axis="delta_channels", cw=cw,
-                    cw_per_s=CW_PER_S[cw], levels=levels, flow=flow_name)
+    payload = dict(
+        axis="delta", cell=cell, levels=levels, rows=rows, eps=eps, mean_exposure=mean_exposure
+    )
+    resolved = dict(
+        cell=cell,
+        axis="delta_channels",
+        cw=cw,
+        cw_per_s=CW_PER_S[cw],
+        levels=levels,
+        flow=flow_name,
+    )
     obj = envelope("rshift", cell, seed, n_eval, n_tune, resolved, payload)
     e, f = env_name, flow_name
     path = str(Path(out_dir) / f"rshift_{e}_{f}_delta_s{seed}.json")
@@ -139,12 +152,13 @@ def main(argv=None):
     ap.add_argument("--seed", type=int, required=True)
     ap.add_argument("--out", default="results_inject")
     args = ap.parse_args(argv)
-    path, rows = run_channels(args.cell, args.seed, args.n_eval, args.n_tune,
-                              args.out, cw=args.cw)
+    path, rows = run_channels(args.cell, args.seed, args.n_eval, args.n_tune, args.out, cw=args.cw)
     for r in rows:
-        print(f"  delta={r['level']:+.2f}  A={r['A']:.4f}  "
-              f"asking(A-A\\V)={r['asking']:.4f}  "
-              f"waiting(A-A\\W)={r['waiting']:.4f}  A-B1={r['advantage']:.4f}")
+        print(
+            f"  delta={r['level']:+.2f}  A={r['A']:.4f}  "
+            f"asking(A-A\\V)={r['asking']:.4f}  "
+            f"waiting(A-A\\W)={r['waiting']:.4f}  A-B1={r['advantage']:.4f}"
+        )
     print(f"wrote {path}")
 
 

@@ -11,6 +11,7 @@ Outside a window, a wait action pays the cost and then the transition
 fires.  Beliefs do not update while waiting; the belief axis moves only
 through the delegator's answer, which reveals intent exactly.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -32,6 +33,7 @@ class Channel:
     pmf_m    : same for misuse intent (equal to pmf_h unless a
                response-bias perturbation is being injected)
     """
+
     f: np.ndarray
     m: float
     h: float
@@ -57,8 +59,14 @@ class Channel:
 
     def params(self, rho: float | None = None) -> dict:
         """core.py parameter dict; rho only matters for geometric evaluation."""
-        return dict(m=self.m, h=self.h, C=self.C, cw=self.cw,
-                    rho=(rho if rho is not None else 0.5), tau=self.tau)
+        return dict(
+            m=self.m,
+            h=self.h,
+            C=self.C,
+            cw=self.cw,
+            rho=(rho if rho is not None else 0.5),
+            tau=self.tau,
+        )
 
 
 @dataclass
@@ -75,6 +83,7 @@ class Draws:
     t_ans    : answer delay in ticks from the moment a query is sent
                (np.iinfo.max = never answers within any deadline)
     """
+
     v: np.ndarray
     p_true: np.ndarray
     theta: np.ndarray
@@ -106,7 +115,7 @@ def retime_answers(theta, u_ans, pmf_h, pmf_m, tau):
         if len(idx) == 0:
             continue
         cdf = np.cumsum(np.append(pmf, max(0.0, 1.0 - pmf.sum())))
-        cdf = cdf / cdf[-1]                       # guard rounding to 1.0
+        cdf = cdf / cdf[-1]  # guard rounding to 1.0
         k = np.searchsorted(cdf, u_ans[idx], side="right")
         t_ans[idx] = np.where(k < tau, k + 1, NEVER)
     return t_ans
@@ -121,8 +130,9 @@ def _draw(ch: Channel, flow, n: int, rng: np.random.Generator):
     fail_at = np.where(fired.any(axis=1), fired.argmax(axis=1), N + 1)
     u_ans = rng.random(n)
     t_ans = retime_answers(theta, u_ans, ch.pmf_h, ch.pmf_m, ch.tau)
-    d = Draws(v=v, p_true=p_true, theta=theta, pi0=pi0,
-              fail_at=fail_at.astype(np.int64), t_ans=t_ans)
+    d = Draws(
+        v=v, p_true=p_true, theta=theta, pi0=pi0, fail_at=fail_at.astype(np.int64), t_ans=t_ans
+    )
     return d, u_ans
 
 
@@ -197,6 +207,6 @@ def replay(ch: Channel, d: Draws, policy, ex_expected: np.ndarray) -> np.ndarray
             stage += 1
             if stage > FIN:
                 break
-    # unreachable
+        # unreachable
         out[k] = payoff
     return out

@@ -9,6 +9,7 @@ transition rates take the observed regime estimates.
 
 Run:  python -m duel.poll_apply --summary poll/poll_summary_123.json
 """
+
 from __future__ import annotations
 
 import argparse
@@ -16,7 +17,7 @@ import json
 import re
 from pathlib import Path
 
-N_FAST = 40         # E-fast hazard array length [f_0..f_39]
+N_FAST = 40  # E-fast hazard array length [f_0..f_39]
 
 
 def fast_hazards(summary: dict, submission_f0: float = 0.005) -> list[float]:
@@ -49,8 +50,7 @@ def rewrite(text: str, summary: dict) -> str:
     return text
 
 
-def apply_summary(summary_path: str, gate_path: str = "duel/gate.py",
-                  dry_run: bool = False) -> str:
+def apply_summary(summary_path: str, gate_path: str = "duel/gate.py", dry_run: bool = False) -> str:
     """Read a summary, rewrite gate.py (unless dry_run), return new text."""
     summary = json.loads(Path(summary_path).read_text())
     src = Path(gate_path).read_text()
