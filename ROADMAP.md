@@ -7,7 +7,7 @@ The unchecked items below build toward one claim that can be defended: for a
 fixed model, a stated defense changes what an agent spends outside its
 authorization, by an amount reported with repetitions and an interval, on
 traffic that includes the legitimate tasks the defense could block. Milestones
-M0 through M5 mark the order.
+M0 through M6 mark the order.
 
 ## Foundation
 
@@ -64,6 +64,25 @@ M0 through M5 mark the order.
 - [x] Pareto trade-off artifacts over unauthorized spend, over-blocking, escalations, token cost, and latency
 - [x] Repetition and bootstrap interval reporting applied to every frontier point
 - [x] Optional OpenTelemetry spans for run and payment decisions
+
+## Repeated relationships — M6
+
+- [x] Freeze the implementation specification, experiment cells, split boundaries,
+  estimands, and artifact contract
+- [ ] Add the relationship configuration, hidden-state boundary, belief update,
+  and event simulator
+- [ ] Add value iteration, exact likelihood-lattice checks, and compiled policy
+  snapshots
+- [ ] Add fixed, adaptive, sequential-test, strike, no-public-sampling, and
+  no-deposit policies
+- [ ] Add behavioral and strategic seller modes
+- [ ] Add common-random-number batches with enforced pilot, tuning, and evaluation
+  splits
+- [ ] Add component, deposit-cap, and assumption-violation experiments
+- [ ] Add relationship metrics, margin-aware paired inference, artifact manifests,
+  and generated reports
+- [ ] Add the optional relationship-event mapping to the reference HTTP gateway
+- [ ] Run the reduced smoke matrix and the full confirmatory matrix
 
 ## Deliberately out of scope
 

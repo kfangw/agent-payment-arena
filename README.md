@@ -230,6 +230,9 @@ Scope first, then design, then plan.
 - [Delegator](docs/design/delegator.md): the person the agent escalates to, modeled rather than assumed
 - [Metrics](docs/design/metrics.md): the five quantities, and why none is reported alone
 - [Reproducibility](docs/design/reproducibility.md): cassettes, seeds, repetitions, version records
+- [Repeated relationships](docs/design/relationship-evaluation.md): the model,
+  policies, split isolation, inference, and artifact contract for the next
+  evaluation harness
 
 ## License
 
