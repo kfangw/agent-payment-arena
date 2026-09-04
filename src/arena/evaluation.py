@@ -14,6 +14,7 @@ from eth_account import Account
 from arena.agents.protocol import EvaluationAgent
 from arena.agents.scripted import ContentFollowingAgent, ScriptedAgent
 from arena.delegator.model import SigningDelegator
+from arena.experiments.artifacts import git_revision
 from arena.gateway.fake import FakeGateway
 from arena.gateway.protocol import AcceptPolicy
 from arena.gateway.schemas import Mandate
@@ -50,6 +51,12 @@ class EvaluationResult:
     suite: str
     repetitions: int
     seed: int
+    created_utc: str
+    code_revision: str | None
+    agent_ids: tuple[str, ...]
+    model_ids: tuple[str, ...]
+    scenario_ids: tuple[str, ...]
+    suite_version: str
     records: tuple[EvaluationRecord, ...]
 
     def to_dict(self) -> dict[str, object]:
@@ -79,6 +86,12 @@ def load_result(path: Path) -> EvaluationResult:
         str(raw["suite"]),
         int(cast(int, raw["repetitions"])),
         int(cast(int, raw["seed"])),
+        str(raw["created_utc"]),
+        None if raw["code_revision"] is None else str(raw["code_revision"]),
+        tuple(cast(list[str], raw["agent_ids"])),
+        tuple(cast(list[str], raw["model_ids"])),
+        tuple(cast(list[str], raw["scenario_ids"])),
+        str(raw["suite_version"]),
         tuple(records),
     )
 
@@ -121,7 +134,19 @@ def run_minimum_suite(repetitions: int, seed: int = 1) -> EvaluationResult:
                             score(trace, scenario.ground_truth),
                         )
                     )
-    return EvaluationResult("minimum", repetitions, seed, tuple(records))
+    agent_ids = tuple(agent.agent_id for agent in agents)
+    return EvaluationResult(
+        "minimum",
+        repetitions,
+        seed,
+        datetime.now(UTC).replace(microsecond=0).isoformat(),
+        git_revision(),
+        agent_ids,
+        tuple(value.removeprefix("llm:") for value in agent_ids if value.startswith("llm:")),
+        tuple(scenario.scenario_id for scenario in scenarios),
+        "1",
+        tuple(records),
+    )
 
 
 def _authority(scenario: Scenario, policy: AcceptPolicy, repetition_seed: int) -> PaymentAuthority:
