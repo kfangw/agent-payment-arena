@@ -53,10 +53,10 @@ M0 through M5 mark the order.
 
 ## Real gateway — M4
 
-- [ ] `HttpGateway` against a running stablecoin-x402-gateway (`src/arena/gateway/http.py`)
-- [ ] Docker Compose stack bringing up the gateway and a node for the HTTP backend
-- [ ] Differential test: the same scenarios through both backends, asserting they agree
-- [ ] CI job for the HTTP backend, separate from the default suite
+- [x] `HttpGateway` against a running stablecoin-x402-gateway (`src/arena/gateway/http.py`)
+- [x] Pinned upstream Docker Compose stack bringing up the gateway and node for the HTTP backend
+- [x] Differential test: the same signed payment through both backends, asserting they agree
+- [x] CI job for the HTTP backend, separate from the default suite
 
 ## Frontier — M5
 
