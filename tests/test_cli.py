@@ -1,5 +1,7 @@
 """The CLI is the only surface a reader touches first, so it is covered."""
 
+from pathlib import Path
+
 import pytest
 
 from arena.cli import main
@@ -25,3 +27,29 @@ def test_version_flag_exits_cleanly(capsys: pytest.CaptureFixture[str]) -> None:
         main(["--version"])
     assert exit_info.value.code == 0
     assert "arena" in capsys.readouterr().out
+
+
+def test_demo_runs_without_network(capsys: pytest.CaptureFixture[str]) -> None:
+    assert main(["demo"]) == 0
+    assert "Evaluation report: minimum" in capsys.readouterr().out
+
+
+def test_run_and_report_commands(tmp_path: Path) -> None:
+    result = tmp_path / "result.json"
+    report_json = tmp_path / "report.json"
+    report_md = tmp_path / "report.md"
+    assert main(["run", "--out", str(result)]) == 0
+    assert (
+        main(
+            [
+                "report",
+                str(result),
+                "--json-out",
+                str(report_json),
+                "--markdown-out",
+                str(report_md),
+            ]
+        )
+        == 0
+    )
+    assert report_json.exists() and report_md.exists()

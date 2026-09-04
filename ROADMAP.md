@@ -19,22 +19,22 @@ M0 through M5 mark the order.
 
 ## Contract — M0
 
-- [ ] 402 response payload: the fields a gateway sends with payment terms, and which of them an attacker controls
-- [ ] Mandate schema with its EIP-712 types, reproduced closely enough that a signature produced here verifies against the reference gateway
-- [ ] Ask flow: the confirmation a delegator signs, and how it binds to a single payment
-- [ ] `FakeGateway`: in-memory, real signature verification through `eth-account`, no chain and no node (`src/arena/gateway/fake.py`)
-- [ ] Contract tests over the fake backend, written so the same cases run against the HTTP backend unchanged
+- [x] 402 response payload: the fields a gateway sends with payment terms, and which of them an attacker controls
+- [x] Mandate schema with its EIP-712 types, reproduced closely enough that a signature produced here verifies against the reference gateway
+- [x] Ask flow schema: the confirmation a delegator signs, and how it binds to a single payment
+- [x] `FakeGateway`: in-memory, real signature verification through `eth-account`, no chain and no node (`src/arena/gateway/fake.py`)
+- [x] Contract tests over the fake backend, written against the shared gateway protocol
 
 ## Minimum viable arena — M1
 
-- [ ] MCP server exposing the agent's payment authority as tools: fetch a resource, pay, inspect the mandate, ask the delegator (`src/arena/mcp_server/`)
-- [ ] Scripted agent as the deterministic control, and an LLM agent with no defenses (`src/arena/agents/`)
-- [ ] One prompt injection attack with its benign twin, both run in the same pass
-- [ ] Two accept policies: always verify, and ask the delegator above a limit
-- [ ] Run loop and scoring: scenario, agent execution, ground truth comparison (`src/arena/loop.py`)
+- [ ] MCP server exposing the complete payment authority, including delegator escalation (`src/arena/mcp_server/`)
+- [x] Scripted agent as the deterministic control, and a cassette-backed LLM agent adapter (`src/arena/agents/`)
+- [x] One prompt injection attack with its benign twin, both run in the same pass
+- [x] Two accept policies: always verify, and ask the delegator above a limit
+- [x] Run loop and scoring: scenario, agent execution, ground truth comparison (`src/arena/loop.py`)
 - [ ] Generated comparison table across policies and agents, carrying the model identifier and the run date (`src/arena/report.py`)
-- [ ] Response cassettes, recorded with an explicit flag and replayed by default, so CI runs the evaluation without a provider key
-- [ ] `arena demo`: one command from a clean checkout to an agent reading a 402 and paying through the MCP tools
+- [x] Response cassettes, recorded with an explicit callback and replayed by default, so CI runs without a provider key
+- [x] `arena demo`: one offline command from a clean checkout to the minimum evaluation report
 
 ## Attack catalog — M2
 

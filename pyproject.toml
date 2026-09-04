@@ -99,8 +99,18 @@ files = ["src", "tests"]
 exclude = ["tests/test_structcheck.py", "src/arena/experiments/settlement"]
 
 [[tool.mypy.overrides]]
-module = ["eth_account.*"]
+module = ["eth_account.*", "mcp.*"]
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["arena.gateway.schemas"]
+# Pydantic's BaseModel is typed through an Any-valued metaclass in its stubs.
+disable_error_code = ["explicit-any"]
+
+[[tool.mypy.overrides]]
+module = ["arena.mcp_server.tools"]
+# MCP decorators intentionally preserve arbitrary tool signatures.
+disable_error_code = ["explicit-any"]
 
 [tool.pytest.ini_options]
 minversion = "8.0"
