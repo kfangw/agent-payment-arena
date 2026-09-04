@@ -83,19 +83,19 @@ def pick_K(curve) -> int:
 
 def _coarse_K(cell, seed, n_eval, n_tune, cw, axis="lambda") -> int:
     """A coarse three-point sweep to gauge the curve's bend for pick_K."""
-    from .inject import _chain_ctx, _chain_diff, _outage_ctx, _outage_diff
+    from .inject import chain_context, chain_difference, outage_context, outage_difference
 
     env_name, flow_name = parse_cell(cell)
     kind, env, rho = envs_for(cw)[env_name]
     flow = make_flows()[flow_name]
     if kind == "chain":
-        ctx = _chain_ctx(env, rho, flow, seed, n_tune, n_eval)
+        ctx = chain_context(env, rho, flow, seed, n_tune, n_eval)
         ctx["seed"] = seed
-        diff = _chain_diff
+        diff = chain_difference
     else:
-        ctx = _outage_ctx(env, flow, seed, n_tune, n_eval)
+        ctx = outage_context(env, flow, seed, n_tune, n_eval)
         ctx["seed"] = seed
-        diff = _outage_diff
+        diff = outage_difference
     levels = [0.5, 1.0, 2.0]
     curve = [float(diff(ctx, axis, lv).mean()) for lv in levels]
     return pick_K(curve)

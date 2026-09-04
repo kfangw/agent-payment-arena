@@ -93,6 +93,8 @@ The settlement-policy modules separate the model from the experiment plumbing:
 - `duel.core` defines the exact decision model.
 - `duel.simulate` and `duel.outage` generate and replay stochastic channels.
 - `duel.policies` compiles and tunes comparison policies.
+- `duel.watch` contains the reusable settlement-observation policies and their
+  threshold-and-horizon tuner.
 - `duel.run` executes one comparison cell.
 - `duel.aggregate` turns completed cells into tables; `duel.stats` and
   `duel.report` preserve the original command-line API as thin compatibility

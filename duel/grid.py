@@ -24,7 +24,7 @@ from pathlib import Path
 
 import numpy as np
 
-from .b4 import B4Force, OB4Force, PPE, _base_facts, _block_sums
+from .b4 import load_base_facts
 from .core import GRANT, REJECT, VERIFY, sigma_list
 from .flows import make_flows
 from .gate import CW_PER_S, envs_for
@@ -34,6 +34,12 @@ from .report import envelope, write_once
 from .run import CHAIN_BLOCK
 from .simulate import draw_batch, replay
 from .stats import ratio_mean
+from .watch import (
+    PAYMENTS_PER_EPISODE as PPE,
+    FixedActionOutageWatchPolicy as OB4Force,
+    FixedActionWatchPolicy as B4Force,
+    block_sums,
+)
 
 NS = [21, 41, 81, 161]
 
@@ -70,7 +76,7 @@ def _best_ab(g, r, w, pi0, grid):
 
 
 def run_cell(env_name, flow_name, seed, n_tune, n_eval, results, ns):
-    base = _base_facts(env_name, flow_name, seed, results)
+    base = load_base_facts(env_name, flow_name, seed, results)
     kind, env, rho = envs_for("mid")[env_name]
     flow = make_flows()[flow_name]
     rng = np.random.default_rng(seed)
@@ -100,7 +106,7 @@ def run_cell(env_name, flow_name, seed, n_tune, n_eval, results, ns):
     for n in ns:
         grid = suspicion_grid(n)
         (a, b), tune_mean = _best_ab(gt, rt, wt, pi_tune, grid)
-        b3_sums = _block_sums(_select(ge, re_, we, pi_eval, a, b), episodes, uniq)
+        b3_sums = block_sums(_select(ge, re_, we, pi_eval, a, b), episodes)
         if n == 21:
             id_gap = float(np.abs(b3_sums - b3_base_sums).max())
             ba, bb = base["b3_params"]

@@ -20,13 +20,19 @@ from pathlib import Path
 
 import numpy as np
 
-from .b4 import OB4, OB4Force, _block_sums, _tune_b4, k_grid
+from .watch import (
+    FixedActionOutageWatchPolicy as OB4Force,
+    OutageWatchBandPolicy as OB4,
+    block_sums,
+    horizon_grid as k_grid,
+    tune_watch_policy as tune_b4,
+)
 from .core import rho_hat_from_q, sigma_list
 from .design import eps_for
 from .flows import make_flows
 from .gate import CW_PER_S, envs_for
 from .gitcheck import require_clean_tree
-from .inject import _tune_outage_b1, parse_cell
+from .inject import parse_cell, tune_outage_baseline
 from .outage import compile_outage, draw_outage_batch_crn, replay_outage, survival, window_AD
 from .policies import B1, compile_A, default_grids, tune
 from .report import envelope, write_once
@@ -69,7 +75,7 @@ def run_chain(env, rho, flow, seed, shape, n_tune, n_eval):
     q = float((tu.t_ans <= env.tau).mean())  # compiler stays geometric
     a = compile_A(env, "A", rho=rho_hat_from_q(q, env.tau))
     _, b1, _ = tune(lambda t: B1(t, env.h), default_grids()["B1"], env, tu, ex)
-    best, _, _ = _tune_b4(
+    best, _, _ = tune_b4(
         lambda k, act: replay(env, tu, _B4Force(k, act), ex),
         default_grids()["B3"],
         k_grid(env.N + 1),
@@ -106,8 +112,8 @@ def run_outage(env, flow, seed, shape, n_tune, n_eval):
     _, _, ex = window_AD(env, survival(env))
     q = float((tu.t_ans <= env.tau).mean())
     a = compile_outage(replace(env, rho=rho_hat_from_q(q, env.tau)), "A")
-    b1 = _tune_outage_b1(env, tu, ex, default_grids()["B1"])
-    best, _, _ = _tune_b4(
+    b1 = tune_outage_baseline(env, tu, ex, default_grids()["B1"])
+    best, _, _ = tune_b4(
         lambda k, act: replay_outage(env, tu, OB4Force(k, act, env.H, env.N), ex),
         default_grids()["B3"],
         k_grid(env.H),
@@ -129,8 +135,8 @@ def run_outage(env, flow, seed, shape, n_tune, n_eval):
 def _pack(a_pay, b1_pay, b4_pay, episodes, mexp, best):
     counts = np.bincount(episodes).astype(float)
     return dict(
-        ab1=_block_sums(a_pay - b1_pay, episodes),
-        ab4=_block_sums(a_pay - b4_pay, episodes),
+        ab1=block_sums(a_pay - b1_pay, episodes),
+        ab4=block_sums(a_pay - b4_pay, episodes),
         counts=counts,
         mexp=mexp,
         b4=dict(k=best[0], a=best[1], b=best[2]),

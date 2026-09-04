@@ -25,7 +25,7 @@ from pathlib import Path
 
 import numpy as np
 
-from .b4 import OB4, _block_sums
+from .watch import OutageWatchBandPolicy as OB4, block_sums
 from .core import GRANT, REJECT, VERIFY, WAIT, rho_hat_from_q
 from .gate import CW_PER_S, envs_for
 from .gitcheck import require_clean_tree
@@ -198,13 +198,13 @@ def run_cell(flow_name, seed, n_tune, n_eval, results, results_grid):
     gridf = json.load(open(Path(results_grid) / f"b4_gridN_E-outage_{flow_name}_mid_s{seed}.json"))
     b3a, b3b = gridf["payload"]["b4"]["a"], gridf["payload"]["b4"]["b"]
 
-    block = {"A": _block_sums(replay_outage(env, eval_d, A, ex_pos), episodes)}
+    block = {"A": block_sums(replay_outage(env, eval_d, A, ex_pos), episodes)}
     for hide in (("r",), ("v",), ("r", "v")):
         pol = rederive(env_hat, A.v_grid, PI_GRID_OUTAGE, eval_d.v, hide)
-        block["A_hide_" + "".join(hide)] = _block_sums(
+        block["A_hide_" + "".join(hide)] = block_sums(
             replay_outage(env, eval_d, pol, ex_pos), episodes
         )
-    block["B3"] = _block_sums(
+    block["B3"] = block_sums(
         replay_outage(env, eval_d, OB4(0, b3a, b3b, env.H, env.N), ex_pos), episodes
     )
 

@@ -64,7 +64,7 @@ def _geom(rho: float, tau: int) -> np.ndarray:
 
 
 # ------------------------------------------------------------ chain cell
-def _chain_ctx(env, rho, flow, seed, n_tune, n_eval):
+def chain_context(env, rho, flow, seed, n_tune, n_eval):
     """Base draws, exercise values, and the level-0 A2 and B1 for a chain
     cell, plus everything the axes reshape."""
     rng = np.random.default_rng(seed)
@@ -94,7 +94,7 @@ def _chain_ctx(env, rho, flow, seed, n_tune, n_eval):
     )
 
 
-def _chain_diff(ctx, axis, level):
+def chain_difference(ctx, axis, level):
     """Per-payment A2 - B1 on the evaluation draws at one axis level."""
     env, ex = ctx["env"], ctx["ex"]
     eval_d, tune_d = ctx["eval_d"], ctx["tune_d"]
@@ -146,7 +146,7 @@ def _chain_noise_diff(ctx, sigma):
 
 
 # ------------------------------------------------------------ outage cell
-def _tune_outage_b1(env, tune_d, ex, grid):
+def tune_outage_baseline(env, tune_d, ex, grid):
     best_val, best = -np.inf, None
     for g in grid:
         pol = OB(B1(g, env.h))
@@ -156,7 +156,7 @@ def _tune_outage_b1(env, tune_d, ex, grid):
     return best
 
 
-def _outage_ctx(env, flow, seed, n_tune, n_eval, ppe=50):
+def outage_context(env, flow, seed, n_tune, n_eval, ppe=50):
     rng = np.random.default_rng(seed)
     tune_d, u_tune = draw_outage_batch_crn(env, flow, n_tune, rng, payments_per_episode=ppe)
     eval_d, u_eval = draw_outage_batch_crn(env, flow, n_eval, rng, payments_per_episode=ppe)
@@ -165,7 +165,7 @@ def _outage_ctx(env, flow, seed, n_tune, n_eval, ppe=50):
     rho_hat = rho_hat_from_q(q_hat, env.tau)
     a2 = compile_outage(replace(env, rho=rho_hat), "A2")
     grid = default_grids()["B1"]
-    b1 = _tune_outage_b1(env, tune_d, ex, grid)
+    b1 = tune_outage_baseline(env, tune_d, ex, grid)
     return dict(
         env=env,
         rho=env.rho,
@@ -184,19 +184,19 @@ def _outage_ctx(env, flow, seed, n_tune, n_eval, ppe=50):
     )
 
 
-def _outage_diff(ctx, axis, level):
+def outage_difference(ctx, axis, level):
     env, ex = ctx["env"], ctx["ex"]
     eval_d, tune_d = ctx["eval_d"], ctx["tune_d"]
     if axis == "kappa":
         ev = replace(eval_d, pi0=np.clip(level * eval_d.pi0, 0.0, 1.0))
         tu = replace(tune_d, pi0=np.clip(level * tune_d.pi0, 0.0, 1.0))
-        b1 = _tune_outage_b1(env, tu, ex, ctx["grid"])
+        b1 = tune_outage_baseline(env, tu, ex, ctx["grid"])
         return replay_outage(env, ev, ctx["a2"], ex) - replay_outage(env, ev, b1, ex)
     if axis == "delta":
         d_bar = abs(float(np.mean(env.f)) - env.cw)
         env2 = replace(env, cw=env.cw + level * d_bar)
         a2 = compile_outage(replace(env2, rho=ctx["rho_hat"]), "A2")
-        b1 = _tune_outage_b1(env2, tune_d, ex, ctx["grid"])
+        b1 = tune_outage_baseline(env2, tune_d, ex, ctx["grid"])
         return replay_outage(env2, eval_d, a2, ex) - replay_outage(env2, eval_d, b1, ex)
     if axis == "lambda":
         rho_m = min(env.rho * level, 1.0 - 1e-12)
@@ -296,11 +296,11 @@ def run_axis(
     levels = list(AXIS_GRIDS[axis] if levels is None else levels)
 
     if kind == "chain":
-        ctx = _chain_ctx(env, rho, flow, seed, n_tune, n_eval)
-        diff_fn = _chain_diff
+        ctx = chain_context(env, rho, flow, seed, n_tune, n_eval)
+        diff_fn = chain_difference
     else:
-        ctx = _outage_ctx(env, flow, seed, n_tune, n_eval)
-        diff_fn = _outage_diff
+        ctx = outage_context(env, flow, seed, n_tune, n_eval)
+        diff_fn = outage_difference
     ctx["seed"] = seed
     episodes = ctx["episodes"]
     uniq = np.unique(episodes)

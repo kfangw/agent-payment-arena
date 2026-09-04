@@ -34,12 +34,12 @@ from __future__ import annotations
 
 import argparse
 import json
-from dataclasses import dataclass, replace
+from dataclasses import replace
 from pathlib import Path
 
 import numpy as np
 
-from .core import GRANT, REJECT, VERIFY, WAIT, rho_hat_from_q, sigma_list
+from .core import rho_hat_from_q, sigma_list
 from .flows import make_flows
 from .gate import CW_PER_S, envs_for
 from .outage import (
@@ -55,105 +55,16 @@ from .report import envelope, jsonable, write_once
 from .run import CHAIN_BLOCK
 from .simulate import Channel, draw_batch, replay
 from .stats import boot_ci, perm_p, ratio_mean
-
-K_BASE = [0, 1, 2, 4, 8, 16, 32, 64, 128, 256]
-PPE = 50
-
-
-def k_grid(horizon: int) -> list[int]:
-    """The declared k ladder clipped to the cell's watch horizon, with the
-    horizon itself always included as the top rung."""
-    return sorted({k for k in K_BASE if k < horizon} | {0, horizon})
-
-
-# ---------------- B4 policies ----------------
-@dataclass
-class B4:
-    """Chain B4: wait k ticks, then the two-threshold band."""
-
-    k: int
-    a: float
-    b: float
-
-    def __call__(self, stage, v, pi):
-        if stage < self.k:
-            return WAIT
-        if pi < self.a:
-            return GRANT
-        if pi > self.b:
-            return REJECT
-        return VERIFY
-
-
-@dataclass
-class B4Force:
-    """Chain: wait k ticks, then a fixed terminal action (tuning helper)."""
-
-    k: int
-    act: int
-
-    def __call__(self, stage, v, pi):
-        return WAIT if stage < self.k else self.act
-
-
-class OB4:
-    """Outage B4.  Ticks elapsed since arrival is H - l, so a stateless
-    rule knows how long it has watched; it waits while that is below k and
-    the payment is still live (not settled, not expired)."""
-
-    def __init__(self, k, a, b, H, N):
-        self.k, self.a, self.b, self.H, self.FIN = k, a, b, H, N + 1
-
-    def __call__(self, i, l, r, v, pi):
-        if (self.H - l) < self.k and i < self.FIN and l > 0:
-            return WAIT
-        if pi < self.a:
-            return GRANT
-        if pi > self.b:
-            return REJECT
-        return VERIFY
-
-
-class OB4Force:
-    def __init__(self, k, act, H, N):
-        self.k, self.act, self.H, self.FIN = k, act, H, N + 1
-
-    def __call__(self, i, l, r, v, pi):
-        if (self.H - l) < self.k and i < self.FIN and l > 0:
-            return WAIT
-        return self.act
-
-
-# ---------------- joint (k, a, b) tuning ----------------
-def _tune_b4(force_fn, ab_grid, k_list, pi0):
-    """Score every (k, a, b) on the tuning draws and return the best.
-
-    force_fn(k, act) -> per-payment tuning payoff under 'wait k then act'.
-    For each k the three terminal payoffs are computed once; every (a, b)
-    selects among them on the suspicion band.
-    """
-    best, best_val, rows = None, -np.inf, []
-    for k in k_list:
-        g = force_fn(k, GRANT)
-        r = force_fn(k, REJECT)
-        w = force_fn(k, VERIFY)
-        k_best, k_val = None, -np.inf
-        for a, b in ab_grid:
-            sel = np.where(pi0 < a, g, np.where(pi0 > b, r, w))
-            val = float(sel.mean())
-            if val > k_val:
-                k_best, k_val = (a, b), val
-        rows.append(dict(k=int(k), a=float(k_best[0]), b=float(k_best[1]), tune_mean=k_val))
-        if k_val > best_val:
-            best, best_val = (int(k), float(k_best[0]), float(k_best[1])), k_val
-    return best, best_val, rows
-
-
-def _block_sums(arr, episodes, uniq=None):
-    """Per-episode sums.  Episodes are the contiguous block ids
-    arange(n)//block, so a weighted bincount gives every block sum in one
-    pass; the uniq argument is accepted for call-site compatibility."""
-    return np.bincount(episodes, weights=arr)
+from .watch import (
+    PAYMENTS_PER_EPISODE as PPE,
+    FixedActionOutageWatchPolicy as OB4Force,
+    FixedActionWatchPolicy as B4Force,
+    OutageWatchBandPolicy as OB4,
+    WatchBandPolicy as B4,
+    block_sums,
+    horizon_grid as k_grid,
+    tune_watch_policy as tune_b4,
+)
 
 
 # ---------------- per-kind runners ----------------
@@ -172,7 +83,7 @@ def run_chain_b4(
     horizon = ch.N + 1
     ks = k_grid(horizon) if k_list is None else sorted(set(k_list))
     tune_src = eval_d if tune_on_eval else tune_d
-    best, best_val, rows = _tune_b4(
+    best, best_val, rows = tune_b4(
         lambda k, act: replay(ch, tune_src, B4Force(k, act), ex), ab_grid, ks, tune_src.pi0
     )
     k_star, a_star, b_star = best
@@ -208,7 +119,7 @@ def run_outage_b4(
     horizon = env.H
     ks = k_grid(horizon) if k_list is None else sorted(set(k_list))
     tune_src = eval_d if tune_on_eval else tune_d
-    best, best_val, rows = _tune_b4(
+    best, best_val, rows = tune_b4(
         lambda k, act: replay_outage(env, tune_src, OB4Force(k, act, env.H, env.N), ex),
         ab_grid,
         ks,
@@ -236,8 +147,8 @@ def _finish(b4_pay, id0, episodes, uniq, base, b4meta, rows, horizon, ks):
     """Shared tail: block sums, the k=0 bit-identity check against the base
     B3 block sums, and the A2 - B4 paired statistic from base A2."""
     counts = np.asarray(base["block_counts"], dtype=float)
-    b4_sums = _block_sums(b4_pay, episodes, uniq)
-    id0_sums = _block_sums(id0, episodes, uniq)
+    b4_sums = block_sums(b4_pay, episodes)
+    id0_sums = block_sums(id0, episodes)
     a2_sums = np.asarray(base["a2_block_sums"], dtype=float)
     b3_sums = np.asarray(base["b3_block_sums"], dtype=float)
 
@@ -264,7 +175,7 @@ def _finish(b4_pay, id0, episodes, uniq, base, b4meta, rows, horizon, ks):
     return payload
 
 
-def _base_facts(env_name, flow, seed, results_dir):
+def load_base_facts(env_name, flow, seed, results_dir):
     """Pull A2 and B3 block sums, block counts, and the tuned B3 threshold
     from the base cell's result file."""
     path = Path(results_dir) / f"duel_{env_name}_{flow}_mid_s{seed}.json"
@@ -347,7 +258,7 @@ def main(argv=None):
 
     kind, env, rho = envs_for(args.cw)[args.env]
     flow = make_flows()[args.flow]
-    base = _base_facts(args.env, args.flow, args.seed, args.results)
+    base = load_base_facts(args.env, args.flow, args.seed, args.results)
     ab_grid = suspicion_grid(args.b3_n)
     k_list = [int(x) for x in args.k_grid.split(",")] if args.k_grid else None
     if kind == "chain":

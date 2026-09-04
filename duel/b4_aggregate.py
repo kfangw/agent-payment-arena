@@ -31,13 +31,13 @@ CELL_SEED = {
 }
 
 
-def _tag(cell):
+def split_cell(cell):
     env, flow = (s.strip() for s in cell.split("x"))
     return env, flow
 
 
 def load(cell, results, results_b4):
-    env, flow = _tag(cell)
+    env, flow = split_cell(cell)
     seed = CELL_SEED[cell]
     base = json.load(open(Path(results) / f"duel_{env}_{flow}_mid_s{seed}.json"))
     b4 = json.load(open(Path(results_b4) / f"b4_{env}_{flow}_mid_s{seed}.json"))
