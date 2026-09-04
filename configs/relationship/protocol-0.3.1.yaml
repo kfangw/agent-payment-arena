@@ -1,0 +1,108 @@
+schema_version: 1
+protocol_version: 0.3.1
+status: frozen
+frozen_at: 2026-09-04
+
+analysis_unit: relationship
+primary_outcome: geometric_departure_buyer_utility_per_transaction
+discounting:
+  mechanism: realized_geometric_departure
+  apply_time_weights_to_realized_path: false
+  seed_aggregation: ratio_of_sums
+
+equivalence_margin:
+  expression: 0.01 * u * v
+  canonical_value: 0.002
+
+canonical:
+  v: 1.0
+  u: 0.2
+  alpha: 0.02
+  beta: 0.10
+  behavioral_cheat_rate: 1.0
+  g: 0.45
+  deposit_cap: 10.0
+  prior_bad: 0.05
+  escrow_cost_rate: 0.05
+  seller_margin: 0.10
+
+operating_points:
+  H:
+    verification_cost_ratio: 3.0
+  L:
+    verification_cost_ratio: 1.2
+
+relationship_lengths:
+  short:
+    continuation_probability: 0.80
+    expected_transactions: 5
+  medium:
+    continuation_probability: 0.95
+    expected_transactions: 20
+  long:
+    continuation_probability: 0.98
+    expected_transactions: 50
+
+seller_modes:
+  - behavioral
+  - strategic
+
+policies:
+  tested: compiled_deposit_exit
+  eligible_primary_competitors:
+    - adaptive_sampling
+    - wald_sprt
+    - one_strike
+    - two_strike
+  diagnostic:
+    - always_pay
+    - always_verify
+    - no_public_sampling
+    - no_deposit_optimum
+
+splits:
+  pilot:
+    seed_start: 1000
+    seed_end: 1029
+    relationships_per_seed_cell: 500
+  tuning:
+    seed_start: 10000
+    seed_end: 10049
+    relationships_per_seed_cell: 1000
+  evaluation:
+    seed_start: 20000
+    seed_end: 20099
+    relationships_per_seed_cell: 2000
+
+inference:
+  bootstrap_resamples: 10000
+  confidence_level: 0.95
+  simultaneous_primary_cells: 12
+  primary_correction: bonferroni
+  sensitivity_test: paired_sign_flip
+  sensitivity_correction: holm
+
+assumption_violations:
+  type_switch_probability:
+    - 0.01
+    - 0.05
+    - 0.10
+  verdict_delay:
+    - 1
+    - 3
+    - 5
+  partial_delivery_fraction:
+    - 0.25
+    - 0.50
+    - 0.75
+  verification_error_multiplier:
+    - 0.50
+    - 0.75
+    - 1.25
+    - 1.50
+    - 2.00
+
+data_grades:
+  G: generated
+  P: parameterized
+  M: measured
