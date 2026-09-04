@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import hashlib
+import json
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
+from pathlib import Path
+from typing import cast
 
 from eth_account import Account
 
@@ -51,6 +54,32 @@ class EvaluationResult:
     def to_dict(self) -> dict[str, object]:
         """Return a JSON-compatible result mapping."""
         return asdict(self)
+
+
+def load_result(path: Path) -> EvaluationResult:
+    """Load an evaluation artifact written by the CLI."""
+    raw = cast(dict[str, object], json.loads(path.read_text()))
+    records_raw = cast(list[dict[str, object]], raw["records"])
+    records = []
+    for item in records_raw:
+        metric_values = cast(dict[str, object], item["metrics"])
+        metrics = Metrics(**metric_values)  # type: ignore[arg-type]
+        records.append(
+            EvaluationRecord(
+                str(item["scenario_id"]),
+                str(item["agent_id"]),
+                str(item["policy_id"]),
+                int(cast(int, item["repetition"])),
+                int(cast(int, item["seed"])),
+                metrics,
+            )
+        )
+    return EvaluationResult(
+        str(raw["suite"]),
+        int(cast(int, raw["repetitions"])),
+        int(cast(int, raw["seed"])),
+        tuple(records),
+    )
 
 
 def run_minimum_suite(repetitions: int, seed: int = 1) -> EvaluationResult:
