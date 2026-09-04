@@ -1,14 +1,14 @@
-"""Shared process runner for resumable duel experiment batches."""
+"""Process execution for resumable experiment batches."""
 
 from __future__ import annotations
 
 import os
 import subprocess
 import sys
+from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Sequence
 
 
 @dataclass(frozen=True)
@@ -20,13 +20,13 @@ class Job:
 
     @classmethod
     def python(cls, name: str, *args: str) -> Job:
-        """Build a job that runs a Python module or script."""
+        """Create a job that uses the active Python interpreter."""
         return cls(name=name, command=(sys.executable, *args))
 
 
 @dataclass(frozen=True)
 class BatchResult:
-    """Names of successful and failed jobs in a completed batch."""
+    """Successful and failed job names from a completed batch."""
 
     succeeded: tuple[str, ...]
     failed: tuple[str, ...]
@@ -38,12 +38,12 @@ class BatchResult:
 
 
 def default_workers(limit: int = 8) -> int:
-    """Choose a conservative worker count for CPU-heavy simulations."""
+    """Choose a conservative worker count for CPU-heavy jobs."""
     return min(limit, os.cpu_count() or 1)
 
 
 def _process_env(root: Path) -> dict[str, str]:
-    """Build an isolated child environment with the checkout importable."""
+    """Create a child environment that can import the checkout."""
     current = os.environ.get("PYTHONPATH")
     pythonpath = str(root) if not current else os.pathsep.join((str(root), current))
     return {
@@ -79,7 +79,10 @@ def run_jobs(
     workers: int,
     label: str = "jobs",
 ) -> BatchResult:
-    """Run independent jobs concurrently and report failures consistently."""
+    """Run independent jobs concurrently and summarize their exit codes."""
+    if workers < 1:
+        raise ValueError("workers must be positive")
+
     queue = tuple(jobs)
     print(f"launching {len(queue)} {label} on {workers} workers", flush=True)
     succeeded: list[str] = []
@@ -90,8 +93,8 @@ def run_jobs(
         for future in as_completed(futures):
             name, returncode = future.result()
             (succeeded if returncode == 0 else failed).append(name)
-            done = len(succeeded) + len(failed)
-            print(f"done {name} rc={returncode} ({done}/{len(queue)})", flush=True)
+            completed = len(succeeded) + len(failed)
+            print(f"done {name} rc={returncode} ({completed}/{len(queue)})", flush=True)
 
     print(f"completed ok={len(succeeded)} failed={len(failed)}", flush=True)
     if failed:

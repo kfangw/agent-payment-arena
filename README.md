@@ -21,7 +21,7 @@ The repository contains two related components at different stages.
   decision contract and command-line interface are implemented. The agents,
   attacks, gateway backends, and end-to-end report remain on the
   [roadmap](ROADMAP.md).
-- `duel` is the implemented CMC policy experiment. It includes the exact
+- `duel` is the implemented settlement-policy experiment. It includes the exact
   model, stochastic replay, policy families, paired statistical analysis,
   robustness experiments, and validation programs.
 
@@ -33,9 +33,9 @@ uv run arena contract
 uv run pytest -m "not live and not http_gateway"
 ```
 
-## CMC experiment
+## Settlement-policy experiment
 
-The CMC experiment compares `grant`, `reject`, `verify`, and `wait` policies
+The settlement-policy experiment compares `grant`, `reject`, `verify`, and `wait` policies
 under payment-channel delay and failure. A run draws separate tuning and
 evaluation samples, replays each policy on the same evaluation payments, and
 writes a parameter-hashed JSON envelope. Generated results are ignored by
@@ -81,13 +81,13 @@ uv run python -m duel.validate_run
 
 ```text
 src/arena/     Generic agent-payment contracts and CLI
-duel/          CMC model, simulation, policies, statistics, and reports
-scripts/       Resumable batch definitions built on duel.runner
+duel/          Settlement model, simulation, policies, statistics, and reports
+scripts/       Resumable batch definitions using shared experiment utilities
 tests/         Fast CI regression tests
 docs/          Scope, threat model, and generic arena design notes
 ```
 
-The CMC modules separate the model from the experiment plumbing:
+The settlement-policy modules separate the model from the experiment plumbing:
 
 - `duel.core` defines the exact decision model.
 - `duel.simulate` and `duel.outage` generate and replay stochastic channels.
@@ -95,8 +95,8 @@ The CMC modules separate the model from the experiment plumbing:
 - `duel.run` executes one comparison cell.
 - `duel.stats`, `duel.aggregate`, and `duel.report` perform inference and
   serialize results.
-- `duel.runner` provides the shared subprocess, logging, and concurrency code
-  used by batch scripts.
+- `arena.experiments.runner` provides shared process, logging, and concurrency
+  code for batch scripts and future experiment suites.
 
 ## Generic arena results
 

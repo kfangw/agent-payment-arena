@@ -12,8 +12,8 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+from arena.experiments.runner import Job, default_workers, run_jobs
 from duel.design import CONFIRMATORY_RUNS
-from duel.runner import Job, default_workers, run_jobs
 
 ROOT = Path(__file__).resolve().parent.parent
 LOGS = ROOT / "reports" / "_logs"
