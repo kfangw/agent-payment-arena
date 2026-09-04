@@ -67,3 +67,47 @@ jobs:
         run: |
           uv run arena --version
           uv run arena contract
+          uv run arena demo
+
+  http-gateway:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/checkout@v4
+        with:
+          repository: kfangw/stablecoin-x402-gateway
+          ref: ddd20fe3ec7c2109a006e1112bcac9fdeabf9b32
+          path: stablecoin-x402-gateway
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install HTTP backend
+        run: uv sync --extra http --dev
+
+      - name: Start reference gateway stack
+        run: docker compose -f stablecoin-x402-gateway/docker-compose.yml up --build -d
+
+      - name: Wait for gateway
+        run: |
+          for attempt in $(seq 1 60); do
+            curl --fail --silent http://localhost:8402/healthz && exit 0
+            sleep 2
+          done
+          docker compose -f stablecoin-x402-gateway/docker-compose.yml logs
+          exit 1
+
+      - name: Differential contract test
+        env:
+          ARENA_HTTP_GATEWAY_URL: http://localhost:8402
+        run: uv run pytest -m http_gateway tests/test_gateway_differential.py
+
+      - name: Show logs on failure
+        if: failure()
+        run: docker compose -f stablecoin-x402-gateway/docker-compose.yml logs
+
+      - name: Stop reference gateway stack
+        if: always()
+        run: docker compose -f stablecoin-x402-gateway/docker-compose.yml down --volumes

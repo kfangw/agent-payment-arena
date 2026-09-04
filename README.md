@@ -50,6 +50,16 @@ provider key or network service. The demo first exercises fetch, payment,
 delegator confirmation, and retry through the MCP-compatible tool surface,
 then prints the repeated evaluation report.
 
+The optional HTTP backend targets the pinned
+[`stablecoin-x402-gateway`](https://github.com/kfangw/stablecoin-x402-gateway)
+Compose stack. With that stack listening on port 8402, run the differential
+contract check with:
+
+```bash
+ARENA_HTTP_GATEWAY_URL=http://localhost:8402 \
+  uv run pytest -m http_gateway tests/test_gateway_differential.py
+```
+
 ## Settlement-policy experiment
 
 The settlement-policy experiment compares `grant`, `reject`, `verify`, and `wait` policies
@@ -155,7 +165,7 @@ The generic arena is designed to run against two gateway backends.
 
 `FakeGateway` is in-memory and the default. It reproduces the x402
 contract, not the gateway implementation, so a clean checkout runs with no
-chain, no node, and no Go toolchain. `HttpGateway` will talk to a running
+chain, no node, and no Go toolchain. `HttpGateway` talks to a running
 [stablecoin-x402-gateway](https://github.com/kfangw/stablecoin-x402-gateway)
 over HTTP.
 
