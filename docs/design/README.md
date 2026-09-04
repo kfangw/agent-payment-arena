@@ -20,3 +20,6 @@ work lives in [ROADMAP.md](../../ROADMAP.md); scope lives in
 - [delegator.md](delegator.md): the delegator response model, and why escalation is priced rather than assumed free.
 - [metrics.md](metrics.md): the five quantities a run produces and why none of them may be reported alone.
 - [reproducibility.md](reproducibility.md): cassettes, seeds, repetitions, and version recording.
+- [relationship-evaluation.md](relationship-evaluation.md): the implementation contract for
+  repeated buyer-seller relationships, compiled payment policies, common random
+  numbers, split isolation, and paired inference.
