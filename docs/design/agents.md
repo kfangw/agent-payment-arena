@@ -62,6 +62,7 @@ catalog would be measuring the catalog.
 
 ## Status
 
-Not implemented. `src/arena/agents/` holds the package docstring only. The
-scripted agent and the undefended LLM agent land in M1; the two defended
-agents in M2.
+Implemented. The deterministic catalog run includes the scripted control, a
+content-following subject, and its schema-constrained wrapper. The naive and
+prompt-defended LLM subjects use the same provider abstraction and cassette
+path so a recorded model response can be compared without live calls in CI.

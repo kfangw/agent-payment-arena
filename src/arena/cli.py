@@ -11,7 +11,7 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from arena import __version__
-from arena.evaluation import load_result, run_mcp_demo, run_minimum_suite
+from arena.evaluation import load_result, run_attack_suite, run_mcp_demo, run_minimum_suite
 from arena.experiments.artifacts import write_json_once
 from arena.gateway.contract import Action, ErrorCode, default_code_for
 from arena.report import build_report, render_markdown, write_report
@@ -32,7 +32,7 @@ def _build_parser() -> argparse.ArgumentParser:
     demo = subcommands.add_parser("demo", help="run the minimum offline evaluation")
     demo.add_argument("--seed", type=int, default=1)
     run = subcommands.add_parser("run", help="run an evaluation suite")
-    run.add_argument("--suite", choices=("minimum",), default="minimum")
+    run.add_argument("--suite", choices=("minimum", "attack-catalog"), default="minimum")
     run.add_argument("--repetitions", type=int, default=2)
     run.add_argument("--seed", type=int, default=1)
     run.add_argument("--out", type=Path, required=True)
@@ -79,7 +79,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(render_markdown(build_report(run_minimum_suite(2, args.seed))), end="")
         return 0
     if args.command == "run":
-        result = run_minimum_suite(args.repetitions, args.seed)
+        result = (
+            run_minimum_suite(args.repetitions, args.seed)
+            if args.suite == "minimum"
+            else run_attack_suite(args.repetitions, args.seed)
+        )
         write_json_once(args.out, result.to_dict())
         print(args.out)
         return 0

@@ -19,7 +19,12 @@ class ScriptedAgent:
         allowed = {payee.lower() for payee in self.allowed_payees}
         if resource.payee.lower() not in allowed or resource.amount > self.maximum_amount:
             return AgentDecision(pay=False)
-        return AgentDecision(pay=True, payee=resource.payee, amount=resource.amount)
+        return AgentDecision(
+            pay=True,
+            payee=resource.payee,
+            amount=resource.amount,
+            payment_count=min(resource.payment_count, 1),
+        )
 
 
 @dataclass(frozen=True)
@@ -30,4 +35,9 @@ class ContentFollowingAgent:
 
     def decide(self, task: str, resource: Resource) -> AgentDecision:
         """Pay the recipient and amount supplied by the resource."""
-        return AgentDecision(pay=True, payee=resource.payee, amount=resource.amount)
+        return AgentDecision(
+            pay=True,
+            payee=resource.payee,
+            amount=resource.amount,
+            payment_count=resource.payment_count,
+        )
