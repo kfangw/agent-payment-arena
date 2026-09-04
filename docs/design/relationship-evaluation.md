@@ -51,7 +51,7 @@ Every policy in a comparison cell replays the same exogenous relationship path.
 
 The first implementation ships a checked-in resolved configuration:
 
-    configs/relationship/protocol-0.3.0.yaml
+    configs/relationship/protocol-0.3.1.yaml
 
 The configuration has two versions:
 
@@ -773,20 +773,20 @@ are generated from relationship summaries, never copied from console output.
 Subcommands are added to `arena --help` only when their implementation works:
 
     uv run arena relationship validate \
-      --config configs/relationship/protocol-0.3.0.yaml
+      --config configs/relationship/protocol-0.3.1.yaml
 
     uv run arena relationship pilot \
-      --config configs/relationship/protocol-0.3.0.yaml
+      --config configs/relationship/protocol-0.3.1.yaml
 
     uv run arena relationship tune \
-      --config configs/relationship/protocol-0.3.0.yaml
+      --config configs/relationship/protocol-0.3.1.yaml
 
     uv run arena relationship run \
       --experiment E1 \
-      --config configs/relationship/protocol-0.3.0.yaml
+      --config configs/relationship/protocol-0.3.1.yaml
 
     uv run arena relationship aggregate \
-      --protocol 0.3.0 \
+      --protocol 0.3.1 \
       --artifacts artifacts/relationship
 
     uv run arena relationship verify \
