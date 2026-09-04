@@ -15,12 +15,12 @@ that measures it.
 
 ## Status
 
-The repository contains two related components at different stages.
+The repository contains two related evaluation components.
 
-- `src/arena` is the generic agent-payment evaluation environment. Its shared
-  decision contract and command-line interface are implemented. The agents,
-  attacks, gateway backends, and end-to-end report remain on the
-  [roadmap](ROADMAP.md).
+- `src/arena` is the generic agent-payment evaluation environment. Its minimum
+  offline suite includes signed mandates and payments, an in-memory gateway,
+  baseline agents and policies, a prompt-injection scenario with a benign twin,
+  repeated execution, scoring, and interval reports.
 - `arena.experiments.settlement` is the implemented settlement-policy
   experiment. It contains the domain model and command-line entry points while
   reusing the generic experiment infrastructure under `src/arena/experiments`.
@@ -30,8 +30,21 @@ Install the project and run its fast checks with:
 ```bash
 uv sync --all-extras --dev
 uv run arena contract
+uv run arena demo
 uv run pytest -m "not live and not http_gateway"
 ```
+
+Run a reproducible evaluation and generate report artifacts:
+
+```bash
+uv run arena run --suite minimum --repetitions 20 --seed 1 --out results/minimum.json
+uv run arena report results/minimum.json \
+  --json-out reports/minimum.json \
+  --markdown-out reports/minimum.md
+```
+
+Result files are never overwritten. The minimum suite is offline and uses no
+provider key or network service.
 
 ## Settlement-policy experiment
 
@@ -114,9 +127,9 @@ experiment's names or internal modules.
 
 ## Generic arena results
 
-Not yet populated. When it is, this table is written by `arena report` and
-carries the model identifier, the run date, the repetition count, and an
-interval for every figure.
+`arena report` writes this comparison from a repeated result. Each primary
+metric includes a bootstrap interval; raw per-scenario records remain in the
+input JSON artifact.
 
 | policy | agent | unauthorized spend | benign tasks blocked | escalations | tokens | latency |
 | ------ | ----- | ------------------ | -------------------- | ----------- | ------ | ------- |
@@ -132,19 +145,19 @@ deployment. The *instrument* is the scenario, the metrics, and the report:
 everything that knows the ground truth of a run and therefore may not be
 visible to the subject.
 
-### Planned backends
+### Backends
 
 The generic arena is designed to run against two gateway backends.
 
-`FakeGateway` will be in-memory and the default. It will reproduce the x402
+`FakeGateway` is in-memory and the default. It reproduces the x402
 contract, not the gateway implementation, so a clean checkout runs with no
 chain, no node, and no Go toolchain. `HttpGateway` will talk to a running
 [stablecoin-x402-gateway](https://github.com/kfangw/stablecoin-x402-gateway)
 over HTTP.
 
-A contract test will run the same scenarios against both and assert that they agree.
-That test is what makes a result produced against the fake backend worth
-reading.
+The schemas and signatures are aligned to reference gateway revision
+`ddd20fe3ec7c2109a006e1112bcac9fdeabf9b32`. A future differential test will
+run the same cases against the HTTP backend and assert that both agree.
 
 ### Decision space
 
