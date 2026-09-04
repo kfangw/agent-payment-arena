@@ -44,7 +44,9 @@ uv run arena report results/minimum.json \
 ```
 
 Result files are never overwritten. The minimum suite is offline and uses no
-provider key or network service.
+provider key or network service. The demo first exercises fetch, payment,
+delegator confirmation, and retry through the MCP-compatible tool surface,
+then prints the repeated evaluation report.
 
 ## Settlement-policy experiment
 

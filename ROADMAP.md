@@ -27,14 +27,14 @@ M0 through M5 mark the order.
 
 ## Minimum viable arena — M1
 
-- [ ] MCP server exposing the complete payment authority, including delegator escalation (`src/arena/mcp_server/`)
+- [x] MCP server exposing the complete payment authority, including delegator escalation (`src/arena/mcp_server/`)
 - [x] Scripted agent as the deterministic control, and a cassette-backed LLM agent adapter (`src/arena/agents/`)
 - [x] One prompt injection attack with its benign twin, both run in the same pass
 - [x] Two accept policies: always verify, and ask the delegator above a limit
 - [x] Run loop and scoring: scenario, agent execution, ground truth comparison (`src/arena/loop.py`)
-- [ ] Generated comparison table across policies and agents, carrying the model identifier and the run date (`src/arena/report.py`)
+- [x] Generated comparison table across policies and agents, carrying model identifiers and the run date (`src/arena/report.py`)
 - [x] Response cassettes, recorded with an explicit callback and replayed by default, so CI runs without a provider key
-- [x] `arena demo`: one offline command from a clean checkout to the minimum evaluation report
+- [x] `arena demo`: one offline command exercising payment and escalation through MCP tools before producing the minimum evaluation report
 
 ## Attack catalog — M2
 

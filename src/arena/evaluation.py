@@ -20,6 +20,7 @@ from arena.gateway.protocol import AcceptPolicy
 from arena.gateway.schemas import Mandate
 from arena.gateway.signatures import sign_mandate
 from arena.loop import run_scenario
+from arena.mcp_server.tools import PaymentTools
 from arena.payment import PaymentAuthority
 from arena.policies.payment import AlwaysVerifyPolicy, AskAbovePolicy
 from arena.scenarios import Scenario, minimum_suite
@@ -30,6 +31,27 @@ ATTACKER = "0x" + "22" * 20
 TOKEN = "0x" + "33" * 20
 DELEGATOR_KEY = "0x" + "01" * 32
 AGENT_KEY = "0x" + "02" * 32
+
+
+def run_mcp_demo(seed: int = 1) -> tuple[str, ...]:
+    """Exercise fetch, pay, ask, and confirmed pay through the MCP tool surface."""
+    scenario = minimum_suite(MERCHANT, ATTACKER)[0]
+    now = datetime(2026, 1, 1, tzinfo=UTC)
+    tools = PaymentTools(scenario.resource, _authority(scenario, AskAbovePolicy(20), seed), now)
+    fetched = tools.fetch_resource()
+    terms = cast(dict[str, object], fetched["paymentRequired"])
+    nonce_key = "mcp-demo"
+    first = tools.pay(str(terms["payTo"]), int(cast(str, terms["maxAmountRequired"])), nonce_key)
+    confirmation = tools.ask_delegator(scenario.resource.amount, nonce_key)
+    if confirmation is None:
+        raise RuntimeError("demo delegator did not return a confirmation")
+    second = tools.pay(
+        scenario.resource.payee,
+        scenario.resource.amount,
+        nonce_key,
+        confirmation,
+    )
+    return first.action.value, second.action.value
 
 
 @dataclass(frozen=True)
