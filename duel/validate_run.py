@@ -55,12 +55,12 @@ def run_writes_envelope() -> None:
             assert key in env, f"missing {key}"
         assert env["kind"] == "duel"
         pol = env["payload"]["policies"]
-        assert "A2" in pol and "B1" in pol
+        assert "A" in pol and "B1" in pol
         counts = env["payload"]["block_counts"]
-        sums = pol["A2"]["block_sums"]
+        sums = pol["A"]["block_sums"]
         assert len(counts) == len(sums)
         recon = sum(sums) / sum(counts)
-        assert abs(recon - env["payload"]["means"]["A2"]) < 1e-9
+        assert abs(recon - env["payload"]["means"]["A"]) < 1e-9
         try:
             main(argv)
         except FileExistsError:

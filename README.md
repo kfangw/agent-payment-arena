@@ -21,9 +21,9 @@ The repository contains two related components at different stages.
   decision contract and command-line interface are implemented. The agents,
   attacks, gateway backends, and end-to-end report remain on the
   [roadmap](ROADMAP.md).
-- `duel` is the implemented settlement-policy experiment. It includes the exact
-  model, stochastic replay, policy families, paired statistical analysis,
-  robustness experiments, and validation programs.
+- `duel` is the implemented settlement-policy experiment. It contains the
+  domain model and command-line entry points while reusing the generic
+  experiment infrastructure under `src/arena/experiments`.
 
 Install the project and run its fast checks with:
 
@@ -60,9 +60,10 @@ Aggregate completed confirmatory cells:
 uv run python -m duel.aggregate --results results --out tables
 ```
 
-The batch drivers in `scripts/` skip outputs that already exist and write one
-log per process to `reports/_logs/`. Pass the desired worker count as the
-first argument:
+The batch drivers in `scripts/` declare independent jobs or ordered pipelines.
+They skip outputs that already exist, pin numerical libraries to one thread per
+process, and write one log per job to `reports/_logs/`. Pass the desired worker
+count as the first argument:
 
 ```bash
 uv run python scripts/run_s1.py 8
@@ -81,7 +82,7 @@ uv run python -m duel.validate_run
 
 ```text
 src/arena/     Generic agent-payment contracts and CLI
-duel/          Settlement model, simulation, policies, statistics, and reports
+duel/          Settlement model, simulation, policies, and compatibility CLIs
 scripts/       Resumable batch definitions using shared experiment utilities
 tests/         Fast CI regression tests
 docs/          Scope, threat model, and generic arena design notes
@@ -93,10 +94,18 @@ The settlement-policy modules separate the model from the experiment plumbing:
 - `duel.simulate` and `duel.outage` generate and replay stochastic channels.
 - `duel.policies` compiles and tunes comparison policies.
 - `duel.run` executes one comparison cell.
-- `duel.stats`, `duel.aggregate`, and `duel.report` perform inference and
-  serialize results.
-- `arena.experiments.runner` provides shared process, logging, and concurrency
-  code for batch scripts and future experiment suites.
+- `duel.aggregate` turns completed cells into tables; `duel.stats` and
+  `duel.report` preserve the original command-line API as thin compatibility
+  layers.
+- `arena.experiments.statistics` implements paired block inference.
+- `arena.experiments.artifacts` creates reproducible metadata envelopes and
+  refuses to overwrite completed results.
+- `arena.experiments.runner` provides shared process, pipeline, logging, and
+  concurrency code for every batch script and future experiment suites.
+
+Reusable infrastructure belongs under `arena.experiments`; experiment-specific
+models and entry points belong under `duel`. This boundary keeps new evaluation
+suites from depending on the current experiment's names or internal modules.
 
 ## Generic arena results
 

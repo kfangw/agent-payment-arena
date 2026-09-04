@@ -25,6 +25,25 @@ class Job:
 
 
 @dataclass(frozen=True)
+class PipelineJob:
+    """Named experiment processes that must run in order."""
+
+    name: str
+    commands: tuple[tuple[str, ...], ...]
+
+    @classmethod
+    def python(cls, name: str, *steps: Sequence[str]) -> PipelineJob:
+        """Create a pipeline whose steps use the active Python interpreter."""
+        return cls(
+            name=name,
+            commands=tuple((sys.executable, *step) for step in steps),
+        )
+
+
+type RunnableJob = Job | PipelineJob
+
+
+@dataclass(frozen=True)
 class BatchResult:
     """Successful and failed job names from a completed batch."""
 
@@ -53,26 +72,31 @@ def _process_env(root: Path) -> dict[str, str]:
         "VECLIB_MAXIMUM_THREADS": "1",
         "OPENBLAS_NUM_THREADS": "1",
         "MKL_NUM_THREADS": "1",
+        "NUMEXPR_NUM_THREADS": "1",
     }
 
 
-def run_job(job: Job, *, root: Path, logs: Path) -> tuple[str, int]:
-    """Run one job and write its combined output to a stable log file."""
+def run_job(job: RunnableJob, *, root: Path, logs: Path) -> tuple[str, int]:
+    """Run one job or ordered pipeline and write a stable combined log."""
     logs.mkdir(parents=True, exist_ok=True)
+    commands = (job.command,) if isinstance(job, Job) else job.commands
     with (logs / f"{job.name}.log").open("w") as stream:
-        completed = subprocess.run(
-            job.command,
-            cwd=root,
-            env=_process_env(root),
-            stdout=stream,
-            stderr=subprocess.STDOUT,
-            check=False,
-        )
-    return job.name, completed.returncode
+        for command in commands:
+            completed = subprocess.run(
+                command,
+                cwd=root,
+                env=_process_env(root),
+                stdout=stream,
+                stderr=subprocess.STDOUT,
+                check=False,
+            )
+            if completed.returncode:
+                return job.name, completed.returncode
+    return job.name, 0
 
 
 def run_jobs(
-    jobs: Sequence[Job],
+    jobs: Sequence[RunnableJob],
     *,
     root: Path,
     logs: Path,

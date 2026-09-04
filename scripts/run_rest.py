@@ -19,28 +19,16 @@ Resumable: a job whose final output exists is skipped.
 
 from __future__ import annotations
 
-import os
-import subprocess
 import sys
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
+
+from arena.experiments.runner import PipelineJob, default_workers, run_jobs
+from duel.design import CONFIRMATORY_RUNS
 
 ROOT = Path(__file__).resolve().parent.parent
 LOGS = ROOT / "reports" / "_logs"
-PY = sys.executable
 N_EVAL, N_TUNE = "100000", "50000"
 
-NINE = [
-    ("E-fast", "F1", 1),
-    ("E-fast", "F2", 2),
-    ("E-fast", "F3", 3),
-    ("E-slow", "F1", 4),
-    ("E-slow", "F2", 5),
-    ("E-slow", "F3", 6),
-    ("E-outage", "F1", 7),
-    ("E-outage", "F2", 8),
-    ("E-outage", "F3", 9),
-]
 S3_CELLS = [("E-slow", "F2", 5), ("E-outage", "F2", 8)]
 S3_AXES = ["delta", "kappa", "lambda", "noise"]
 S4_CELLS = [("E-slow-deep", "F1", 10), ("E-slow-deep", "F2", 11), ("E-slow-deep", "F3", 12)]
@@ -52,8 +40,7 @@ def _exists(sub, name):
 
 
 def _duel(env, flow, seed, out):
-    return [
-        PY,
+    return (
         "-m",
         "duel.run",
         "--env",
@@ -70,20 +57,19 @@ def _duel(env, flow, seed, out):
         str(seed),
         "--out",
         out,
-    ]
+    )
 
 
 def jobs():
     out = []
     # S2: reduced base + holdout B4 + oracle B4, matched draws in results_s2
-    for env, flow, seed in NINE:
+    for env, flow, seed in CONFIRMATORY_RUNS:
         tag = f"{env}_{flow}_mid_s{seed}"
         if _exists("results_s2", f"b4oracle_{tag}"):
             continue
-        seq = [
+        steps = [
             _duel(env, flow, seed, "results_s2"),
-            [
-                PY,
+            (
                 "-m",
                 "duel.b4",
                 "--env",
@@ -100,9 +86,8 @@ def jobs():
                 "results_s2",
                 "--out",
                 "results_s2",
-            ],
-            [
-                PY,
+            ),
+            (
                 "-m",
                 "duel.b4",
                 "--env",
@@ -122,48 +107,44 @@ def jobs():
                 "results_s2",
                 "--out",
                 "results_s2",
-            ],
+            ),
         ]
-        out.append((f"s2_{tag}", seq))
+        out.append(PipelineJob.python(f"s2_{tag}", *steps))
     # S3: injection axes against B4 (self-contained, reduced)
     for env, flow, seed in S3_CELLS:
         for axis in S3_AXES:
             tag = f"{env}_{flow}_{axis}_s{seed}"
             if not _exists("results_inject", f"b4_{tag}"):
                 out.append(
-                    (
+                    PipelineJob.python(
                         f"s3_{tag}",
-                        [
-                            [
-                                PY,
-                                "-m",
-                                "duel.inject_b4",
-                                "--cell",
-                                f"{env} x {flow}",
-                                "--axis",
-                                axis,
-                                "--n-eval",
-                                N_EVAL,
-                                "--n-tune",
-                                N_TUNE,
-                                "--seed",
-                                str(seed),
-                                "--out",
-                                "results_inject",
-                            ]
-                        ],
+                        (
+                            "-m",
+                            "duel.inject_b4",
+                            "--cell",
+                            f"{env} x {flow}",
+                            "--axis",
+                            axis,
+                            "--n-eval",
+                            N_EVAL,
+                            "--n-tune",
+                            N_TUNE,
+                            "--seed",
+                            str(seed),
+                            "--out",
+                            "results_inject",
+                        ),
                     )
                 )
     # S4: E-slow-deep reduced base then dense-k B4
     for env, flow, seed in S4_CELLS:
         tag = f"{env}_{flow}_mid_s{seed}"
-        seq = []
+        steps = []
         if not _exists("results", f"duel_{tag}"):
-            seq.append(_duel(env, flow, seed, "results"))
+            steps.append(_duel(env, flow, seed, "results"))
         if not _exists("results", f"b4_{tag}"):
-            seq.append(
-                [
-                    PY,
+            steps.append(
+                (
                     "-m",
                     "duel.b4",
                     "--env",
@@ -180,10 +161,10 @@ def jobs():
                     K_DENSE,
                     "--out",
                     "results",
-                ]
+                )
             )
-        if seq:
-            out.append((f"s4_{tag}", seq))
+        if steps:
+            out.append(PipelineJob.python(f"s4_{tag}", *steps))
 
     def cost(name):
         outage = "E-outage" in name or "outage" in name
@@ -195,46 +176,13 @@ def jobs():
             return 30 if outage else 15
         return 10  # s4
 
-    out.sort(key=lambda j: cost(j[0]), reverse=True)
+    out.sort(key=lambda job: cost(job.name), reverse=True)
     return out
 
 
-def run_one(name, cmds):
-    penv = dict(
-        os.environ,
-        PYTHONPATH=str(ROOT),
-        OMP_NUM_THREADS="1",
-        OPENBLAS_NUM_THREADS="1",
-        MKL_NUM_THREADS="1",
-        VECLIB_MAXIMUM_THREADS="1",
-        NUMEXPR_NUM_THREADS="1",
-    )
-    LOGS.mkdir(parents=True, exist_ok=True)
-    with (LOGS / f"{name}.log").open("w") as fh:
-        for cmd in cmds:
-            rc = subprocess.run(
-                cmd, cwd=ROOT, env=penv, stdout=fh, stderr=subprocess.STDOUT
-            ).returncode
-            if rc != 0:
-                return name, rc
-    return name, 0
-
-
 def main():
-    workers = int(sys.argv[1]) if len(sys.argv) > 1 else 8
-    todo = jobs()
-    print(f"launching {len(todo)} jobs on {workers} workers", flush=True)
-    ok, bad = [], []
-    with ThreadPoolExecutor(max_workers=workers) as ex:
-        futs = {ex.submit(run_one, n, c): n for n, c in todo}
-        for fut in as_completed(futs):
-            name, rc = fut.result()
-            (ok if rc == 0 else bad).append(name)
-            print(f"done {name} rc={rc}  ({len(ok) + len(bad)}/{len(todo)})", flush=True)
-    print(f"\ncompleted ok={len(ok)} failed={len(bad)}", flush=True)
-    if bad:
-        print("FAILED:", bad, flush=True)
-        sys.exit(1)
+    workers = int(sys.argv[1]) if len(sys.argv) > 1 else default_workers()
+    raise SystemExit(run_jobs(jobs(), root=ROOT, logs=LOGS, workers=workers).exit_code)
 
 
 if __name__ == "__main__":
