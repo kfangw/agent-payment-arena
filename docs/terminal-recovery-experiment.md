@@ -132,6 +132,25 @@ uv run python -m arena.experiments.settlement.halt_subset \
   --conditions outage --recovery 0 1 --out results/halted-subset.json
 ```
 
+## Security outcomes of the main cells
+
+The main run kept per-block payoff sums only. `security_replay` regenerates a
+cell's draws from its seed, rebuilds A, B3, B4 (and B5 on the halting rail)
+from the archived fitted parameters without retuning, replays them with
+per-payment instrumentation, and refuses to report unless every replayed
+mean payoff equals the archived one. It reports release, misuse grant,
+misuse exposure, unpaid exposure, legitimate refusal, and query outcomes with
+paired block-bootstrap intervals against A.
+
+```bash
+uv run python -m arena.experiments.settlement.security_replay \
+  --archive results/archive --out results/security
+```
+
+`--archive` is a directory holding the archived `results/` and `b5/`
+folders. Passing `--n-tune` or `--n-eval` runs a smoke test and disables
+the identity check.
+
 ## Quick execution check
 
 ```bash
