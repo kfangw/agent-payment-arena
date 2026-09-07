@@ -138,10 +138,11 @@ def main():
                      'misspecification_cost': {}, 'a_minus': {}}
             for name in ('A', 'B4', 'B5'):
                 vals = np.array([r['misspecification_cost'][name] for r in sel])
+                rng = np.random.default_rng([seed, 776])
                 entry['misspecification_cost'][name] = {
                     'repeat_values': vals.tolist(), 'mean': float(vals.mean()),
                     'repeat_bootstrap_ci95': None if len(vals) < 5 else np.quantile([
-                        np.random.default_rng([seed, 776]).choice(vals, len(vals)).mean()
+                        rng.choice(vals, len(vals)).mean()
                         for _ in range(args.n_boot)], [.025, .975]).tolist()}
             for name in ('B4', 'B5'):
                 vals = np.array([r['comparisons'][name]['mean'] for r in sel])
