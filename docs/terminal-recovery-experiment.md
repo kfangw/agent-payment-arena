@@ -117,6 +117,21 @@ uv run python -m arena.experiments.settlement.halt_curve --recovery 0
 uv run python -m arena.experiments.settlement.halt_curve --recovery 1 --minutes 10 30 60
 ```
 
+## Halted-arrival subset and additive rescoring
+
+`halt_subset` reads the saved outcomes of one or more runs and reports, per
+condition and recovery value, the halted-arrival count, the compiled policy's
+release rate among halted arrivals (all, legitimate, misuse), the per-halted-
+payment and pooled A minus comparator differences with a block-bootstrap
+interval, and the shift each policy takes under an additive loss convention
+that charges `h*v` on a release that is both misuse and unpaid.
+
+```bash
+uv run python -m arena.experiments.settlement.halt_subset \
+  --run results/halt-10 results/halt-60 results/recovery-F2-pilot \
+  --conditions outage --recovery 0 1 --out results/halted-subset.json
+```
+
 ## Quick execution check
 
 ```bash
