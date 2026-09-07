@@ -45,3 +45,6 @@ log_*.txt
 
 # Local analysis reports (kept out of the repository text)
 reports/
+results_settlement*/
+results_cmc_v37*/
+artifacts/
