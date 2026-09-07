@@ -67,7 +67,7 @@ class OutageEnv:
 
 
 # ------------------------------------------------------------ exact DP
-def survival(env: OutageEnv) -> np.ndarray:
+def survival(env: OutageEnv, *, recovery: float = 0.0) -> np.ndarray:
     """sig[i, l, r] = P(reach FINAL before expiry | state).  The tick-t
     chain event is included: committing now rides this tick's advance."""
     N, H = env.N, env.H
@@ -75,6 +75,14 @@ def survival(env: OutageEnv) -> np.ndarray:
     P = env.trans()
     sig = np.zeros((FIN + 1, H + 1, 2))
     sig[FIN, :, :] = 1.0
+    if not 0 <= recovery <= 1:
+        raise ValueError("recovery must be in [0, 1]")
+    if recovery and env.p10 <= 0:
+        raise ValueError("continuation requires eventual recovery from a halt")
+    # Stage zero is unexecuted. Stages 1..N have executed but lack finality.
+    # Only an already committed grant can receive this continuation payoff.
+    for i in range(1, FIN):
+        sig[i, 0, :] = recovery * np.prod(1 - env.f[i:])
     for l in range(1, H + 1):
         for i in range(N, -1, -1):
             sig[i, l, 0] = (1 - env.f[i]) * (sig[i + 1, l - 1, :] @ P[0])
@@ -106,14 +114,14 @@ def window_AD(env: OutageEnv, sig: np.ndarray):
     return A, D, ex
 
 
-def value_labels(env: OutageEnv, v, pi_grid, drop=()):
+def value_labels(env: OutageEnv, v, pi_grid, drop=(), *, recovery=0.0):
     """Optimal values and labels over the state space at exposure v,
     with actions in `drop` removed from the argmax (the continuation V
     is recomputed under the mask).  Tie order grant<reject<verify<wait."""
     N, H, tau = env.N, env.H, env.tau
     FIN = N + 1
     P = env.trans()
-    sig = survival(env)
+    sig = survival(env, recovery=recovery)
     A, D, ex = window_AD(env, sig)
     pi = np.asarray(pi_grid)
     kappa = 1 + (1 - pi) * env.m - pi * env.h
@@ -125,6 +133,10 @@ def value_labels(env: OutageEnv, v, pi_grid, drop=()):
     for l in range(0, H + 1):
         for i in range(FIN, -1, -1):
             for r in (0, 1):
+                if recovery and l == 0 and i != FIN:
+                    # Uncommitted requests close without release at the cutoff.
+                    lab[i, l, r] = REJECT
+                    continue
                 G = v * (sig[i, l, r] * kappa - 1.0)
                 R = np.zeros(npi)
                 w = min(tau, l)
@@ -164,10 +176,11 @@ class CompiledOutagePolicy:
 
 
 def compile_outage(
-    env: OutageEnv, name: str, n_v=41, v_lo=0.5, v_hi=2000.0, drop=()
+    env: OutageEnv, name: str, n_v=41, v_lo=0.5, v_hi=2000.0, drop=(), *, recovery=0.0
 ) -> CompiledOutagePolicy:
     v_grid = np.geomspace(v_lo, v_hi, n_v)
-    tabs = [value_labels(env, v, PI_GRID_OUTAGE, drop=drop)[0] for v in v_grid]
+    tabs = [value_labels(env, v, PI_GRID_OUTAGE, drop=drop, recovery=recovery)[0]
+            for v in v_grid]
     return CompiledOutagePolicy(name, v_grid, tabs)
 
 
