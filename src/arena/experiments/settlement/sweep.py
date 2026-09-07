@@ -7,7 +7,7 @@ three E-slow cells and reports A minus B1, since E-slow still sits in the
 confirmatory family even though it no longer holds the margin.  Both retune
 the competitor at every point, at the reduced sample, and both report the
 margin recomputed at the point's own mean exposure alongside the closed-form
-floor and v* so the manuscript table can be checked.
+floor and v* so the reported table can be checked.
 
     python -m arena.experiments.settlement.sweep --env E-outage --flow F2 --seed 8 --C 0.25 --competitor B4
     python -m arena.experiments.settlement.sweep --env E-slow --flow F2 --seed 5 --f0 0.015 --gamma 0.3 --competitor B1

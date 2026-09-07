@@ -1,7 +1,7 @@
 """R4: E-outage residual diagnosis.
 
 The surviving empirical margin is E-outage A - B3 at the refined grid, and
-k* = 0 there, so B4 = B3: the margin is the amount the manuscript calls the
+k* = 0 there, so B4 = B3: the margin is the amount the reports call the
 undiagnosed residual.  B3 reads only suspicion pi; the compiled family-A
 policy reads (i, l, r, v, pi).  This module measures what the four extra
 coordinates buy.
