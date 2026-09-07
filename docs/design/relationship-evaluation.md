@@ -24,8 +24,8 @@ Reusable execution, artifact, and statistical functions remain in:
     src/arena/experiments/runner.py
     src/arena/experiments/statistics.py
 
-No module, public type, command, artifact key, or test name may contain a paper
-title, venue name, or submission label.
+No module, public type, command, artifact key, or test name may contain an
+external document title, venue name, or submission label.
 
 ## Behavior
 
