@@ -1,5 +1,9 @@
 # agent-payment-arena
 
+The [settlement reproducibility guide](docs/settlement-reproducibility.md) gives the
+locked environment, one-command smoke and confirmatory runs, the B5 runner,
+and checksum-verified data preservation procedure for the settlement experiments.
+
 [![CI](https://github.com/kfangw/agent-payment-arena/actions/workflows/ci.yml/badge.svg)](https://github.com/kfangw/agent-payment-arena/actions/workflows/ci.yml)
 
 An evaluation environment that measures what breaks when an LLM agent is given
