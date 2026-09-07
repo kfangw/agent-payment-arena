@@ -144,6 +144,30 @@ def paired_bootstrap(difference, block_size, rng, n_boot):
     return np.quantile(means, [.025, .975]).tolist()
 
 
+def with_halt_minutes(env, halt_minutes=None, keep_halt_share=False):
+    """Return `env` with the mean halt duration set to `halt_minutes`.
+
+    The halt process is a two-state Markov chain at the 60-second tick, so
+    the mean halt length is 1/p10 ticks.  By default the halt start rate
+    p01 is left unchanged, so shorter halts also lower the stationary halt
+    share.  With `keep_halt_share` the start rate is rescaled so that the
+    stationary share p01/(p01+p10) is preserved and only the duration moves.
+    """
+    if halt_minutes is None:
+        return env
+    if halt_minutes <= 0:
+        raise ValueError('halt duration must be positive')
+    ticks = halt_minutes * 60.0 / env.tick_seconds
+    p10 = 1.0 / ticks
+    if p10 > 1:
+        raise ValueError('halt duration shorter than one tick')
+    p01 = env.p01
+    if keep_halt_share:
+        share = env.stationary_outage
+        p01 = share * p10 / (1.0 - share)
+    return replace(env, p01=p01, p10=p10)
+
+
 def run(args):
     """Create one immutable experiment directory with draws and outcomes."""
     if min(args.n_tune, args.n_eval, args.repeats, args.block_size, args.n_boot) <= 0:
@@ -157,6 +181,7 @@ def run(args):
     if len(set(args.recovery)) != len(args.recovery):
         raise ValueError('duplicate recovery probabilities')
     _, base, _ = envs_for('mid')['E-outage']
+    base = with_halt_minutes(base, args.halt_minutes, args.keep_halt_share)
     max_watch = base.N + 1 if args.max_watch is None else args.max_watch
     if not 0 <= max_watch <= base.H:
         raise ValueError('watch grid outside horizon')
@@ -253,6 +278,10 @@ def main():
     parser.add_argument('--conditions', nargs='+', choices=['normal', 'outage'],
                         default=['normal', 'outage'])
     parser.add_argument('--recovery', nargs='+', type=float, default=[0., .5, 1.])
+    parser.add_argument('--halt-minutes', type=float,
+                        help='mean halt duration in minutes (default: cell constant)')
+    parser.add_argument('--keep-halt-share', action='store_true',
+                        help='rescale the halt start rate so the stationary halt share is unchanged')
     parser.add_argument('--out', type=Path, required=True)
     run(parser.parse_args())
 
