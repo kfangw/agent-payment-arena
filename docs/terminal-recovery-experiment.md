@@ -100,6 +100,23 @@ checking runtime and the number of actual outage episodes. Rare halted arrivals
 will be poorly represented by the pilot. Full per-payment artifacts consume disk
 space in proportion to samples, conditions, recovery values, and repeats.
 
+## Halt duration
+
+The cell constant is a mean halt of 60 minutes (`p10 = 1/60` at the 60-second
+tick). `--halt-minutes M` sets the mean halt to `M` minutes. By default the halt
+start rate `p01` is unchanged, so shorter halts also lower the stationary halt
+share; `--keep-halt-share` rescales `p01` so that only the duration moves. The
+override is recorded in `config.json` (`halt_minutes`, `keep_halt_share`, and
+the resulting `base_environment`).
+
+The analytic settlement probability for an arrival during a halt, as a function
+of the mean halt duration, needs no sampling:
+
+```bash
+uv run python -m arena.experiments.settlement.halt_curve --recovery 0
+uv run python -m arena.experiments.settlement.halt_curve --recovery 1 --minutes 10 30 60
+```
+
 ## Quick execution check
 
 ```bash
