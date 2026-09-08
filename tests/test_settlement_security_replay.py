@@ -12,11 +12,14 @@ from arena.experiments.settlement.outage import (
 )
 from arena.experiments.settlement.policies import B3, compile_A
 from arena.experiments.settlement.run import OB
+from arena.experiments.settlement.policies import suspicion_grid
 from arena.experiments.settlement.security_replay import (
-    FIELDS, replay_chain, replay_outage_fields, summarize,
+    FIELDS, replay_chain, replay_outage_fields, retune, summarize,
 )
 from arena.experiments.settlement.simulate import draw_batch, replay
-from arena.experiments.settlement.watch import OutageWatchBandPolicy, WatchBandPolicy
+from arena.experiments.settlement.watch import (
+    FixedActionWatchPolicy as B4Force, OutageWatchBandPolicy, WatchBandPolicy,
+)
 
 
 def test_chain_fields_match_payoff_replay() -> None:
@@ -41,3 +44,27 @@ def test_outage_fields_match_payoff_replay() -> None:
         out = replay_outage_fields(env, d, pol, ex)
         assert np.array_equal(out[:, 0], replay_outage(env, d, pol, ex))
         assert out.shape[1] == len(FIELDS)
+
+
+def test_retune_moves_the_band_with_the_misuse_weight() -> None:
+    """Re-fitting at a heavier misuse weight must tighten the grant band.
+
+    The forced-payoff path is what a comparison at another weight uses for
+    every family-B rule, so this checks the direction the closed form gives:
+    a larger weight makes granting worse at a given suspicion, so the lower
+    threshold cannot rise.
+    """
+    _, ch, _ = envs_for('mid')['E-slow']
+    flow = make_flows()['F2']
+    d = draw_batch(ch, flow, 4000, np.random.default_rng(11))
+    ex = np.maximum(sigma_list(ch.f) * (1 + ch.m) - 1.0, 0.0)
+    grid = suspicion_grid(21)
+    fits = {}
+    for weight in (ch.h, 2 * ch.h):
+        world = replace(ch, h=weight)
+        (a, b), (k, _, _), b5 = retune(
+            lambda k, act: replay(world, d, B4Force(k, act), ex),
+            d.pi0, [0, 1, 2], grid, None)
+        fits[weight] = (a, b, k)
+        assert b5 is None and 0.0 <= a < b <= 1.0
+    assert fits[2 * ch.h][0] <= fits[ch.h][0]
