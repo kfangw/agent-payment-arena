@@ -1,0 +1,6 @@
+{
+  "schedule": [[{"weight": 1.0, "amount": 0.05, "hazards": [0.01]}], [{"weight": 1.0, "amount": 1.0, "hazards": []}]],
+  "prior": 0.5, "low": 0.01, "high": 0.99,
+  "margin": 1.0, "harm": 1.0, "query_cost": 0.1,
+  "wait_cost": 0.0001, "response_rate": 0.99, "deadline": 2
+}
