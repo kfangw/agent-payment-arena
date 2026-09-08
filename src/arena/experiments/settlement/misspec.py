@@ -25,7 +25,7 @@ import numpy as np
 from .core import rho_hat_from_q
 from .gate import envs_for
 from .outage import OutageDraws, compile_outage, survival, window_AD
-from .recovery import FIELDS, paired_bootstrap, replay, rule, summarize
+from .recovery import FIELDS, paired_bootstrap, replay, rule, summarize, with_halt_minutes
 from .report import jsonable, write_once
 
 DRAW_KEYS = ('v', 'p_true', 'theta', 'pi0', 'u_stage', 't_ans', 'paths')
@@ -89,6 +89,10 @@ def main():
     config = json.loads((args.run / 'config.json').read_text())
     repeats, seed = config['repeats'], config['seed']
     _, base, _ = envs_for('mid')['E-outage']
+    # A run may have been produced at a non-default mean halt; rebuild the
+    # same environment it used, or the identity check below will reject it.
+    base = with_halt_minutes(base, config.get('halt_minutes'),
+                             config.get('keep_halt_share', False))
     args.out.mkdir(parents=True, exist_ok=False)
 
     identity = {}
