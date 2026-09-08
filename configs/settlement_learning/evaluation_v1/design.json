@@ -1,0 +1,804 @@
+{
+  "schema": 1,
+  "name": "finite-release-evaluation-v1",
+  "status": "frozen-before-evaluation",
+  "base_revision": "28d9048619ac556551bd5abf950222e32a670a4c",
+  "split": "evaluation",
+  "seeds": [
+    173,
+    947,
+    2081
+  ],
+  "relations_per_seed": 2000,
+  "policies": [
+    "optimal",
+    "fixed",
+    "myopic",
+    "query_first",
+    "q_assumed"
+  ],
+  "source_sha256": {
+    "src/arena/experiments/settlement_learning/run.py": "8398bcde04ffae1c0cd50ee21a82bac47f0149a2924f9ffdcae5c3bda7c1b8f5",
+    "src/arena/experiments/settlement_learning/solver.py": "57261d205562e9597ab507323e7ed580c12d92f53b91e001c559c2f7708212d6",
+    "src/arena/experiments/settlement_learning/simulate.py": "164376d129eef4d578f5dd41e384a3289e855745e4fd4cb6f76ef86b6929fca0",
+    "src/arena/experiments/settlement_learning/__init__.py": "935181ed82dbeadf495cd06e5f2ea342965d01e07012b180ff60a82b43d9e7c8",
+    "src/arena/experiments/settlement_learning/model.py": "d0360cedbbe67740c40aa742e097693108d8019a30efe5bd2e8718b4a7f863e7",
+    "src/arena/experiments/settlement/core.py": "2c32baf62bf86240affd78b38c93f5ef313293b29387ebdbecf26d0d4a365262"
+  },
+  "statistical_family_alpha": 0.05,
+  "primary": "exact expected relation reward",
+  "cells": [
+    {
+      "id": "anchor_uncertain",
+      "path": "configs/settlement_learning/evaluation_v1/anchor_uncertain.json",
+      "sha256": "4cdc532c55a4a87977bab81e4cd0c871be8dd410a0ae37a176f7c21182d3fedb",
+      "groups": [
+        "E1",
+        "E2",
+        "anchors"
+      ],
+      "replay": true,
+      "expected_exposure": 1.05,
+      "practical_delta": 0.0010500000000000002
+    },
+    {
+      "id": "anchor_pilot",
+      "path": "configs/settlement_learning/evaluation_v1/anchor_pilot.json",
+      "sha256": "50df39b55a9bc24ed270c5923fa8e4bb93c9baa3407a758c2ed94b3c8ad79e3f",
+      "groups": [
+        "anchors"
+      ],
+      "replay": true,
+      "expected_exposure": 1.6,
+      "practical_delta": 0.0016
+    },
+    {
+      "id": "learning-e0.01-v0.25-c0.03",
+      "path": "configs/settlement_learning/evaluation_v1/learning-e0.01-v0.25-c0.03.json",
+      "sha256": "508ed41b460292008529d5a74f2c1e5d0ec1bae581b0a85118394accfa7bf96b",
+      "groups": [
+        "E1"
+      ],
+      "replay": false,
+      "expected_exposure": 0.3,
+      "practical_delta": 0.0003
+    },
+    {
+      "id": "learning-e0.01-v0.25-c0.1",
+      "path": "configs/settlement_learning/evaluation_v1/learning-e0.01-v0.25-c0.1.json",
+      "sha256": "a4db7319c8acd0c557c02f59b6bac14e69b9545f43b706f9706f5687eafea3b4",
+      "groups": [
+        "E1"
+      ],
+      "replay": false,
+      "expected_exposure": 0.3,
+      "practical_delta": 0.0003
+    },
+    {
+      "id": "learning-e0.01-v0.25-c0.3",
+      "path": "configs/settlement_learning/evaluation_v1/learning-e0.01-v0.25-c0.3.json",
+      "sha256": "3c279b8f247afd66f32d769ee06958da89db72fcbe22d564e62c9ebc6c573919",
+      "groups": [
+        "E1"
+      ],
+      "replay": false,
+      "expected_exposure": 0.3,
+      "practical_delta": 0.0003
+    },
+    {
+      "id": "learning-e0.01-v1-c0.03",
+      "path": "configs/settlement_learning/evaluation_v1/learning-e0.01-v1-c0.03.json",
+      "sha256": "c78208fac2c7cb77240180b6b9c38bba4fd19b10794c4ad867331fb5a13f2987",
+      "groups": [
+        "E1"
+      ],
+      "replay": false,
+      "expected_exposure": 1.05,
+      "practical_delta": 0.0010500000000000002
+    },
+    {
+      "id": "learning-e0.01-v1-c0.3",
+      "path": "configs/settlement_learning/evaluation_v1/learning-e0.01-v1-c0.3.json",
+      "sha256": "17b83381e332af835abed92296901635d73b4ed4bbf86b90440d463cd2e5851f",
+      "groups": [
+        "E1"
+      ],
+      "replay": false,
+      "expected_exposure": 1.05,
+      "practical_delta": 0.0010500000000000002
+    },
+    {
+      "id": "learning-e0.01-v4-c0.03",
+      "path": "configs/settlement_learning/evaluation_v1/learning-e0.01-v4-c0.03.json",
+      "sha256": "0c43d992179cb8f1637da8b6924ca578d8ea7f078b318fbfb424e87dd494bca4",
+      "groups": [
+        "E1"
+      ],
+      "replay": false,
+      "expected_exposure": 4.05,
+      "practical_delta": 0.00405
+    },
+    {
+      "id": "learning-e0.01-v4-c0.1",
+      "path": "configs/settlement_learning/evaluation_v1/learning-e0.01-v4-c0.1.json",
+      "sha256": "2c98167c9c5fe1d89e087746ad16c8389ff634351a792c1eb61e1cb132b7026c",
+      "groups": [
+        "E1"
+      ],
+      "replay": false,
+      "expected_exposure": 4.05,
+      "practical_delta": 0.00405
+    },
+    {
+      "id": "learning-e0.01-v4-c0.3",
+      "path": "configs/settlement_learning/evaluation_v1/learning-e0.01-v4-c0.3.json",
+      "sha256": "16e3305a98aa39bdb316ec6aa538b85e3608901146950d1d54dcb73345ed6b70",
+      "groups": [
+        "E1"
+      ],
+      "replay": false,
+      "expected_exposure": 4.05,
+      "practical_delta": 0.00405
+    },
+    {
+      "id": "learning-e0.1-v0.25-c0.03",
+      "path": "configs/settlement_learning/evaluation_v1/learning-e0.1-v0.25-c0.03.json",
+      "sha256": "af348800631f57536fd7e88d527402872cfe1a69eb47152b61f43f202aefa642",
+      "groups": [
+        "E1"
+      ],
+      "replay": false,
+      "expected_exposure": 0.3,
+      "practical_delta": 0.0003
+    },
+    {
+      "id": "learning-e0.1-v0.25-c0.1",
+      "path": "configs/settlement_learning/evaluation_v1/learning-e0.1-v0.25-c0.1.json",
+      "sha256": "c33096b49580cd3744d81ebede8ac9a38a69fd66e6cc284731d2da932bc8e662",
+      "groups": [
+        "E1"
+      ],
+      "replay": false,
+      "expected_exposure": 0.3,
+      "practical_delta": 0.0003
+    },
+    {
+      "id": "learning-e0.1-v0.25-c0.3",
+      "path": "configs/settlement_learning/evaluation_v1/learning-e0.1-v0.25-c0.3.json",
+      "sha256": "b099e077d845c562646e755efb68c8151db5340c55c7b5423789d762d27206ed",
+      "groups": [
+        "E1"
+      ],
+      "replay": false,
+      "expected_exposure": 0.3,
+      "practical_delta": 0.0003
+    },
+    {
+      "id": "learning-e0.1-v1-c0.03",
+      "path": "configs/settlement_learning/evaluation_v1/learning-e0.1-v1-c0.03.json",
+      "sha256": "4ec2a85f7090e7b7151704c6586ba7a2c1220cb247a856d525791c0295085465",
+      "groups": [
+        "E1"
+      ],
+      "replay": false,
+      "expected_exposure": 1.05,
+      "practical_delta": 0.0010500000000000002
+    },
+    {
+      "id": "learning-e0.1-v1-c0.1",
+      "path": "configs/settlement_learning/evaluation_v1/learning-e0.1-v1-c0.1.json",
+      "sha256": "ee23c2bfe605d289f626cb305a3e0120f0f853965a0df9faafd259b9b458f62b",
+      "groups": [
+        "E1"
+      ],
+      "replay": false,
+      "expected_exposure": 1.05,
+      "practical_delta": 0.0010500000000000002
+    },
+    {
+      "id": "learning-e0.1-v1-c0.3",
+      "path": "configs/settlement_learning/evaluation_v1/learning-e0.1-v1-c0.3.json",
+      "sha256": "add3ade9cc93ea2f63ec609290ff17be8572a523e53ade01eaef23f80ac49378",
+      "groups": [
+        "E1"
+      ],
+      "replay": false,
+      "expected_exposure": 1.05,
+      "practical_delta": 0.0010500000000000002
+    },
+    {
+      "id": "learning-e0.1-v4-c0.03",
+      "path": "configs/settlement_learning/evaluation_v1/learning-e0.1-v4-c0.03.json",
+      "sha256": "12a39226395d7daed3cd33ff97945d27fb61472f9dc0982804775d7f5164eb3d",
+      "groups": [
+        "E1"
+      ],
+      "replay": false,
+      "expected_exposure": 4.05,
+      "practical_delta": 0.00405
+    },
+    {
+      "id": "learning-e0.1-v4-c0.1",
+      "path": "configs/settlement_learning/evaluation_v1/learning-e0.1-v4-c0.1.json",
+      "sha256": "543182866c4ba1294051bb3d7951692f54762406652dc1a52a89c75f76c96d29",
+      "groups": [
+        "E1"
+      ],
+      "replay": false,
+      "expected_exposure": 4.05,
+      "practical_delta": 0.00405
+    },
+    {
+      "id": "learning-e0.1-v4-c0.3",
+      "path": "configs/settlement_learning/evaluation_v1/learning-e0.1-v4-c0.3.json",
+      "sha256": "07daeef7a75a9ea291bd5d1f28625e8c48b3203b9713bbf7c6756b4f6f481657",
+      "groups": [
+        "E1"
+      ],
+      "replay": false,
+      "expected_exposure": 4.05,
+      "practical_delta": 0.00405
+    },
+    {
+      "id": "learning-e0.3-v0.25-c0.03",
+      "path": "configs/settlement_learning/evaluation_v1/learning-e0.3-v0.25-c0.03.json",
+      "sha256": "c4ca4fd41f3ed511fa3a5749d7b13e323e48f50396d38adb6f14f5481092c2bf",
+      "groups": [
+        "E1"
+      ],
+      "replay": false,
+      "expected_exposure": 0.3,
+      "practical_delta": 0.0003
+    },
+    {
+      "id": "learning-e0.3-v0.25-c0.1",
+      "path": "configs/settlement_learning/evaluation_v1/learning-e0.3-v0.25-c0.1.json",
+      "sha256": "b4f076799fc3242a3be87340a30f8690e5cdbbf14cab18d329382f564023b492",
+      "groups": [
+        "E1"
+      ],
+      "replay": false,
+      "expected_exposure": 0.3,
+      "practical_delta": 0.0003
+    },
+    {
+      "id": "learning-e0.3-v0.25-c0.3",
+      "path": "configs/settlement_learning/evaluation_v1/learning-e0.3-v0.25-c0.3.json",
+      "sha256": "28778010440e6adff8a2e991f94d789e9bc65e10e07f3a510a16c15d0ee42803",
+      "groups": [
+        "E1"
+      ],
+      "replay": false,
+      "expected_exposure": 0.3,
+      "practical_delta": 0.0003
+    },
+    {
+      "id": "learning-e0.3-v1-c0.03",
+      "path": "configs/settlement_learning/evaluation_v1/learning-e0.3-v1-c0.03.json",
+      "sha256": "86ab1e67e92b37bac7355a425dab03a057730f94ab9bb82b0abd88a36367b327",
+      "groups": [
+        "E1"
+      ],
+      "replay": false,
+      "expected_exposure": 1.05,
+      "practical_delta": 0.0010500000000000002
+    },
+    {
+      "id": "learning-e0.3-v1-c0.1",
+      "path": "configs/settlement_learning/evaluation_v1/learning-e0.3-v1-c0.1.json",
+      "sha256": "ef983a4ed2eab2cde49be66069a95e31626f76517c38f6974118d95b74484474",
+      "groups": [
+        "E1"
+      ],
+      "replay": false,
+      "expected_exposure": 1.05,
+      "practical_delta": 0.0010500000000000002
+    },
+    {
+      "id": "learning-e0.3-v1-c0.3",
+      "path": "configs/settlement_learning/evaluation_v1/learning-e0.3-v1-c0.3.json",
+      "sha256": "80796befc30e69471ed561cafbd5dc90d48469dfebc563f1c63ab2f6515be719",
+      "groups": [
+        "E1"
+      ],
+      "replay": false,
+      "expected_exposure": 1.05,
+      "practical_delta": 0.0010500000000000002
+    },
+    {
+      "id": "learning-e0.3-v4-c0.03",
+      "path": "configs/settlement_learning/evaluation_v1/learning-e0.3-v4-c0.03.json",
+      "sha256": "1ac8d773c20bc837e368d028ce5cc679d57398b21ebfe09673d4270a045c6aba",
+      "groups": [
+        "E1"
+      ],
+      "replay": false,
+      "expected_exposure": 4.05,
+      "practical_delta": 0.00405
+    },
+    {
+      "id": "learning-e0.3-v4-c0.1",
+      "path": "configs/settlement_learning/evaluation_v1/learning-e0.3-v4-c0.1.json",
+      "sha256": "abdc7aa7ece436e6e56750e13327ff2a21fdbdcd0e58701a1ec290d3acb7c726",
+      "groups": [
+        "E1"
+      ],
+      "replay": false,
+      "expected_exposure": 4.05,
+      "practical_delta": 0.00405
+    },
+    {
+      "id": "learning-e0.3-v4-c0.3",
+      "path": "configs/settlement_learning/evaluation_v1/learning-e0.3-v4-c0.3.json",
+      "sha256": "f51296148fce0559c5ddc7f45ca4829feee8811424405c451cc7ff1931301107",
+      "groups": [
+        "E1"
+      ],
+      "replay": false,
+      "expected_exposure": 4.05,
+      "practical_delta": 0.00405
+    },
+    {
+      "id": "clock-r0.25-f0-t1",
+      "path": "configs/settlement_learning/evaluation_v1/clock-r0.25-f0-t1.json",
+      "sha256": "2fc40c31f97cde6961e84bbf3098ea523d46a4aa68d10b5e9b25249642c1f658",
+      "groups": [
+        "E2"
+      ],
+      "replay": false,
+      "expected_exposure": 1.05,
+      "practical_delta": 0.0010500000000000002
+    },
+    {
+      "id": "clock-r0.25-f0-t2",
+      "path": "configs/settlement_learning/evaluation_v1/clock-r0.25-f0-t2.json",
+      "sha256": "bf00cecd1dbfd4534fa4d8526bf082168576f61eddd5b529d563ed9d6bb5d3c3",
+      "groups": [
+        "E2"
+      ],
+      "replay": false,
+      "expected_exposure": 1.05,
+      "practical_delta": 0.0010500000000000002
+    },
+    {
+      "id": "clock-r0.25-f0-t5",
+      "path": "configs/settlement_learning/evaluation_v1/clock-r0.25-f0-t5.json",
+      "sha256": "7bfde17ad4c4fbc62f8d16196b70e37f2b6ea97f77ccb023b6e7c46f75c7cb68",
+      "groups": [
+        "E2"
+      ],
+      "replay": false,
+      "expected_exposure": 1.05,
+      "practical_delta": 0.0010500000000000002
+    },
+    {
+      "id": "clock-r0.25-f0.01-t1",
+      "path": "configs/settlement_learning/evaluation_v1/clock-r0.25-f0.01-t1.json",
+      "sha256": "6fa9cf9e17be6654d6fa7d1149474423cb56b470113cba058b4a88eaba438a0d",
+      "groups": [
+        "E2"
+      ],
+      "replay": false,
+      "expected_exposure": 1.05,
+      "practical_delta": 0.0010500000000000002
+    },
+    {
+      "id": "clock-r0.25-f0.01-t2",
+      "path": "configs/settlement_learning/evaluation_v1/clock-r0.25-f0.01-t2.json",
+      "sha256": "7c0f38382c118f6f469025a93aa771e0286fe6e9236d73072b956547aac24cc6",
+      "groups": [
+        "E2"
+      ],
+      "replay": false,
+      "expected_exposure": 1.05,
+      "practical_delta": 0.0010500000000000002
+    },
+    {
+      "id": "clock-r0.25-f0.01-t5",
+      "path": "configs/settlement_learning/evaluation_v1/clock-r0.25-f0.01-t5.json",
+      "sha256": "db441f8acb4be42cfd87ea38b4ccb1be92e8af660c65f9cd7e0f2b94604faf0d",
+      "groups": [
+        "E2"
+      ],
+      "replay": false,
+      "expected_exposure": 1.05,
+      "practical_delta": 0.0010500000000000002
+    },
+    {
+      "id": "clock-r0.25-f0.2-t1",
+      "path": "configs/settlement_learning/evaluation_v1/clock-r0.25-f0.2-t1.json",
+      "sha256": "336824b2f0c48946e41a53d3323989e3505d5c531c0607a7a818c1584e9e1935",
+      "groups": [
+        "E2"
+      ],
+      "replay": false,
+      "expected_exposure": 1.05,
+      "practical_delta": 0.0010500000000000002
+    },
+    {
+      "id": "clock-r0.25-f0.2-t2",
+      "path": "configs/settlement_learning/evaluation_v1/clock-r0.25-f0.2-t2.json",
+      "sha256": "bbd7c6c6ac8e03be4eac90a6d7d10e935765c0aa2f24cca44e52ec5e77be5edd",
+      "groups": [
+        "E2"
+      ],
+      "replay": false,
+      "expected_exposure": 1.05,
+      "practical_delta": 0.0010500000000000002
+    },
+    {
+      "id": "clock-r0.25-f0.2-t5",
+      "path": "configs/settlement_learning/evaluation_v1/clock-r0.25-f0.2-t5.json",
+      "sha256": "5c4e4b1f4eef6019dc96473d50e42782ef442c9226419f00a6de55367e6a2e9a",
+      "groups": [
+        "E2"
+      ],
+      "replay": false,
+      "expected_exposure": 1.05,
+      "practical_delta": 0.0010500000000000002
+    },
+    {
+      "id": "clock-r0.75-f0-t1",
+      "path": "configs/settlement_learning/evaluation_v1/clock-r0.75-f0-t1.json",
+      "sha256": "d5e673aa1d784f28fa52ecdece10984475379ac3830df949f099322ab8ad0501",
+      "groups": [
+        "E2"
+      ],
+      "replay": false,
+      "expected_exposure": 1.05,
+      "practical_delta": 0.0010500000000000002
+    },
+    {
+      "id": "clock-r0.75-f0-t2",
+      "path": "configs/settlement_learning/evaluation_v1/clock-r0.75-f0-t2.json",
+      "sha256": "f1257941e604d1cd3a6ebf454d212cde68cb4d20fad19cc69e16467d2529a542",
+      "groups": [
+        "E2"
+      ],
+      "replay": false,
+      "expected_exposure": 1.05,
+      "practical_delta": 0.0010500000000000002
+    },
+    {
+      "id": "clock-r0.75-f0-t5",
+      "path": "configs/settlement_learning/evaluation_v1/clock-r0.75-f0-t5.json",
+      "sha256": "185fdb48dd5193956d194fa3a9a5fbcea643875664272ec699e7c5fc0c4894d9",
+      "groups": [
+        "E2"
+      ],
+      "replay": false,
+      "expected_exposure": 1.05,
+      "practical_delta": 0.0010500000000000002
+    },
+    {
+      "id": "clock-r0.75-f0.01-t1",
+      "path": "configs/settlement_learning/evaluation_v1/clock-r0.75-f0.01-t1.json",
+      "sha256": "63a798ffc2be57c37ac90b97d372befb65a2fd5ab5805c17689215d9e149bc9c",
+      "groups": [
+        "E2"
+      ],
+      "replay": false,
+      "expected_exposure": 1.05,
+      "practical_delta": 0.0010500000000000002
+    },
+    {
+      "id": "clock-r0.75-f0.01-t2",
+      "path": "configs/settlement_learning/evaluation_v1/clock-r0.75-f0.01-t2.json",
+      "sha256": "8b110170907cf15d333163e2f644e0ed25012aecb29ea306f8bccc1fa856a8f7",
+      "groups": [
+        "E2"
+      ],
+      "replay": false,
+      "expected_exposure": 1.05,
+      "practical_delta": 0.0010500000000000002
+    },
+    {
+      "id": "clock-r0.75-f0.01-t5",
+      "path": "configs/settlement_learning/evaluation_v1/clock-r0.75-f0.01-t5.json",
+      "sha256": "20e67ec3100f1046feecd0728152194617f53d6617072acf61865c49c0d5ae1e",
+      "groups": [
+        "E2"
+      ],
+      "replay": false,
+      "expected_exposure": 1.05,
+      "practical_delta": 0.0010500000000000002
+    },
+    {
+      "id": "clock-r0.75-f0.2-t1",
+      "path": "configs/settlement_learning/evaluation_v1/clock-r0.75-f0.2-t1.json",
+      "sha256": "d25848b8da6daabc4fd10f06ff999d5befdaea87475e7a691b700594e6b52caf",
+      "groups": [
+        "E2"
+      ],
+      "replay": false,
+      "expected_exposure": 1.05,
+      "practical_delta": 0.0010500000000000002
+    },
+    {
+      "id": "clock-r0.75-f0.2-t2",
+      "path": "configs/settlement_learning/evaluation_v1/clock-r0.75-f0.2-t2.json",
+      "sha256": "df6031d5cb71b4403947f028accf207fb03439da95dbba8e3f0e34e473267f9f",
+      "groups": [
+        "E2"
+      ],
+      "replay": false,
+      "expected_exposure": 1.05,
+      "practical_delta": 0.0010500000000000002
+    },
+    {
+      "id": "clock-r0.75-f0.2-t5",
+      "path": "configs/settlement_learning/evaluation_v1/clock-r0.75-f0.2-t5.json",
+      "sha256": "8838eb0c0fce72c24385d471f4345a78056e82b25833e6f9b76ae5cd3c72bd79",
+      "groups": [
+        "E2"
+      ],
+      "replay": false,
+      "expected_exposure": 1.05,
+      "practical_delta": 0.0010500000000000002
+    },
+    {
+      "id": "clock-r0.99-f0-t1",
+      "path": "configs/settlement_learning/evaluation_v1/clock-r0.99-f0-t1.json",
+      "sha256": "8ad9a48a151d88d98be90986fe13b3dbdca56ee38f59669efd369a28199d3b74",
+      "groups": [
+        "E2"
+      ],
+      "replay": false,
+      "expected_exposure": 1.05,
+      "practical_delta": 0.0010500000000000002
+    },
+    {
+      "id": "clock-r0.99-f0-t2",
+      "path": "configs/settlement_learning/evaluation_v1/clock-r0.99-f0-t2.json",
+      "sha256": "548cef662fc92de2c65666840dc7e6bd01ffa81c1261d5938e2b5c820945f78f",
+      "groups": [
+        "E2"
+      ],
+      "replay": false,
+      "expected_exposure": 1.05,
+      "practical_delta": 0.0010500000000000002
+    },
+    {
+      "id": "clock-r0.99-f0-t5",
+      "path": "configs/settlement_learning/evaluation_v1/clock-r0.99-f0-t5.json",
+      "sha256": "b3c43e6bb369d9ce1d42cb6031d44869cb1a9ed1eca4bf9520c7e7921f0fc97d",
+      "groups": [
+        "E2"
+      ],
+      "replay": false,
+      "expected_exposure": 1.05,
+      "practical_delta": 0.0010500000000000002
+    },
+    {
+      "id": "clock-r0.99-f0.01-t1",
+      "path": "configs/settlement_learning/evaluation_v1/clock-r0.99-f0.01-t1.json",
+      "sha256": "9fbfef332d2c012c77251f5fc574c5558711a039b3be6bad4af838e746579610",
+      "groups": [
+        "E2"
+      ],
+      "replay": false,
+      "expected_exposure": 1.05,
+      "practical_delta": 0.0010500000000000002
+    },
+    {
+      "id": "clock-r0.99-f0.01-t5",
+      "path": "configs/settlement_learning/evaluation_v1/clock-r0.99-f0.01-t5.json",
+      "sha256": "4a6599e9d4952fc09f5edb894dd0a6722f728cc736254e2446ffc46aaba1ba26",
+      "groups": [
+        "E2"
+      ],
+      "replay": false,
+      "expected_exposure": 1.05,
+      "practical_delta": 0.0010500000000000002
+    },
+    {
+      "id": "clock-r0.99-f0.2-t1",
+      "path": "configs/settlement_learning/evaluation_v1/clock-r0.99-f0.2-t1.json",
+      "sha256": "6d16b6ab3dc659ec3636700ff034e6139450091aed5855ac856117cd55ecc12a",
+      "groups": [
+        "E2"
+      ],
+      "replay": false,
+      "expected_exposure": 1.05,
+      "practical_delta": 0.0010500000000000002
+    },
+    {
+      "id": "clock-r0.99-f0.2-t2",
+      "path": "configs/settlement_learning/evaluation_v1/clock-r0.99-f0.2-t2.json",
+      "sha256": "2eeb384867b8544eb27f8ef985489c2d58e65f340bc382eb0a53546d3abf6a39",
+      "groups": [
+        "E2"
+      ],
+      "replay": false,
+      "expected_exposure": 1.05,
+      "practical_delta": 0.0010500000000000002
+    },
+    {
+      "id": "clock-r0.99-f0.2-t5",
+      "path": "configs/settlement_learning/evaluation_v1/clock-r0.99-f0.2-t5.json",
+      "sha256": "3dfe6fd519f980287a34ceb952624f2b8073ab1a5303d90b5c96e88f9ee84941",
+      "groups": [
+        "E2"
+      ],
+      "replay": false,
+      "expected_exposure": 1.05,
+      "practical_delta": 0.0010500000000000002
+    },
+    {
+      "id": "wait-cost-0",
+      "path": "configs/settlement_learning/evaluation_v1/wait-cost-0.json",
+      "sha256": "4e399ed2ae1b0030ca98ea4abf1fc8aaf85209d0c8ef062c866a00c0faa6aa16",
+      "groups": [
+        "E2"
+      ],
+      "replay": false,
+      "expected_exposure": 1.05,
+      "practical_delta": 0.0010500000000000002
+    },
+    {
+      "id": "wait-cost-0.01",
+      "path": "configs/settlement_learning/evaluation_v1/wait-cost-0.01.json",
+      "sha256": "a370d8b92d585f7f97ebdd2e610cf81d714799dceae1c011755b31e8dbd5088e",
+      "groups": [
+        "E2"
+      ],
+      "replay": false,
+      "expected_exposure": 1.05,
+      "practical_delta": 0.0010500000000000002
+    },
+    {
+      "id": "wait-cost-0.1",
+      "path": "configs/settlement_learning/evaluation_v1/wait-cost-0.1.json",
+      "sha256": "25940b02aab0280a037e54d1b18808f47fb95890c8bbc537e831d97a676bab98",
+      "groups": [
+        "E2"
+      ],
+      "replay": false,
+      "expected_exposure": 1.05,
+      "practical_delta": 0.0010500000000000002
+    },
+    {
+      "id": "horizon-k1-ascending",
+      "path": "configs/settlement_learning/evaluation_v1/horizon-k1-ascending.json",
+      "sha256": "4518292abf5726a5d73ede3c5d8acd4ae3e08ac7e46c68807395daa89d4a2503",
+      "groups": [
+        "E3"
+      ],
+      "replay": false,
+      "expected_exposure": 1.0,
+      "practical_delta": 0.001
+    },
+    {
+      "id": "horizon-k2-ascending",
+      "path": "configs/settlement_learning/evaluation_v1/horizon-k2-ascending.json",
+      "sha256": "98941e9da152986a1ac4edb13df883e0c86006baf33bfe350e3363f0f510b4db",
+      "groups": [
+        "E3"
+      ],
+      "replay": false,
+      "expected_exposure": 1.1,
+      "practical_delta": 0.0011
+    },
+    {
+      "id": "horizon-k2-descending",
+      "path": "configs/settlement_learning/evaluation_v1/horizon-k2-descending.json",
+      "sha256": "e7f911e7ab313c2e9b8dcd0bcf2a80fff2759009b61bd9c902ba32c63391503b",
+      "groups": [
+        "E3"
+      ],
+      "replay": false,
+      "expected_exposure": 1.1,
+      "practical_delta": 0.0011
+    },
+    {
+      "id": "horizon-k4-ascending",
+      "path": "configs/settlement_learning/evaluation_v1/horizon-k4-ascending.json",
+      "sha256": "a93ef399bb7bc8f3af44d14f07f5bd9a3a1e0d7b777a39bb3f2ad82096b4f9f8",
+      "groups": [
+        "E3"
+      ],
+      "replay": false,
+      "expected_exposure": 1.1,
+      "practical_delta": 0.0011
+    },
+    {
+      "id": "horizon-k4-descending",
+      "path": "configs/settlement_learning/evaluation_v1/horizon-k4-descending.json",
+      "sha256": "21340517b2fae6dccd7ba99a0a11a2b7f8fbaedc76eec371a25f68b3354cde6d",
+      "groups": [
+        "E3"
+      ],
+      "replay": false,
+      "expected_exposure": 1.1,
+      "practical_delta": 0.0011
+    },
+    {
+      "id": "horizon-k8-ascending",
+      "path": "configs/settlement_learning/evaluation_v1/horizon-k8-ascending.json",
+      "sha256": "7895ec0cec1fb1e03db03143c9f8d5c7db7fe71742dbc3973eaace393a46ab7a",
+      "groups": [
+        "E3"
+      ],
+      "replay": false,
+      "expected_exposure": 1.1,
+      "practical_delta": 0.0011
+    },
+    {
+      "id": "horizon-k8-descending",
+      "path": "configs/settlement_learning/evaluation_v1/horizon-k8-descending.json",
+      "sha256": "252e4a692d7dc4fcb472fe7998f23cf14b5961efe79a5b0e5282e87dc568d053",
+      "groups": [
+        "E3"
+      ],
+      "replay": false,
+      "expected_exposure": 1.1,
+      "practical_delta": 0.0011
+    },
+    {
+      "id": "boundary_no_reply",
+      "path": "configs/settlement_learning/evaluation_v1/boundary_no_reply.json",
+      "sha256": "ee0446da1063f901dd7ea8dde1ee3d3f605ae56ad3790a7da999f959ac3d1601",
+      "groups": [
+        "boundary"
+      ],
+      "replay": true,
+      "expected_exposure": 1.05,
+      "practical_delta": 0.0010500000000000002
+    },
+    {
+      "id": "boundary_known_low",
+      "path": "configs/settlement_learning/evaluation_v1/boundary_known_low.json",
+      "sha256": "007d745282d3094b038e243f512714c489f023a5b460489fe8551847712c1f7c",
+      "groups": [
+        "boundary"
+      ],
+      "replay": false,
+      "expected_exposure": 1.05,
+      "practical_delta": 0.0010500000000000002
+    },
+    {
+      "id": "boundary_known_high",
+      "path": "configs/settlement_learning/evaluation_v1/boundary_known_high.json",
+      "sha256": "e24a2a8a5818c1cc2f6c092ee755dd72867837c1add3c545927cd0d525b3adc8",
+      "groups": [
+        "boundary"
+      ],
+      "replay": false,
+      "expected_exposure": 1.05,
+      "practical_delta": 0.0010500000000000002
+    },
+    {
+      "id": "boundary_weak_types",
+      "path": "configs/settlement_learning/evaluation_v1/boundary_weak_types.json",
+      "sha256": "d00c79ded36c6c3a7c046d3e9431b0120620f2c62f1341bbbbf9dfd6a767535e",
+      "groups": [
+        "boundary"
+      ],
+      "replay": false,
+      "expected_exposure": 1.05,
+      "practical_delta": 0.0010500000000000002
+    },
+    {
+      "id": "boundary_high_cost",
+      "path": "configs/settlement_learning/evaluation_v1/boundary_high_cost.json",
+      "sha256": "ff6b367ad7dd662013f7ad64e26195897b17bc17b39aa9612b0a20eb85b7b2da",
+      "groups": [
+        "boundary"
+      ],
+      "replay": true,
+      "expected_exposure": 1.05,
+      "practical_delta": 0.0010500000000000002
+    },
+    {
+      "id": "boundary_immediate_reply",
+      "path": "configs/settlement_learning/evaluation_v1/boundary_immediate_reply.json",
+      "sha256": "efeb859752c1574aa237017e0861bd336c3e0294bdad6e787f7659574068fbf7",
+      "groups": [
+        "boundary"
+      ],
+      "replay": false,
+      "expected_exposure": 1.05,
+      "practical_delta": 0.0010500000000000002
+    }
+  ]
+}
