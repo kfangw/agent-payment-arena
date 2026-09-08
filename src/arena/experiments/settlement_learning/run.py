@@ -32,9 +32,7 @@ def read_setting(path: Path) -> Setting:
         for distribution in raw.pop("schedule")
     )
     if len(schedule) > 12:
-        raise ValueError(
-            "initial exact solver supports at most 12 requests per relation"
-        )
+        raise ValueError("initial exact solver supports at most 12 requests per relation")
     return Setting(schedule=schedule, **raw)
 
 
@@ -43,7 +41,7 @@ def source_metadata() -> dict:
     folder = Path(__file__).resolve().parent
     from arena.experiments.settlement import core
 
-    files = sorted(folder.glob("*.py")) + [Path(core.__file__)]
+    files = [*sorted(folder.glob("*.py")), Path(core.__file__)]
     hashes = {
         p.name if p.parent == folder else "settlement/core.py": hashlib.sha256(
             p.read_bytes()
@@ -55,19 +53,17 @@ def source_metadata() -> dict:
             ["git", "rev-parse", "HEAD"], cwd=folder, text=True
         ).strip()
         dirty = bool(
-            subprocess.check_output(
-                ["git", "status", "--porcelain"], cwd=folder, text=True
-            )
+            subprocess.check_output(["git", "status", "--porcelain"], cwd=folder, text=True)
         )
     except (OSError, subprocess.CalledProcessError):
         revision, dirty = "unavailable", None
-    return dict(
-        revision=revision,
-        dirty=dirty,
-        source_sha256=hashes,
-        python=platform.python_version(),
-        numpy=version("numpy"),
-    )
+    return {
+        "revision": revision,
+        "dirty": dirty,
+        "source_sha256": hashes,
+        "python": platform.python_version(),
+        "numpy": version("numpy"),
+    }
 
 
 def main() -> None:
@@ -75,13 +71,9 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
-    parser.add_argument(
-        "--relations", type=int, default=0, help="0 computes exact values only"
-    )
+    parser.add_argument("--relations", type=int, default=0, help="0 computes exact values only")
     parser.add_argument("--seed", type=int, default=731)
-    parser.add_argument(
-        "--split", choices=("e0", "pilot", "evaluation"), default="pilot"
-    )
+    parser.add_argument("--split", choices=("e0", "pilot", "evaluation"), default="pilot")
     args = parser.parse_args()
     if args.relations < 0 or args.relations == 1:
         parser.error("relations must be 0 or at least 2")
@@ -116,8 +108,7 @@ def main() -> None:
                 metrics, events = replay(solver, args.seed, args.split, relation)
                 rows[mode].append(metrics)
                 metric_file.write(
-                    json.dumps(dict(policy=mode, relation_id=relation, **metrics))
-                    + "\n"
+                    json.dumps(dict(policy=mode, relation_id=relation, **metrics)) + "\n"
                 )
                 for event in events:
                     event_file.write(json.dumps(dict(policy=mode, **event)) + "\n")
@@ -130,30 +121,24 @@ def main() -> None:
     if args.relations:
         for mode, records in rows.items():
             rewards = [row["reward"] for row in records]
-            summary["sample"][mode] = dict(
-                means={
-                    key: statistics.mean(row[key] for row in records)
-                    for key in records[0]
-                },
-                reward_se=statistics.stdev(rewards) / math.sqrt(args.relations),
-                normal_rejection_rate=(
+            summary["sample"][mode] = {
+                "means": {key: statistics.mean(row[key] for row in records) for key in records[0]},
+                "reward_se": statistics.stdev(rewards) / math.sqrt(args.relations),
+                "normal_rejection_rate": (
                     sum(r["normal_rejections"] for r in records)
                     / sum(r["normal_requests"] for r in records)
                     if sum(r["normal_requests"] for r in records)
                     else None
                 ),
-            )
+            }
             difference = [
-                a["reward"] - b["reward"]
-                for a, b in zip(rows["optimal"], records, strict=True)
+                a["reward"] - b["reward"] for a, b in zip(rows["optimal"], records, strict=True)
             ]
-            summary["paired"][mode] = dict(
-                mean=statistics.mean(difference),
-                se=statistics.stdev(difference) / math.sqrt(args.relations),
-            )
-    (args.output / "summary.json").write_text(
-        json.dumps(summary, indent=2, allow_nan=False)
-    )
+            summary["paired"][mode] = {
+                "mean": statistics.mean(difference),
+                "se": statistics.stdev(difference) / math.sqrt(args.relations),
+            }
+    (args.output / "summary.json").write_text(json.dumps(summary, indent=2, allow_nan=False))
     manifest["status"] = "complete"
     (args.output / "manifest.json").write_text(json.dumps(manifest, indent=2))
     print(args.output / "summary.json")

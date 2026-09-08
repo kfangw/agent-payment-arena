@@ -104,7 +104,16 @@ warn_unreachable = true
 disallow_any_explicit = true
 enable_error_code = ["redundant-expr", "possibly-undefined", "truthy-bool"]
 files = ["src", "tests"]
-exclude = ["tests/test_structcheck.py", "src/arena/experiments/settlement"]
+# The settlement experiment is excluded above; its tests call into it on
+# every line, so type checking them only reports the exclusion back.
+exclude = [
+    "tests/test_structcheck.py",
+    "src/arena/experiments/settlement",
+    "tests/test_settlement_b5.py",
+    "tests/test_settlement_misspec.py",
+    "tests/test_settlement_recovery.py",
+    "tests/test_settlement_security_replay.py",
+]
 
 [[tool.mypy.overrides]]
 module = ["eth_account.*", "mcp.*", "opentelemetry.*"]

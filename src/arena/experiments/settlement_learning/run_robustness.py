@@ -79,30 +79,30 @@ def design(config_dir):
                     if assumed in unique:
                         unique[assumed]["tags"].append(name)
                     else:
-                        item = dict(
-                            id=f"{base}-{name}",
-                            base=base,
-                            tags=[name],
-                            actual=actual,
-                            assumed=assumed,
-                            actual_accounting="basic",
-                            planning_accounting="basic",
-                        )
+                        item = {
+                            "id": f"{base}-{name}",
+                            "base": base,
+                            "tags": [name],
+                            "actual": actual,
+                            "assumed": assumed,
+                            "actual_accounting": "basic",
+                            "planning_accounting": "basic",
+                        }
                         unique[assumed] = item
                         cases.append(item)
                 for kind in ("refit", "held"):
                     cases.append(
-                        dict(
-                            id=f"{base}-additive-{kind}",
-                            base=base,
-                            tags=[f"additive_{kind}"],
-                            actual=actual,
-                            assumed=actual,
-                            actual_accounting="additive",
-                            planning_accounting="additive"
+                        {
+                            "id": f"{base}-additive-{kind}",
+                            "base": base,
+                            "tags": [f"additive_{kind}"],
+                            "actual": actual,
+                            "assumed": actual,
+                            "actual_accounting": "additive",
+                            "planning_accounting": "additive"
                             if kind == "refit"
                             else "basic",
-                        )
+                        }
                     )
     return cases
 
@@ -145,11 +145,11 @@ def main():
         cases = cases[: args.limit]
     if not cases:
         parser.error("no cases selected")
-    payload = dict(
-        cases=[serial(c) for c in cases],
-        points=args.points,
-        policies=[*MODES, "no_verify", "no_wait"],
-        threshold_families=[
+    payload = {
+        "cases": [serial(c) for c in cases],
+        "points": args.points,
+        "policies": [*MODES, "no_verify", "no_wait"],
+        "threshold_families": [
             "B1",
             "B2",
             "B3_prior",
@@ -157,11 +157,11 @@ def main():
             "B4_prior",
             "B4_posterior",
         ],
-        candidate_ties="within 1e-10*(1+expected exposure) of maximum",
-        selection="largest computed reward; first encountered exact tie",
-        data_grade="synthetic_exact",
-        new_replay=False,
-    )
+        "candidate_ties": "within 1e-10*(1+expected exposure) of maximum",
+        "selection": "largest computed reward; first encountered exact tie",
+        "data_grade": "synthetic_exact",
+        "new_replay": False,
+    }
     encoded = json.dumps(payload, sort_keys=True).encode()
     digest = hashlib.sha256(encoded).hexdigest()
     metadata = source_metadata()
@@ -260,14 +260,14 @@ def main():
                 args.output / (case["id"] + "-ties.json.gz"), "wt"
             ) as stream:
                 json.dump(ties, stream, allow_nan=False)
-            output = dict(
-                status="complete",
-                case=serial(case),
-                oracle_reward=optimal,
-                exposure=exposure,
-                rows=rows,
-                elapsed_seconds=time.monotonic() - start,
-            )
+            output = {
+                "status": "complete",
+                "case": serial(case),
+                "oracle_reward": optimal,
+                "exposure": exposure,
+                "rows": rows,
+                "elapsed_seconds": time.monotonic() - start,
+            }
             save(path, output)
             manifest["completed_cases"] = index + 1
             save(args.output / "manifest.json", manifest)

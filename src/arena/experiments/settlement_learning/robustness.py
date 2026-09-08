@@ -329,13 +329,13 @@ def tune(setting, family, posterior=True, points=21, accounting="basic"):
     ties = [
         p for value, _, params in evaluated if best - value <= tolerance for p in params
     ]
-    return selected, dict(
-        value=best,
-        numerical_tie_tolerance=tolerance,
-        tied_parameters=ties,
-        behavioral_groups=len(evaluated),
-        grid_candidates=sum(len(row[2]) for row in evaluated),
-        selected={
+    return selected, {
+        "value": best,
+        "numerical_tie_tolerance": tolerance,
+        "tied_parameters": ties,
+        "behavioral_groups": len(evaluated),
+        "grid_candidates": sum(len(row[2]) for row in evaluated),
+        "selected": {
             k: getattr(selected, k) for k in ("theta", "lower", "upper", "watch")
         },
-    )
+    }

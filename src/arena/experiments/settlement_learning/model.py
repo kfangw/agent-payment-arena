@@ -14,6 +14,7 @@ class Request:
     hazards: tuple[float, ...] = ()
 
     def __post_init__(self) -> None:
+        """Reject amounts and hazards outside the model's domain."""
         if not math.isfinite(self.amount) or self.amount <= 0:
             raise ValueError("amount must be finite and positive")
         if any(not math.isfinite(f) or not 0 <= f <= 1 for f in self.hazards):
@@ -36,6 +37,7 @@ class Setting:
     deadline: int = 2
 
     def __post_init__(self) -> None:
+        """Reject settings whose numbers fall outside the model's domain."""
         numbers = (
             self.prior,
             self.low,
@@ -59,13 +61,9 @@ class Setting:
         if not self.schedule:
             raise ValueError("schedule cannot be empty")
         for distribution in self.schedule:
-            if not distribution or any(
-                not math.isfinite(w) or w <= 0 for w, _ in distribution
-            ):
+            if not distribution or any(not math.isfinite(w) or w <= 0 for w, _ in distribution):
                 raise ValueError("weights must be finite and positive")
-            if not math.isclose(
-                sum(w for w, _ in distribution), 1.0, rel_tol=0, abs_tol=1e-12
-            ):
+            if not math.isclose(sum(w for w, _ in distribution), 1.0, rel_tol=0, abs_tol=1e-12):
                 raise ValueError("weights must sum to one")
 
     @property
