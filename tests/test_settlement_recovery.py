@@ -84,7 +84,7 @@ def test_invalid_recovery_rejected() -> None:
 def test_halt_minutes_sets_mean_duration_and_keeps_start_rate() -> None:
     from arena.experiments.settlement.recovery import with_halt_minutes
 
-    _, base, _ = envs_for('mid')['E-outage']
+    _, base, _ = envs_for("mid")["E-outage"]
     assert with_halt_minutes(base, None) is base
     short = with_halt_minutes(base, 10)
     assert short.p10 == pytest.approx(1 / 10)
@@ -95,7 +95,7 @@ def test_halt_minutes_sets_mean_duration_and_keeps_start_rate() -> None:
 def test_keep_halt_share_rescales_start_rate() -> None:
     from arena.experiments.settlement.recovery import with_halt_minutes
 
-    _, base, _ = envs_for('mid')['E-outage']
+    _, base, _ = envs_for("mid")["E-outage"]
     short = with_halt_minutes(base, 10, keep_halt_share=True)
     assert short.p10 == pytest.approx(1 / 10)
     assert short.stationary_outage == pytest.approx(base.stationary_outage)
@@ -105,7 +105,7 @@ def test_keep_halt_share_rescales_start_rate() -> None:
 def test_invalid_halt_minutes_rejected() -> None:
     from arena.experiments.settlement.recovery import with_halt_minutes
 
-    _, base, _ = envs_for('mid')['E-outage']
+    _, base, _ = envs_for("mid")["E-outage"]
     with pytest.raises(ValueError):
         with_halt_minutes(base, 0)
     with pytest.raises(ValueError):
