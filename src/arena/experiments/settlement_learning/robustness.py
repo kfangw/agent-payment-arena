@@ -7,9 +7,10 @@ the evaluator uses the actual posterior and the policy uses its assumed one.
 from __future__ import annotations
 
 import math
+from collections.abc import Iterator
 from dataclasses import dataclass
 from functools import cache
-from typing import Protocol
+from typing import Protocol, TypedDict
 
 from .model import PublicState, Request, Setting
 from .solver import MODES, Solver
@@ -25,12 +26,12 @@ METRICS = (
 ZERO = (0.0,) * len(METRICS)
 
 
-def add(*vectors):
+def add(*vectors: tuple[float, ...]) -> tuple[float, ...]:
     """Sum vectors without changing their units."""
     return tuple(map(sum, zip(*vectors, strict=True)))
 
 
-def scale(weight, vector):
+def scale(weight: float, vector: tuple[float, ...]) -> tuple[float, ...]:
     """Weight each outcome by its event probability."""
     return tuple(weight * x for x in vector)
 
@@ -38,8 +39,16 @@ def scale(weight, vector):
 class Policy(Protocol):
     """Public policy interface including the committed normal-answer action."""
 
-    setting: Setting
-    accounting: str
+    # Read-only so that a frozen dataclass also satisfies the protocol.
+    @property
+    def setting(self) -> Setting:
+        """Return the model the policy plans against."""
+        ...
+
+    @property
+    def accounting(self) -> str:
+        """Return the loss convention the policy assumes."""
+        ...
 
     def action(self, state: PublicState) -> str:
         """Select an action from public state."""
@@ -53,7 +62,7 @@ class Policy(Protocol):
 class Planner(Solver):
     """Original planner with explicitly recomputed action or accounting changes."""
 
-    def __init__(self, setting, mode="optimal", accounting="basic"):
+    def __init__(self, setting: Setting, mode: str = "optimal", accounting: str = "basic") -> None:
         if accounting not in ("basic", "additive"):
             raise ValueError("invalid accounting")
         if mode not in (*MODES, "no_verify", "no_wait"):
@@ -62,19 +71,18 @@ class Planner(Solver):
         self.ablation = mode if mode.startswith("no_") else None
         super().__init__(setting, "optimal" if self.ablation else mode)
 
-    def current(self, request, stage, bad, good):
+    def current(self, request: Request, stage: int, bad: int, good: int) -> tuple[float, float]:
+        """Return the grant and query values, adjusted for the accounting."""
         grant, query = super().current(request, stage, bad, good)
         if self.accounting == "additive":
             sigma = self.window(request)[0][stage]
-            grant -= (
-                request.amount
-                * self.setting.risk(bad, good)
-                * self.setting.harm
-                * (1 - sigma)
-            )
+            grant -= request.amount * self.setting.risk(bad, good) * self.setting.harm * (1 - sigma)
         return grant, query
 
-    def values(self, n, request, stage, bad, good):
+    def values(
+        self, n: int, request: Request, stage: int, bad: int, good: int
+    ) -> tuple[float, ...]:
+        """Return the four action values, with the ablated action removed."""
         values = list(super().values(n, request, stage, bad, good))
         if self.ablation == "no_verify":
             values[2] = -math.inf
@@ -82,8 +90,9 @@ class Planner(Solver):
             values[3] = -math.inf
         return tuple(values)
 
-    def release_normal(self, request, stage):
-        return self.window(request)[0][stage] * (1 + self.setting.margin) >= 1
+    def release_normal(self, request: Request, stage: int) -> bool:
+        """Decide whether a normal answer warrants release."""
+        return bool(self.window(request)[0][stage] * (1 + self.setting.margin) >= 1)
 
 
 @dataclass(frozen=True)
@@ -99,7 +108,8 @@ class Threshold:
     watch: int = 0
     accounting: str = "basic"
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """Reject parameters outside the rule family's domain."""
         if self.family not in ("B1", "B2", "B3", "B4"):
             raise ValueError("invalid threshold family")
         if not 0 <= self.lower <= self.upper <= 1 or self.theta < 0:
@@ -109,10 +119,9 @@ class Threshold:
         if self.accounting not in ("basic", "additive"):
             raise ValueError("invalid accounting")
 
-    def action(self, state):
-        bad, good = (
-            (state.misuse_labels, state.normal_labels) if self.posterior else (0, 0)
-        )
+    def action(self, state: PublicState) -> str:
+        """Select an action from public state."""
+        bad, good = (state.misuse_labels, state.normal_labels) if self.posterior else (0, 0)
         risk = self.setting.risk(bad, good)
         if self.family == "B1":
             return (
@@ -122,9 +131,7 @@ class Threshold:
             )
         if self.family == "B2":
             return "grant" if state.request.amount <= self.theta else "reject"
-        if self.family == "B4" and state.stage < min(
-            self.watch, len(state.request.hazards)
-        ):
+        if self.family == "B4" and state.stage < min(self.watch, len(state.request.hazards)):
             return "wait"
         if risk < self.lower:
             return "grant"
@@ -132,20 +139,16 @@ class Threshold:
             return "reject"
         return "verify"
 
-    def release_normal(self, request, stage):
-        return (
-            math.prod(1 - f for f in request.hazards[stage:])
-            * (1 + self.setting.margin)
-            >= 1
+    def release_normal(self, request: Request, stage: int) -> bool:
+        """Decide whether a normal answer warrants release."""
+        return bool(
+            math.prod(1 - f for f in request.hazards[stage:]) * (1 + self.setting.margin) >= 1
         )
 
 
-def aligned(actual, assumed):
+def aligned(actual: Setting, assumed: Setting) -> None:
     """Reject changes to observable support or protocol configuration."""
-    if (
-        len(actual.schedule) != len(assumed.schedule)
-        or actual.deadline != assumed.deadline
-    ):
+    if len(actual.schedule) != len(assumed.schedule) or actual.deadline != assumed.deadline:
         raise ValueError("schedule and deadline must agree")
     for left, right in zip(actual.schedule, assumed.schedule, strict=True):
         if len(left) != len(right):
@@ -162,16 +165,17 @@ class Evaluator:
     No true-model replanning occurs after a label or settlement transition.
     """
 
-    def __init__(self, actual: Setting, policy: Policy, accounting="basic"):
+    def __init__(self, actual: Setting, policy: Policy, accounting: str = "basic") -> None:
         aligned(actual, policy.setting)
         if accounting not in ("basic", "additive"):
             raise ValueError("invalid actual accounting")
         self.actual, self.policy, self.accounting = actual, policy, accounting
-        self.future = cache(self.future)
-        self.stage = cache(self.stage)
-        self.window = cache(self.window)
+        # Memoize per instance; the recursion below revisits the same states.
+        self.future = cache(self.future)  # type: ignore[method-assign]
+        self.stage = cache(self.stage)  # type: ignore[method-assign]
+        self.window = cache(self.window)  # type: ignore[method-assign]
 
-    def window(self, n, choice, stage):
+    def window(self, n: int, choice: int, stage: int) -> tuple[float, float, float, float, float]:
         """Enumerate response opportunities independently of the planner window."""
         s = self.actual
         request = s.schedule[n][choice][1]
@@ -184,9 +188,7 @@ class Evaluator:
             eta += answer
             if self.policy.release_normal(assumed, i):
                 survival = math.prod(1 - f for f in request.hazards[i:])
-                normal_value += (
-                    answer * request.amount * (survival * (1 + s.margin) - 1)
-                )
+                normal_value += answer * request.amount * (survival * (1 + s.margin) - 1)
                 released += answer
                 unpaid += answer * (1 - survival) * request.amount
             failure = request.hazards[i] if i < len(request.hazards) else 0
@@ -194,7 +196,8 @@ class Evaluator:
             i = min(i + 1, len(request.hazards))
         return eta, delay, normal_value, released, unpaid
 
-    def future(self, n=0, bad=0, good=0):
+    def future(self, n: int = 0, bad: int = 0, good: int = 0) -> tuple[float, ...]:
+        """Return the expected outcome vector from request n onward."""
         if n == len(self.actual.schedule):
             return ZERO
         result = ZERO
@@ -203,7 +206,8 @@ class Evaluator:
             result = add(result, scale(weight, self.stage(n, choice, 0, bad, good)))
         return add(result, (0, 0, 1 - pi, 0, 0, 0))
 
-    def stage(self, n, choice, stage, bad, good):
+    def stage(self, n: int, choice: int, stage: int, bad: int, good: int) -> tuple[float, ...]:
+        """Return the expected outcome vector from one settlement stage."""
         s = self.actual
         request = s.schedule[n][choice][1]
         assumed = self.policy.setting.schedule[n][choice][1]
@@ -212,9 +216,7 @@ class Evaluator:
         follow = self.future(n + 1, bad, good)
         if action == "grant":
             sigma = math.prod(1 - f for f in request.hazards[stage:])
-            reward = request.amount * (
-                sigma * (1 + (1 - pi) * s.margin - pi * s.harm) - 1
-            )
+            reward = request.amount * (sigma * (1 + (1 - pi) * s.margin - pi * s.harm) - 1)
             if self.accounting == "additive":
                 reward -= request.amount * (1 - sigma) * pi * s.harm
             return add(
@@ -249,16 +251,20 @@ class Evaluator:
             scale(eta * (1 - pi), self.future(n + 1, bad, good + 1)),
         )
 
-    def report(self):
+    def report(self) -> dict[str, float]:
         """Return relation-level expectations and the pooled service ratio."""
         out = dict(zip(METRICS, self.future(), strict=True))
-        out["normal_nonrelease_rate"] = (
-            out["normal_nonrelease"] / out["normal_requests"]
-        )
+        out["normal_nonrelease_rate"] = out["normal_nonrelease"] / out["normal_requests"]
         return out
 
 
-def candidates(setting, family, posterior, points, accounting="basic"):
+def candidates(
+    setting: Setting,
+    family: str,
+    posterior: bool,
+    points: int,
+    accounting: str = "basic",
+) -> Iterator[tuple[Threshold, list[dict[str, float]]]]:
     """Group grid tuples with identical decisions on every possible public risk.
 
     This is exact behavior deduplication, not threshold subsampling. Every original
@@ -277,13 +283,11 @@ def candidates(setting, family, posterior, points, accounting="basic"):
         else {setting.risk(0, 0)}
     )
     amounts = sorted({r.amount for dist in setting.schedule for _, r in dist})
-    groups = {}
+    groups: dict[object, list[dict[str, float]]] = {}
     if family in ("B1", "B2"):
         maximum = max(amounts) * (setting.harm if family == "B1" else 1)
         scores = (
-            [p * setting.harm * v for p in risks for v in amounts]
-            if family == "B1"
-            else amounts
+            [p * setting.harm * v for p in risks for v in amounts] if family == "B1" else amounts
         )
         for j in range(points):
             theta = maximum * j / (points - 1)
@@ -301,9 +305,7 @@ def candidates(setting, family, posterior, points, accounting="basic"):
             for b in grid:
                 if a > b:
                     continue
-                signature = tuple(
-                    "g" if p < a else "r" if p > b else "v" for p in risks
-                )
+                signature = tuple("g" if p < a else "r" if p > b else "v" for p in risks)
                 for watch in watches:
                     groups.setdefault((watch, signature), []).append(
                         {"lower": a, "upper": b, "watch": watch}
@@ -315,27 +317,40 @@ def candidates(setting, family, posterior, points, accounting="basic"):
         )
 
 
-def tune(setting, family, posterior=True, points=21, accounting="basic"):
+class Fit(TypedDict):
+    """Summary of one tuning run over a threshold family."""
+
+    value: float
+    numerical_tie_tolerance: float
+    tied_parameters: list[dict[str, float]]
+    behavioral_groups: int
+    grid_candidates: int
+    selected: dict[str, float]
+
+
+def tune(
+    setting: Setting,
+    family: str,
+    posterior: bool = True,
+    points: int = 21,
+    accounting: str = "basic",
+) -> tuple[Threshold, Fit]:
     """Tune on exact assumed-model relation reward and retain all numerical ties."""
     exposure = sum(sum(w * r.amount for w, r in dist) for dist in setting.schedule)
     tolerance = 1e-10 * (1 + exposure)
-    evaluated = []
+    evaluated: list[tuple[float, Threshold, list[dict[str, float]]]] = []
     for policy, params in candidates(setting, family, posterior, points, accounting):
         value = Evaluator(setting, policy, accounting).future()[0]
         evaluated.append((value, policy, params))
     best = max(row[0] for row in evaluated)
     # Select the actual largest computed value. Record tolerance ties separately.
     selected = max(evaluated, key=lambda row: row[0])[1]
-    ties = [
-        p for value, _, params in evaluated if best - value <= tolerance for p in params
-    ]
+    ties = [p for value, _, params in evaluated if best - value <= tolerance for p in params]
     return selected, {
         "value": best,
         "numerical_tie_tolerance": tolerance,
         "tied_parameters": ties,
         "behavioral_groups": len(evaluated),
         "grid_candidates": sum(len(row[2]) for row in evaluated),
-        "selected": {
-            k: getattr(selected, k) for k in ("theta", "lower", "upper", "watch")
-        },
+        "selected": {k: getattr(selected, k) for k in ("theta", "lower", "upper", "watch")},
     }

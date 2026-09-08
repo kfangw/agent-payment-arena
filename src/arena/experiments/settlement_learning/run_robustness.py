@@ -8,16 +8,20 @@ import hashlib
 import json
 import math
 import time
+from collections.abc import Callable
 from dataclasses import asdict, replace
 from pathlib import Path
+from typing import TypedDict
 
-from .model import Request
-from .robustness import Evaluator, Planner, tune
+from .model import Request, Setting
+from .robustness import Evaluator, Planner, Policy, tune
 from .run import read_setting, source_metadata
 from .solver import MODES
 
 
-def with_hazards(setting, change):
+def with_hazards(
+    setting: Setting, change: Callable[[tuple[float, ...]], tuple[float, ...]]
+) -> Setting:
     """Change only hazard values, preserving observable support."""
     return replace(
         setting,
@@ -28,9 +32,21 @@ def with_hazards(setting, change):
     )
 
 
-def design(config_dir):
+class Case(TypedDict):
+    """One evaluation case: the actual model, the model the policy assumes, and both conventions."""
+
+    id: str
+    base: str
+    tags: list[str]
+    actual: Setting
+    assumed: Setting
+    actual_accounting: str
+    planning_accounting: str
+
+
+def design(config_dir: Path) -> list[Case]:
     """Build the predeclared 18 bases and deduplicated misspecification cases."""
-    cases = []
+    cases: list[Case] = []
     for anchor in ("uncertain", "pilot"):
         original = read_setting(config_dir / f"{anchor}.json")
         for rail, hazards in (
@@ -39,7 +55,7 @@ def design(config_dir):
             ("persistent", tuple(0.06 * 0.5**i for i in range(4))),
         ):
             for harm in (0.5, 1.0, 2.0):
-                actual = replace(with_hazards(original, lambda _: hazards), harm=harm)
+                actual = replace(with_hazards(original, lambda _, h=hazards: h), harm=harm)
                 base = f"{anchor}-{rail}-h{harm:g}"
                 variants = [
                     ("matched", actual),
@@ -59,9 +75,7 @@ def design(config_dir):
                     ),
                     (
                         "response15",
-                        replace(
-                            actual, response_rate=min(1, actual.response_rate * 1.5)
-                        ),
+                        replace(actual, response_rate=min(1, actual.response_rate * 1.5)),
                     ),
                     (
                         "hazard05",
@@ -69,17 +83,15 @@ def design(config_dir):
                     ),
                     (
                         "hazard2",
-                        with_hazards(
-                            actual, lambda fs: tuple(min(1, f * 2) for f in fs)
-                        ),
+                        with_hazards(actual, lambda fs: tuple(min(1, f * 2) for f in fs)),
                     ),
                 ]
-                unique = {}
+                unique: dict[Setting, Case] = {}
                 for name, assumed in variants:
                     if assumed in unique:
                         unique[assumed]["tags"].append(name)
                     else:
-                        item = {
+                        item: Case = {
                             "id": f"{base}-{name}",
                             "base": base,
                             "tags": [name],
@@ -99,32 +111,28 @@ def design(config_dir):
                             "actual": actual,
                             "assumed": actual,
                             "actual_accounting": "additive",
-                            "planning_accounting": "additive"
-                            if kind == "refit"
-                            else "basic",
+                            "planning_accounting": "additive" if kind == "refit" else "basic",
                         }
                     )
     return cases
 
 
-def serial(case):
+def serial(case: Case) -> dict[str, object]:
     """Serialize both models so later runs do not infer actual from assumed."""
     return {k: asdict(v) if k in ("actual", "assumed") else v for k, v in case.items()}
 
 
-def save(path, value):
+def save(path: Path, value: object) -> None:
     """Replace only a run's own control file atomically."""
     temp = path.with_suffix(path.suffix + ".tmp")
     temp.write_text(json.dumps(value, indent=2, allow_nan=False) + "\n")
     temp.replace(path)
 
 
-def main():
+def main() -> None:
     """Explicit execution entry point; importing this module runs no evaluation."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--configs", type=Path, default=Path("configs/settlement_learning")
-    )
+    parser.add_argument("--configs", type=Path, default=Path("configs/settlement_learning"))
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--points", nargs="+", type=int, default=[21, 161])
     parser.add_argument("--case-prefix", default="")
@@ -175,9 +183,7 @@ def main():
     else:
         args.output.mkdir(parents=True, exist_ok=False)
         save(args.output / "design.json", payload)
-        manifest = dict(
-            status="planned", design_sha256=digest, completed_cases=0, **metadata
-        )
+        manifest = dict(status="planned", design_sha256=digest, completed_cases=0, **metadata)
         save(args.output / "manifest.json", manifest)
     if args.plan_only:
         print(f"{len(cases)} cases; grids {args.points}; no evaluation", flush=True)
@@ -194,8 +200,8 @@ def main():
                 current_base = case["base"]
             path = args.output / (case["id"] + ".json")
             if path.exists():
-                record = json.loads(path.read_text())
-                if record.get("status") != "complete":
+                existing = json.loads(path.read_text())
+                if existing.get("status") != "complete":
                     raise ValueError(f"incomplete result file: {path}")
                 continue
             start = time.monotonic()
@@ -207,16 +213,26 @@ def main():
                 oracle = Planner(actual, accounting=accounting)
                 truth = Evaluator(actual, oracle, accounting)
                 optimal = truth.future()[0]
-                if not math.isclose(
-                    optimal, oracle.future(0, 0, 0), abs_tol=1e-10, rel_tol=1e-10
-                ):
+                if not math.isclose(optimal, oracle.future(0, 0, 0), abs_tol=1e-10, rel_tol=1e-10):
                     raise RuntimeError("oracle planning and evaluation disagree")
                 oracles[oracle_key] = optimal
             optimal = oracles[oracle_key]
-            rows = []
-            ties = {}
+            rows: list[dict[str, object]] = []
+            ties: dict[str, object] = {}
 
-            def record(name, policy, grid=None, fit=None):
+            # The loop rebinds these on every case, so bind them here as well.
+            def record(
+                name: str,
+                policy: Policy,
+                grid: int | None = None,
+                fit: dict[str, object] | None = None,
+                *,
+                actual: Setting = actual,
+                accounting: str = accounting,
+                optimal: float = optimal,
+                exposure: float = exposure,
+                rows: list[dict[str, object]] = rows,
+            ) -> None:
                 values = Evaluator(actual, policy, accounting).report()
                 gap = optimal - values["reward"]
                 if gap < -1e-9 * (1 + exposure):
@@ -236,29 +252,21 @@ def main():
                 record(mode, Planner(assumed, mode, planned))
             for points in args.points:
                 for family in ("B1", "B2", "B3", "B4"):
-                    for posterior in (
-                        (False, True) if family in ("B3", "B4") else (False,)
-                    ):
+                    for posterior in (False, True) if family in ("B3", "B4") else (False,):
                         name = family + ("_posterior" if posterior else "_prior")
                         key = (assumed, family, posterior, points, planned)
                         if key in tuned:
                             policy, fit = tuned[key]
                         else:
-                            policy, fit = tune(
-                                assumed, family, posterior, points, planned
-                            )
+                            policy, fit = tune(assumed, family, posterior, points, planned)
                             if assumed == actual and planned == "basic":
                                 tuned[key] = (policy, fit)
                         ident = f"{name}-{points}"
                         ties[ident] = fit["tied_parameters"]
-                        compact = {
-                            k: v for k, v in fit.items() if k != "tied_parameters"
-                        }
+                        compact = {k: v for k, v in fit.items() if k != "tied_parameters"}
                         compact["tied_parameter_count"] = len(fit["tied_parameters"])
                         record(name, policy, points, compact)
-            with gzip.open(
-                args.output / (case["id"] + "-ties.json.gz"), "wt"
-            ) as stream:
+            with gzip.open(args.output / (case["id"] + "-ties.json.gz"), "wt") as stream:
                 json.dump(ties, stream, allow_nan=False)
             output = {
                 "status": "complete",
@@ -279,9 +287,7 @@ def main():
         manifest["completed_cases"] = len(cases)
         save(args.output / "manifest.json", manifest)
     except BaseException as exc:
-        manifest["status"] = (
-            "interrupted" if isinstance(exc, KeyboardInterrupt) else "failed"
-        )
+        manifest["status"] = "interrupted" if isinstance(exc, KeyboardInterrupt) else "failed"
         manifest["error"] = type(exc).__name__ + ": " + str(exc)
         save(args.output / "manifest.json", manifest)
         raise

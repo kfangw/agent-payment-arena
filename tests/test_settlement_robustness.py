@@ -17,19 +17,19 @@ from arena.experiments.settlement_learning.run_robustness import design
 from arena.experiments.settlement_learning.solver import MODES, Solver
 
 
-def environment(hazards=(0.2, 0.03), **kwargs):
+def environment(hazards: tuple[float, ...] = (0.2, 0.03), *, prior: float = 0.5) -> Setting:
     return Setting(
         schedule=(((1.0, Request(0.05, hazards)),), ((1.0, Request(1.0)),)),
         wait_cost=0.002,
         response_rate=0.7,
         deadline=3,
-        **kwargs,
+        prior=prior,
     )
 
 
 @pytest.mark.parametrize("mode", MODES)
 @pytest.mark.parametrize("hazards", [(), (0.2, 0.03)])
-def test_original_values_and_metrics_preserved(mode, hazards):
+def test_original_values_and_metrics_preserved(mode: str, hazards: tuple[float, ...]) -> None:
     s = environment(hazards)
     new = Evaluator(s, Planner(s, mode)).report()
     assert new["reward"] == pytest.approx(Solver(s, mode).evaluate(), abs=1e-11)
@@ -39,21 +39,16 @@ def test_original_values_and_metrics_preserved(mode, hazards):
 
 @pytest.mark.parametrize("mode", ["no_wait", "no_verify"])
 @pytest.mark.parametrize("accounting", ["basic", "additive"])
-def test_recomputed_ablation_and_evaluator_agree(mode, accounting):
+def test_recomputed_ablation_and_evaluator_agree(mode: str, accounting: str) -> None:
     s = environment()
     solver = Planner(s, mode, accounting)
-    assert solver.future(0, 0, 0) == pytest.approx(
-        Evaluator(s, solver, accounting).future()[0]
-    )
-    assert (
-        solver.future(0, 0, 0)
-        <= Planner(s, accounting=accounting).future(0, 0, 0) + 1e-12
-    )
+    assert solver.future(0, 0, 0) == pytest.approx(Evaluator(s, solver, accounting).future()[0])
+    assert solver.future(0, 0, 0) <= Planner(s, accounting=accounting).future(0, 0, 0) + 1e-12
     for i in range(3):
         assert solver.action(PublicState(0, s.schedule[0][0][1], i)) != mode[3:]
 
 
-def test_actual_posterior_not_assumed_posterior():
+def test_actual_posterior_not_assumed_posterior() -> None:
     actual = environment((), prior=0.1)
     assumed = replace(actual, prior=0.9)
     policy = Threshold(assumed, "B1", theta=1e5)
@@ -66,42 +61,32 @@ def test_actual_posterior_not_assumed_posterior():
     )
 
 
-def test_normal_answer_keeps_assumed_release_decision():
-    actual = Setting(
-        schedule=(((1.0, Request(1.0, (0.9,))),),), response_rate=1, deadline=1
-    )
+def test_normal_answer_keeps_assumed_release_decision() -> None:
+    actual = Setting(schedule=(((1.0, Request(1.0, (0.9,))),),), response_rate=1, deadline=1)
     assumed = replace(actual, schedule=(((1.0, Request(1.0, (0.0,))),),))
     policy = Planner(assumed, "query_first")
     # A certain normal answer still causes an unpaid-risk release under the optimistic policy.
     expected = -0.1 + 0.5 * (0.1 * 2 - 1)
     assert Evaluator(actual, policy).future()[0] == pytest.approx(expected)
-    assert Evaluator(actual, policy).report()["unpaid_release_amount"] == pytest.approx(
-        0.45
-    )
-    assert Evaluator(actual, Planner(actual, "query_first")).future()[
-        0
-    ] == pytest.approx(-0.1)
+    assert Evaluator(actual, policy).report()["unpaid_release_amount"] == pytest.approx(0.45)
+    assert Evaluator(actual, Planner(actual, "query_first")).future()[0] == pytest.approx(-0.1)
 
 
-def test_response_precedes_certain_settlement_failure():
-    actual = Setting(
-        schedule=(((1.0, Request(1.0, (1.0,))),),), response_rate=0.4, deadline=2
-    )
+def test_response_precedes_certain_settlement_failure() -> None:
+    actual = Setting(schedule=(((1.0, Request(1.0, (1.0,))),),), response_rate=0.4, deadline=2)
     policy = Planner(actual, "query_first")
     assert Evaluator(actual, policy).window(0, 0, 0)[0] == pytest.approx(0.4)
 
 
-def test_additive_fixed_policy_loss_uses_actual_unpaid_misuse():
+def test_additive_fixed_policy_loss_uses_actual_unpaid_misuse() -> None:
     actual = environment((0.2,))
     policy = Threshold(actual, "B1", theta=100)
     basic = Evaluator(actual, policy).future()[0]
     additive = Evaluator(actual, policy, "additive").future()[0]
-    assert basic - additive == pytest.approx(
-        0.05 * 0.2 * actual.risk(0, 0) * actual.harm
-    )
+    assert basic - additive == pytest.approx(0.05 * 0.2 * actual.risk(0, 0) * actual.harm)
 
 
-def test_failure_preserves_future_requests_and_metrics():
+def test_failure_preserves_future_requests_and_metrics() -> None:
     actual = environment((1.0,))
     policy = Threshold(actual, "B4", lower=1, upper=1, watch=1)
     result = Evaluator(actual, policy).report()
@@ -111,7 +96,7 @@ def test_failure_preserves_future_requests_and_metrics():
 
 
 @pytest.mark.parametrize("family", ["B1", "B2", "B3", "B4"])
-def test_grouped_search_keeps_entire_grid_and_matches_exhaustive(family):
+def test_grouped_search_keeps_entire_grid_and_matches_exhaustive(family: str) -> None:
     s = environment()
     groups = list(candidates(s, family, True, 5))
     expected = 5 if family in ("B1", "B2") else 15 * (3 if family == "B4" else 1)
@@ -119,7 +104,15 @@ def test_grouped_search_keeps_entire_grid_and_matches_exhaustive(family):
     brute = []
     for representative, parameters in groups:
         for parameters_item in parameters:
-            policy = Threshold(s, family, True, **parameters_item)
+            policy = Threshold(
+                s,
+                family,
+                True,
+                theta=parameters_item.get("theta", 0.0),
+                lower=parameters_item.get("lower", 0.0),
+                upper=parameters_item.get("upper", 1.0),
+                watch=int(parameters_item.get("watch", 0)),
+            )
             value = Evaluator(s, policy).future()[0]
             assert value == pytest.approx(Evaluator(s, representative).future()[0])
             brute.append(value)
@@ -128,7 +121,7 @@ def test_grouped_search_keeps_entire_grid_and_matches_exhaustive(family):
     assert fit["tied_parameters"]
 
 
-def test_all_threshold_ties_recorded():
+def test_all_threshold_ties_recorded() -> None:
     s = environment()
     # Amounts are below multiple thresholds; all grant-all candidates tie in this example.
     _, fit = tune(s, "B2", False, 21)
@@ -136,14 +129,14 @@ def test_all_threshold_ties_recorded():
     assert len(fit["tied_parameters"]) >= 1
 
 
-def test_invalid_public_support_fails_before_evaluation():
+def test_invalid_public_support_fails_before_evaluation() -> None:
     s = environment()
     other = replace(s, schedule=(((1.0, Request(2.0, (0.2, 0.03))),), s.schedule[1]))
     with pytest.raises(ValueError, match="support"):
         Evaluator(s, Planner(other))
 
 
-def test_design_contains_18_bases_and_deduplicates_no_hazard_cases():
+def test_design_contains_18_bases_and_deduplicates_no_hazard_cases() -> None:
     cases = design(Path("configs/settlement_learning"))
     assert len({c["base"] for c in cases}) == 18
     assert len(cases) == 168
