@@ -1,0 +1,29 @@
+{
+  "deadline": 2,
+  "harm": 1.0,
+  "high": 0.99,
+  "low": 0.01,
+  "margin": 1.0,
+  "prior": 0.5,
+  "query_cost": 0.03,
+  "response_rate": 0.99,
+  "schedule": [
+    [
+      {
+        "amount": 0.05,
+        "hazards": [
+          0.01
+        ],
+        "weight": 1.0
+      }
+    ],
+    [
+      {
+        "amount": 0.25,
+        "hazards": [],
+        "weight": 1.0
+      }
+    ]
+  ],
+  "wait_cost": 0.0001
+}
