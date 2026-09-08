@@ -58,16 +58,12 @@ class Solver:
             tuple(eta),
         )
 
-    def current(
-        self, request: Request, stage: int, bad: int, good: int
-    ) -> tuple[float, float]:
+    def current(self, request: Request, stage: int, bad: int, good: int) -> tuple[float, float]:
         """Current grant and query expected payoffs at the actual belief."""
         s = self.setting
         pi = s.risk(bad, good)
         sigma, execution, delay, _ = self.window(request)
-        grant = request.amount * (
-            sigma[stage] * (1 + (1 - pi) * s.margin - pi * s.harm) - 1
-        )
+        grant = request.amount * (sigma[stage] * (1 + (1 - pi) * s.margin - pi * s.harm) - 1)
         query = -s.query_cost - delay[stage] + (1 - pi) * execution[stage]
         return grant, query
 
@@ -129,13 +125,10 @@ class Solver:
         if n == len(self.setting.schedule):
             return 0.0
         return sum(
-            w * self._evaluate_stage(n, r, 0, bad, good)
-            for w, r in self.setting.schedule[n]
+            w * self._evaluate_stage(n, r, 0, bad, good) for w, r in self.setting.schedule[n]
         )
 
-    def _evaluate_stage(
-        self, n: int, request: Request, stage: int, bad: int, good: int
-    ) -> float:
+    def _evaluate_stage(self, n: int, request: Request, stage: int, bad: int, good: int) -> float:
         follow = self.evaluate(n + 1, bad, good)
         action = self.action(PublicState(n, request, stage, bad, good))
         grant, query = self.current(request, stage, bad, good)

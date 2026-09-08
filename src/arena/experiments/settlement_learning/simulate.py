@@ -48,26 +48,24 @@ def select_request(setting: Setting, n: int, draw: float) -> Request:
     return setting.schedule[n][-1][1]
 
 
-def replay(
-    solver: Solver, seed: int, split: str, relation: int
-) -> tuple[dict, list[dict]]:
+def replay(solver: Solver, seed: int, split: str, relation: int) -> tuple[dict, list[dict]]:
     """Replay a relation; return private evaluation metrics and public events."""
     s = solver.setting
     high = uniform(seed, split, relation, -1, "type") < s.prior
     risk = s.high if high else s.low
     history = History()
-    total = dict(
-        reward=0.0,
-        queries=0,
-        query_cost=0.0,
-        wait_ticks=0,
-        wait_cost=0.0,
-        misuse_release_amount=0.0,
-        unpaid_loss=0.0,
-        normal_requests=0,
-        normal_rejections=0,
-        labels=0,
-    )
+    total = {
+        "reward": 0.0,
+        "queries": 0,
+        "query_cost": 0.0,
+        "wait_ticks": 0,
+        "wait_cost": 0.0,
+        "misuse_release_amount": 0.0,
+        "unpaid_loss": 0.0,
+        "normal_requests": 0,
+        "normal_rejections": 0,
+        "labels": 0,
+    }
     events = []
     for n in range(len(s.schedule)):
         request = select_request(s, n, uniform(seed, split, relation, n, "request"))
@@ -80,9 +78,7 @@ def replay(
         reason = "reject"
 
         def fails(at: int, r: Request = request, index: int = n) -> bool:
-            return (
-                uniform(seed, split, relation, index, "settlement", at) < r.hazards[at]
-            )
+            return uniform(seed, split, relation, index, "settlement", at) < r.hazards[at]
 
         def release(
             at: int,
@@ -111,17 +107,17 @@ def replay(
             state = PublicState(n, request, stage, history.misuse, history.normal)
             action = solver.action(state)
             events.append(
-                dict(
-                    relation_id=relation,
-                    request_id=n,
-                    stage=stage,
-                    amount=request.amount,
-                    action=action,
-                    misuse_labels=history.misuse,
-                    normal_labels=history.normal,
-                    belief=s.belief(history.misuse, history.normal),
-                    event="decision",
-                )
+                {
+                    "relation_id": relation,
+                    "request_id": n,
+                    "stage": stage,
+                    "amount": request.amount,
+                    "action": action,
+                    "misuse_labels": history.misuse,
+                    "normal_labels": history.normal,
+                    "belief": s.belief(history.misuse, history.normal),
+                    "event": "decision",
+                }
             )
             if action == "grant":
                 release(stage)
@@ -142,17 +138,11 @@ def replay(
             reason = "timeout"
             for tick in range(s.deadline):
                 wait_cost()
-                if (
-                    uniform(seed, split, relation, n, "response", tick)
-                    < s.response_rate
-                ):
+                if uniform(seed, split, relation, n, "response", tick) < s.response_rate:
                     label = int(latent_misuse)
                     reason = "answered"
                     sigma = solver.window(request)[0][stage]
-                    if (
-                        label == 0
-                        and request.amount * (sigma * (1 + s.margin) - 1) >= 0
-                    ):
+                    if label == 0 and request.amount * (sigma * (1 + s.margin) - 1) >= 0:
                         release(stage)
                     break
                 if stage < final:
@@ -165,14 +155,14 @@ def replay(
         total["labels"] += int(label is not None)
         total["normal_rejections"] += int(not latent_misuse and not released)
         events.append(
-            dict(
-                relation_id=relation,
-                request_id=n,
-                event="close",
-                reason=reason,
-                label=label,
-                released=released,
-                posterior=s.belief(history.misuse, history.normal),
-            )
+            {
+                "relation_id": relation,
+                "request_id": n,
+                "event": "close",
+                "reason": reason,
+                "label": label,
+                "released": released,
+                "posterior": s.belief(history.misuse, history.normal),
+            }
         )
     return total, events

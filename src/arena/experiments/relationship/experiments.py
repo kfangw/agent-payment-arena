@@ -29,8 +29,7 @@ class SplitGuard:
         split = self.definition(phase)
         if not split.contains(seed):
             raise ValueError(
-                f"seed {seed} is outside {phase.value} range "
-                f"[{split.seed_start}, {split.seed_end}]"
+                f"seed {seed} is outside {phase.value} range [{split.seed_start}, {split.seed_end}]"
             )
 
     def seeds(self, phase: Phase) -> range:

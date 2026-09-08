@@ -118,7 +118,7 @@ def solve_value(
 
     for iteration in range(1, config.max_iterations + 1):
         action_values = bellman_action_values(parameters, beliefs, values)
-        updated, actions = _select_actions(action_values)
+        updated, _actions = _select_actions(action_values)
         residual = float(np.max(np.abs(updated - values)))
         if not np.isfinite(residual) or not np.all(np.isfinite(updated)):
             raise ArithmeticError("value iteration produced a nonfinite value")
