@@ -1,0 +1,227 @@
+{
+ "environment": "E-fast",
+ "flow": "F3",
+ "seed": 3,
+ "n_tune": 200000,
+ "n_eval": 5663400,
+ "h": 1.0,
+ "refitted": false,
+ "q_hat": 0.75033,
+ "rho_hat": 0.00461470349486881,
+ "mean_exposure": 49.45800329138035,
+ "tick_seconds": 2.0,
+ "bootstrap": {
+  "n_boot": 2000,
+  "seed_boot": 11,
+  "block": 1000,
+  "n_blocks": 5664
+ },
+ "runner": {
+  "base_commit": "feb22194ee1adff4be03a199b9f53d222569c0b6",
+  "module_sha256": "e9b2c6506cfe9991375f70ce22e8705da0cdb1aed2c64244c7be528e0dfc68bc"
+ },
+ "created_utc": "2026-09-16T07:01:43+00:00",
+ "source": {
+  "code": "feb22194ee1adff4be03a199b9f53d222569c0b6",
+  "params_hash": "1d992dcfe42fb5fa2547c0f1d66608a510775e371080ef391f3d9376c5960f0f",
+  "created_utc": "2026-08-22T02:58:28+00:00",
+  "b4_params_hash": "d5dc5e9b9f1400ef4cbcc3888ac42d93d3b9f22fe2875a6b06e331e62dc4235d",
+  "b5_params_hash": null
+ },
+ "policies": {
+  "B3": [
+   0.55,
+   0.9500000000000001
+  ],
+  "B4": [
+   1,
+   0.55,
+   0.9500000000000001
+  ]
+ },
+ "identity_check": {
+  "A": {
+   "replayed": 16.11760698450679,
+   "archived": 16.11760698450679,
+   "gap": 0.0
+  },
+  "B3": {
+   "replayed": 15.902796105233893,
+   "archived": 15.902796105233893,
+   "gap": 0.0
+  },
+  "B4": {
+   "replayed": 16.126318060099333,
+   "archived": 16.12631806009933,
+   "gap": 3.552713678800501e-15
+  }
+ },
+ "outcomes": {
+  "A": {
+   "release_rate": 0.9389619309955151,
+   "misuse_grant_rate": 0.03690405789755287,
+   "misuse_exposure": 0.09139660979805227,
+   "unpaid_exposure": 0.0018717794426881967,
+   "legitimate_refusal_rate": 0.013399297159190618,
+   "query_frequency": 0.0016567786135536957,
+   "mean_delay_ticks": 1.212179079704771,
+   "mean_delay_ticks_queried": 162.3187679846531,
+   "expired_answer_rate": 0.0004193593954161811,
+   "expired_cutoff_rate": 0.0,
+   "payoff": 16.11760698450679,
+   "n": 5663400,
+   "tick_seconds": 2.0,
+   "mean_delay_seconds": 2.424358159409542
+  },
+  "B3": {
+   "release_rate": 0.9462278843097786,
+   "misuse_grant_rate": 0.03753062431359297,
+   "misuse_exposure": 0.0931106257319643,
+   "unpaid_exposure": 0.2352414461965435,
+   "legitimate_refusal_rate": 0.005782709759166228,
+   "query_frequency": 0.01604389589292651,
+   "mean_delay_ticks": 2.6026655366034537,
+   "mean_delay_ticks_queried": 162.22154232195723,
+   "expired_answer_rate": 0.00401048839919483,
+   "expired_cutoff_rate": 0.0,
+   "payoff": 15.902796105233893,
+   "n": 5663400,
+   "tick_seconds": 2.0,
+   "mean_delay_seconds": 5.205331073206907
+  },
+  "B4": {
+   "release_rate": 0.9415089875339901,
+   "misuse_grant_rate": 0.03735110247528935,
+   "misuse_exposure": 0.09245426577528881,
+   "unpaid_exposure": 0.0018717794426881967,
+   "legitimate_refusal_rate": 0.010741336438563147,
+   "query_frequency": 0.01595772857294205,
+   "mean_delay_ticks": 3.602578839566338,
+   "mean_delay_ticks_queried": 164.09206085753803,
+   "expired_answer_rate": 0.00401048839919483,
+   "expired_cutoff_rate": 0.0,
+   "payoff": 16.126318060099333,
+   "n": 5663400,
+   "tick_seconds": 2.0,
+   "mean_delay_seconds": 7.205157679132676
+  }
+ },
+ "paired": {
+  "A_minus_B3": {
+   "misuse_grant_rate": {
+    "mean": -0.0006265664160401002,
+    "block_ci95": [
+     -0.000722366137181819,
+     -0.0005413426980448097
+    ]
+   },
+   "legitimate_refusal_rate": {
+    "mean": 0.00761658740002439,
+    "block_ci95": [
+     0.007544071737518157,
+     0.007688855413533233
+    ]
+   },
+   "misuse_exposure": {
+    "mean": -0.0017140159339120364,
+    "block_ci95": [
+     -0.002151168536319441,
+     -0.0013291476122235064
+    ]
+   },
+   "unpaid_exposure": {
+    "mean": -0.23336966675385531,
+    "block_ci95": [
+     -0.23776422276549167,
+     -0.2289426028382481
+    ]
+   },
+   "query_frequency": {
+    "mean": -0.014387117279372814,
+    "block_ci95": [
+     -0.014485522925336261,
+     -0.014288668391347995
+    ]
+   },
+   "mean_delay_ticks": {
+    "mean": -1.3904864568986828,
+    "block_ci95": [
+     -1.409741594690834,
+     -1.3721359338157189
+    ]
+   },
+   "expired_answer_rate": {
+    "mean": -0.003591129003778649,
+    "block_ci95": [
+     -0.0036428319209039547,
+     -0.0035400995868206378
+    ]
+   },
+   "expired_cutoff_rate": {
+    "mean": 0.0,
+    "block_ci95": [
+     0.0,
+     0.0
+    ]
+   }
+  },
+  "A_minus_B4": {
+   "misuse_grant_rate": {
+    "mean": -0.000447044577736476,
+    "block_ci95": [
+     -0.0005226049452951532,
+     -0.0003726787176702325
+    ]
+   },
+   "legitimate_refusal_rate": {
+    "mean": 0.0026579607206274705,
+    "block_ci95": [
+     0.002613842589717299,
+     0.0027010500838920105
+    ]
+   },
+   "misuse_exposure": {
+    "mean": -0.0010576559772365452,
+    "block_ci95": [
+     -0.001336193877735757,
+     -0.0008101280547222633
+    ]
+   },
+   "unpaid_exposure": {
+    "mean": 0.0,
+    "block_ci95": [
+     0.0,
+     0.0
+    ]
+   },
+   "query_frequency": {
+    "mean": -0.014300949959388354,
+    "block_ci95": [
+     -0.014400366209520035,
+     -0.01420263082930167
+    ]
+   },
+   "mean_delay_ticks": {
+    "mean": -2.3903997598615674,
+    "block_ci95": [
+     -2.4101394425107836,
+     -2.3713286023734286
+    ]
+   },
+   "expired_answer_rate": {
+    "mean": -0.003591129003778649,
+    "block_ci95": [
+     -0.003641456545538016,
+     -0.0035420634437684103
+    ]
+   },
+   "expired_cutoff_rate": {
+    "mean": 0.0,
+    "block_ci95": [
+     0.0,
+     0.0
+    ]
+   }
+  }
+ }
+}

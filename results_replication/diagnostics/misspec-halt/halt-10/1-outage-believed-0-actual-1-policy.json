@@ -1,0 +1,75 @@
+{
+ "repeat": 1,
+ "condition": "outage",
+ "believed": 0.0,
+ "actual": 1.0,
+ "exercise_at": "policy",
+ "metrics": {
+  "A": {
+   "payoff": 8.530760164743416,
+   "released": 0.6984,
+   "misuse_released": 0.0308,
+   "misuse_exposure": 1.1447616609391174,
+   "unpaid_exposure": 0.14206855829965248,
+   "legitimate_refused": 0.1242,
+   "queried": 0.6448,
+   "release_seconds": 70.284,
+   "late_settled": 0.0008,
+   "unexecuted_expired": 0.0,
+   "misuse_grant_rate_given_misuse": 0.14793467819404418,
+   "refusal_rate_given_legitimate": 0.15685779237181105,
+   "mean_release_seconds_given_released": 100.63573883161511
+  },
+  "B4": {
+   "payoff": 8.448092812197205,
+   "released": 0.729,
+   "misuse_released": 0.0402,
+   "misuse_exposure": 1.984046103098826,
+   "unpaid_exposure": 0.16375889835988797,
+   "legitimate_refused": 0.103,
+   "queried": 0.5762,
+   "release_seconds": 60.432,
+   "late_settled": 0.0012,
+   "unexecuted_expired": 0.0,
+   "misuse_grant_rate_given_misuse": 0.1930835734870317,
+   "refusal_rate_given_legitimate": 0.1300833543824198,
+   "mean_release_seconds_given_released": 82.89711934156378
+  },
+  "B5": {
+   "payoff": 8.386122645894794,
+   "released": 0.7268,
+   "misuse_released": 0.04,
+   "misuse_exposure": 1.9810111744136554,
+   "unpaid_exposure": 0.16375889835988797,
+   "legitimate_refused": 0.105,
+   "queried": 0.5754,
+   "release_seconds": 60.348,
+   "late_settled": 0.0008,
+   "unexecuted_expired": 0.0,
+   "misuse_grant_rate_given_misuse": 0.19212295869356388,
+   "refusal_rate_given_legitimate": 0.13260924475877747,
+   "mean_release_seconds_given_released": 83.03247110621905
+  }
+ },
+ "misspecification_cost": {
+  "A": 0.004822698425851257,
+  "B4": 0.0010290432310977593,
+  "B5": 0.0003860161363320458
+ },
+ "comparisons": {
+  "B4": {
+   "mean": 0.0826673525462119,
+   "conditional_ci95": [
+    -0.2778033123878974,
+    0.4888771525134904
+   ]
+  },
+  "B5": {
+   "mean": 0.14463751884862044,
+   "conditional_ci95": [
+    -0.215725843105806,
+    0.5587709675305077
+   ]
+  }
+ }
+}

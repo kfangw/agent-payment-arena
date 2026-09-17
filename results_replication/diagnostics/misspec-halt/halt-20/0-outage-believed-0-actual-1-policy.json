@@ -1,0 +1,75 @@
+{
+ "repeat": 0,
+ "condition": "outage",
+ "believed": 0.0,
+ "actual": 1.0,
+ "exercise_at": "policy",
+ "metrics": {
+  "A": {
+   "payoff": 8.785289252667352,
+   "released": 0.6888,
+   "misuse_released": 0.0252,
+   "misuse_exposure": 0.8044601335827423,
+   "unpaid_exposure": 0.11490272713045983,
+   "legitimate_refused": 0.1318,
+   "queried": 0.6478,
+   "release_seconds": 69.564,
+   "late_settled": 0.0012,
+   "unexecuted_expired": 0.0,
+   "misuse_grant_rate_given_misuse": 0.12316715542521994,
+   "refusal_rate_given_legitimate": 0.16570279104852903,
+   "mean_release_seconds_given_released": 100.99303135888502
+  },
+  "B4": {
+   "payoff": 8.656404095621772,
+   "released": 0.6676,
+   "misuse_released": 0.0158,
+   "misuse_exposure": 0.6807501625620471,
+   "unpaid_exposure": 0.13894842809448496,
+   "legitimate_refused": 0.1436,
+   "queried": 0.7372,
+   "release_seconds": 79.92,
+   "late_settled": 0.0014,
+   "unexecuted_expired": 0.0004,
+   "misuse_grant_rate_given_misuse": 0.0772238514173998,
+   "refusal_rate_given_legitimate": 0.18053809404073423,
+   "mean_release_seconds_given_released": 119.71240263630916
+  },
+  "B5": {
+   "payoff": 8.668646405527346,
+   "released": 0.6662,
+   "misuse_released": 0.0158,
+   "misuse_exposure": 0.6807501625620471,
+   "unpaid_exposure": 0.10827057038956125,
+   "legitimate_refused": 0.145,
+   "queried": 0.7344,
+   "release_seconds": 79.836,
+   "late_settled": 0.001,
+   "unexecuted_expired": 0.0,
+   "misuse_grant_rate_given_misuse": 0.0772238514173998,
+   "refusal_rate_given_legitimate": 0.18229821473472466,
+   "mean_release_seconds_given_released": 119.8378865205644
+  }
+ },
+ "misspecification_cost": {
+  "A": 0.024486543372830738,
+  "B4": -0.00928447486477424,
+  "B5": 0.0020554101506231603
+ },
+ "comparisons": {
+  "B4": {
+   "mean": 0.12888515704559841,
+   "conditional_ci95": [
+    0.034930326482146494,
+    0.22544167978013896
+   ]
+  },
+  "B5": {
+   "mean": 0.11664284714002583,
+   "conditional_ci95": [
+    0.03660779545102336,
+    0.20650355648163193
+   ]
+  }
+ }
+}

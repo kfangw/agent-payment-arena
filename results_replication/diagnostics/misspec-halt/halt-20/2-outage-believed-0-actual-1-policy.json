@@ -1,0 +1,75 @@
+{
+ "repeat": 2,
+ "condition": "outage",
+ "believed": 0.0,
+ "actual": 1.0,
+ "exercise_at": "policy",
+ "metrics": {
+  "A": {
+   "payoff": 9.166755687700041,
+   "released": 0.7106,
+   "misuse_released": 0.0302,
+   "misuse_exposure": 1.2673450675684124,
+   "unpaid_exposure": 0.09540519332419325,
+   "legitimate_refused": 0.1172,
+   "queried": 0.6172,
+   "release_seconds": 68.412,
+   "late_settled": 0.0004,
+   "unexecuted_expired": 0.0,
+   "misuse_grant_rate_given_misuse": 0.1492094861660079,
+   "refusal_rate_given_legitimate": 0.1469408224674022,
+   "mean_release_seconds_given_released": 96.27357162960878
+  },
+  "B4": {
+   "payoff": 9.119147371383283,
+   "released": 0.6762,
+   "misuse_released": 0.016,
+   "misuse_exposure": 0.8899514786327969,
+   "unpaid_exposure": 0.09461509949497568,
+   "legitimate_refused": 0.1374,
+   "queried": 0.7332,
+   "release_seconds": 83.112,
+   "late_settled": 0.0004,
+   "unexecuted_expired": 0.0,
+   "misuse_grant_rate_given_misuse": 0.07905138339920949,
+   "refusal_rate_given_legitimate": 0.17226680040120362,
+   "mean_release_seconds_given_released": 122.91038154392191
+  },
+  "B5": {
+   "payoff": 9.114601795384592,
+   "released": 0.6758,
+   "misuse_released": 0.016,
+   "misuse_exposure": 0.8899514786327969,
+   "unpaid_exposure": 0.09461509949497568,
+   "legitimate_refused": 0.1378,
+   "queried": 0.7322,
+   "release_seconds": 83.112,
+   "late_settled": 0.0004,
+   "unexecuted_expired": 0.0,
+   "misuse_grant_rate_given_misuse": 0.07905138339920949,
+   "refusal_rate_given_legitimate": 0.17276830491474424,
+   "mean_release_seconds_given_released": 122.98313110387689
+  }
+ },
+ "misspecification_cost": {
+  "A": -0.0013834336306768336,
+  "B4": 0.006467176194767887,
+  "B5": 0.0
+ },
+ "comparisons": {
+  "B4": {
+   "mean": 0.04760831631676086,
+   "conditional_ci95": [
+    -0.14191499427300705,
+    0.250539787448175
+   ]
+  },
+  "B5": {
+   "mean": 0.05215389231545176,
+   "conditional_ci95": [
+    -0.14012150882468297,
+    0.2570488406885378
+   ]
+  }
+ }
+}

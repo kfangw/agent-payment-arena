@@ -1,0 +1,924 @@
+{
+ "source_run": "results/diagnostics/halt-F2/halt-20-share",
+ "believed": 0.0,
+ "actual": 1.0,
+ "identity_check": {
+  "0-outage-recovery-0": {
+   "A": 0.0,
+   "B4": 0.0,
+   "B5": 0.0
+  },
+  "0-outage-recovery-1": {
+   "A": 0.0,
+   "B4": 0.0,
+   "B5": 0.0
+  }
+ },
+ "outcome_columns": [
+  "payoff",
+  "released",
+  "misuse_released",
+  "misuse_exposure",
+  "unpaid_exposure",
+  "legitimate_refused",
+  "queried",
+  "release_seconds",
+  "late_settled",
+  "unexecuted_expired"
+ ],
+ "rows": [
+  {
+   "repeat": 0,
+   "condition": "outage",
+   "believed": 0.0,
+   "actual": 1.0,
+   "exercise_at": "policy",
+   "metrics": {
+    "A": {
+     "payoff": 8.785289252667352,
+     "released": 0.6888,
+     "misuse_released": 0.0252,
+     "misuse_exposure": 0.8044601335827423,
+     "unpaid_exposure": 0.11490272713045983,
+     "legitimate_refused": 0.1318,
+     "queried": 0.6478,
+     "release_seconds": 69.564,
+     "late_settled": 0.0012,
+     "unexecuted_expired": 0.0,
+     "misuse_grant_rate_given_misuse": 0.12316715542521994,
+     "refusal_rate_given_legitimate": 0.16570279104852903,
+     "mean_release_seconds_given_released": 100.99303135888502
+    },
+    "B4": {
+     "payoff": 8.656404095621772,
+     "released": 0.6676,
+     "misuse_released": 0.0158,
+     "misuse_exposure": 0.6807501625620471,
+     "unpaid_exposure": 0.13894842809448496,
+     "legitimate_refused": 0.1436,
+     "queried": 0.7372,
+     "release_seconds": 79.92,
+     "late_settled": 0.0014,
+     "unexecuted_expired": 0.0004,
+     "misuse_grant_rate_given_misuse": 0.0772238514173998,
+     "refusal_rate_given_legitimate": 0.18053809404073423,
+     "mean_release_seconds_given_released": 119.71240263630916
+    },
+    "B5": {
+     "payoff": 8.668646405527346,
+     "released": 0.6662,
+     "misuse_released": 0.0158,
+     "misuse_exposure": 0.6807501625620471,
+     "unpaid_exposure": 0.10827057038956125,
+     "legitimate_refused": 0.145,
+     "queried": 0.7344,
+     "release_seconds": 79.836,
+     "late_settled": 0.001,
+     "unexecuted_expired": 0.0,
+     "misuse_grant_rate_given_misuse": 0.0772238514173998,
+     "refusal_rate_given_legitimate": 0.18229821473472466,
+     "mean_release_seconds_given_released": 119.8378865205644
+    }
+   },
+   "misspecification_cost": {
+    "A": 0.024486543372830738,
+    "B4": -0.00928447486477424,
+    "B5": 0.0020554101506231603
+   },
+   "comparisons": {
+    "B4": {
+     "mean": 0.12888515704559841,
+     "conditional_ci95": [
+      0.034930326482146494,
+      0.22544167978013896
+     ]
+    },
+    "B5": {
+     "mean": 0.11664284714002583,
+     "conditional_ci95": [
+      0.03660779545102336,
+      0.20650355648163193
+     ]
+    }
+   }
+  },
+  {
+   "repeat": 0,
+   "condition": "outage",
+   "believed": 0.0,
+   "actual": 1.0,
+   "exercise_at": "world",
+   "metrics": {
+    "A": {
+     "payoff": 8.787344662817976,
+     "released": 0.6892,
+     "misuse_released": 0.0252,
+     "misuse_exposure": 0.8044601335827423,
+     "unpaid_exposure": 0.11490272713045983,
+     "legitimate_refused": 0.1314,
+     "queried": 0.6478,
+     "release_seconds": 69.72,
+     "late_settled": 0.0016,
+     "unexecuted_expired": 0.0,
+     "misuse_grant_rate_given_misuse": 0.12316715542521994,
+     "refusal_rate_given_legitimate": 0.16519989942167462,
+     "mean_release_seconds_given_released": 101.16076610562972
+    },
+    "B4": {
+     "payoff": 8.647119620756998,
+     "released": 0.669,
+     "misuse_released": 0.0158,
+     "misuse_exposure": 0.6807501625620471,
+     "unpaid_exposure": 0.1620100061431682,
+     "legitimate_refused": 0.1422,
+     "queried": 0.7372,
+     "release_seconds": 80.124,
+     "late_settled": 0.002,
+     "unexecuted_expired": 0.0006,
+     "misuse_grant_rate_given_misuse": 0.0772238514173998,
+     "refusal_rate_given_legitimate": 0.17877797334674378,
+     "mean_release_seconds_given_released": 119.76681614349776
+    },
+    "B5": {
+     "payoff": 8.670701815677969,
+     "released": 0.6666,
+     "misuse_released": 0.0158,
+     "misuse_exposure": 0.6807501625620471,
+     "unpaid_exposure": 0.10827057038956125,
+     "legitimate_refused": 0.1446,
+     "queried": 0.7344,
+     "release_seconds": 79.992,
+     "late_settled": 0.0014,
+     "unexecuted_expired": 0.0,
+     "misuse_grant_rate_given_misuse": 0.0772238514173998,
+     "refusal_rate_given_legitimate": 0.18179532310787025,
+     "mean_release_seconds_given_released": 120.0
+    }
+   },
+   "misspecification_cost": {
+    "A": 0.022431133222207578,
+    "B4": 0.0,
+    "B5": 0.0
+   },
+   "comparisons": {
+    "B4": {
+     "mean": 0.14022504206100012,
+     "conditional_ci95": [
+      0.038988669111076936,
+      0.25267143931599967
+     ]
+    },
+    "B5": {
+     "mean": 0.11664284714002583,
+     "conditional_ci95": [
+      0.03660779545102336,
+      0.20650355648163193
+     ]
+    }
+   }
+  },
+  {
+   "repeat": 1,
+   "condition": "outage",
+   "believed": 0.0,
+   "actual": 1.0,
+   "exercise_at": "policy",
+   "metrics": {
+    "A": {
+     "payoff": 8.504475474386137,
+     "released": 0.6976,
+     "misuse_released": 0.0308,
+     "misuse_exposure": 1.1447616609391174,
+     "unpaid_exposure": 0.14206855829965248,
+     "legitimate_refused": 0.125,
+     "queried": 0.6436,
+     "release_seconds": 70.116,
+     "late_settled": 0.0018,
+     "unexecuted_expired": 0.0,
+     "misuse_grant_rate_given_misuse": 0.14793467819404418,
+     "refusal_rate_given_legitimate": 0.15786814852235412,
+     "mean_release_seconds_given_released": 100.51032110091744
+    },
+    "B4": {
+     "payoff": 8.446839399058314,
+     "released": 0.7288,
+     "misuse_released": 0.0402,
+     "misuse_exposure": 1.984046103098826,
+     "unpaid_exposure": 0.16375889835988797,
+     "legitimate_refused": 0.1032,
+     "queried": 0.5762,
+     "release_seconds": 60.42,
+     "late_settled": 0.0028,
+     "unexecuted_expired": 0.0,
+     "misuse_grant_rate_given_misuse": 0.1930835734870317,
+     "refusal_rate_given_legitimate": 0.13033594342005558,
+     "mean_release_seconds_given_released": 82.90340285400659
+    },
+    "B5": {
+     "payoff": 8.40240386986086,
+     "released": 0.7266,
+     "misuse_released": 0.0402,
+     "misuse_exposure": 1.984046103098826,
+     "unpaid_exposure": 0.16375889835988797,
+     "legitimate_refused": 0.1054,
+     "queried": 0.5744,
+     "release_seconds": 60.336,
+     "late_settled": 0.0018,
+     "unexecuted_expired": 0.0,
+     "misuse_grant_rate_given_misuse": 0.1930835734870317,
+     "refusal_rate_given_legitimate": 0.133114422834049,
+     "mean_release_seconds_given_released": 83.03881090008258
+    }
+   },
+   "misspecification_cost": {
+    "A": 0.01630931251500556,
+    "B4": 0.0022824563699881395,
+    "B5": 0.0003860161363320458
+   },
+   "comparisons": {
+    "B4": {
+     "mean": 0.05763607532782271,
+     "conditional_ci95": [
+      -0.31192741651138267,
+      0.45881501937525965
+     ]
+    },
+    "B5": {
+     "mean": 0.10207160452527587,
+     "conditional_ci95": [
+      -0.26491804823265785,
+      0.5102113380054855
+     ]
+    }
+   }
+  },
+  {
+   "repeat": 1,
+   "condition": "outage",
+   "believed": 0.0,
+   "actual": 1.0,
+   "exercise_at": "world",
+   "metrics": {
+    "A": {
+     "payoff": 8.504861490522469,
+     "released": 0.6978,
+     "misuse_released": 0.0308,
+     "misuse_exposure": 1.1447616609391174,
+     "unpaid_exposure": 0.14206855829965248,
+     "legitimate_refused": 0.1248,
+     "queried": 0.6436,
+     "release_seconds": 70.176,
+     "late_settled": 0.0018,
+     "unexecuted_expired": 0.0,
+     "misuse_grant_rate_given_misuse": 0.14793467819404418,
+     "refusal_rate_given_legitimate": 0.15761555948471836,
+     "mean_release_seconds_given_released": 100.56749785038693
+    },
+    "B4": {
+     "payoff": 8.449121855428302,
+     "released": 0.7294,
+     "misuse_released": 0.0402,
+     "misuse_exposure": 1.984046103098826,
+     "unpaid_exposure": 0.16375889835988797,
+     "legitimate_refused": 0.1026,
+     "queried": 0.5762,
+     "release_seconds": 60.516,
+     "late_settled": 0.003,
+     "unexecuted_expired": 0.0,
+     "misuse_grant_rate_given_misuse": 0.1930835734870317,
+     "refusal_rate_given_legitimate": 0.12957817630714827,
+     "mean_release_seconds_given_released": 82.96682204551686
+    },
+    "B5": {
+     "payoff": 8.402789885997192,
+     "released": 0.7268,
+     "misuse_released": 0.0402,
+     "misuse_exposure": 1.984046103098826,
+     "unpaid_exposure": 0.16375889835988797,
+     "legitimate_refused": 0.1052,
+     "queried": 0.5744,
+     "release_seconds": 60.396,
+     "late_settled": 0.0018,
+     "unexecuted_expired": 0.0,
+     "misuse_grant_rate_given_misuse": 0.1930835734870317,
+     "refusal_rate_given_legitimate": 0.13286183379641323,
+     "mean_release_seconds_given_released": 83.09851403412218
+    }
+   },
+   "misspecification_cost": {
+    "A": 0.015923296378673513,
+    "B4": 0.0,
+    "B5": 0.0
+   },
+   "comparisons": {
+    "B4": {
+     "mean": 0.05573963509416594,
+     "conditional_ci95": [
+      -0.3139271041519602,
+      0.45569650133118383
+     ]
+    },
+    "B5": {
+     "mean": 0.10207160452527587,
+     "conditional_ci95": [
+      -0.26491804823265785,
+      0.5102113380054855
+     ]
+    }
+   }
+  },
+  {
+   "repeat": 2,
+   "condition": "outage",
+   "believed": 0.0,
+   "actual": 1.0,
+   "exercise_at": "policy",
+   "metrics": {
+    "A": {
+     "payoff": 9.166755687700041,
+     "released": 0.7106,
+     "misuse_released": 0.0302,
+     "misuse_exposure": 1.2673450675684124,
+     "unpaid_exposure": 0.09540519332419325,
+     "legitimate_refused": 0.1172,
+     "queried": 0.6172,
+     "release_seconds": 68.412,
+     "late_settled": 0.0004,
+     "unexecuted_expired": 0.0,
+     "misuse_grant_rate_given_misuse": 0.1492094861660079,
+     "refusal_rate_given_legitimate": 0.1469408224674022,
+     "mean_release_seconds_given_released": 96.27357162960878
+    },
+    "B4": {
+     "payoff": 9.119147371383283,
+     "released": 0.6762,
+     "misuse_released": 0.016,
+     "misuse_exposure": 0.8899514786327969,
+     "unpaid_exposure": 0.09461509949497568,
+     "legitimate_refused": 0.1374,
+     "queried": 0.7332,
+     "release_seconds": 83.112,
+     "late_settled": 0.0004,
+     "unexecuted_expired": 0.0,
+     "misuse_grant_rate_given_misuse": 0.07905138339920949,
+     "refusal_rate_given_legitimate": 0.17226680040120362,
+     "mean_release_seconds_given_released": 122.91038154392191
+    },
+    "B5": {
+     "payoff": 9.114601795384592,
+     "released": 0.6758,
+     "misuse_released": 0.016,
+     "misuse_exposure": 0.8899514786327969,
+     "unpaid_exposure": 0.09461509949497568,
+     "legitimate_refused": 0.1378,
+     "queried": 0.7322,
+     "release_seconds": 83.112,
+     "late_settled": 0.0004,
+     "unexecuted_expired": 0.0,
+     "misuse_grant_rate_given_misuse": 0.07905138339920949,
+     "refusal_rate_given_legitimate": 0.17276830491474424,
+     "mean_release_seconds_given_released": 122.98313110387689
+    }
+   },
+   "misspecification_cost": {
+    "A": -0.0013834336306768336,
+    "B4": 0.006467176194767887,
+    "B5": 0.0
+   },
+   "comparisons": {
+    "B4": {
+     "mean": 0.04760831631676086,
+     "conditional_ci95": [
+      -0.14191499427300705,
+      0.250539787448175
+     ]
+    },
+    "B5": {
+     "mean": 0.05215389231545176,
+     "conditional_ci95": [
+      -0.14012150882468297,
+      0.2570488406885378
+     ]
+    }
+   }
+  },
+  {
+   "repeat": 2,
+   "condition": "outage",
+   "believed": 0.0,
+   "actual": 1.0,
+   "exercise_at": "world",
+   "metrics": {
+    "A": {
+     "payoff": 9.166755687700041,
+     "released": 0.7106,
+     "misuse_released": 0.0302,
+     "misuse_exposure": 1.2673450675684124,
+     "unpaid_exposure": 0.09540519332419325,
+     "legitimate_refused": 0.1172,
+     "queried": 0.6172,
+     "release_seconds": 68.412,
+     "late_settled": 0.0004,
+     "unexecuted_expired": 0.0,
+     "misuse_grant_rate_given_misuse": 0.1492094861660079,
+     "refusal_rate_given_legitimate": 0.1469408224674022,
+     "mean_release_seconds_given_released": 96.27357162960878
+    },
+    "B4": {
+     "payoff": 9.125614547578051,
+     "released": 0.6766,
+     "misuse_released": 0.016,
+     "misuse_exposure": 0.8899514786327969,
+     "unpaid_exposure": 0.09461509949497568,
+     "legitimate_refused": 0.137,
+     "queried": 0.7332,
+     "release_seconds": 83.136,
+     "late_settled": 0.0004,
+     "unexecuted_expired": 0.0,
+     "misuse_grant_rate_given_misuse": 0.07905138339920949,
+     "refusal_rate_given_legitimate": 0.17176529588766298,
+     "mean_release_seconds_given_released": 122.87318947679574
+    },
+    "B5": {
+     "payoff": 9.114601795384592,
+     "released": 0.6758,
+     "misuse_released": 0.016,
+     "misuse_exposure": 0.8899514786327969,
+     "unpaid_exposure": 0.09461509949497568,
+     "legitimate_refused": 0.1378,
+     "queried": 0.7322,
+     "release_seconds": 83.112,
+     "late_settled": 0.0004,
+     "unexecuted_expired": 0.0,
+     "misuse_grant_rate_given_misuse": 0.07905138339920949,
+     "refusal_rate_given_legitimate": 0.17276830491474424,
+     "mean_release_seconds_given_released": 122.98313110387689
+    }
+   },
+   "misspecification_cost": {
+    "A": -0.0013834336306768336,
+    "B4": 0.0,
+    "B5": 0.0
+   },
+   "comparisons": {
+    "B4": {
+     "mean": 0.041141140121990806,
+     "conditional_ci95": [
+      -0.15052154237026136,
+      0.24656022399072555
+     ]
+    },
+    "B5": {
+     "mean": 0.05215389231545176,
+     "conditional_ci95": [
+      -0.14012150882468297,
+      0.2570488406885378
+     ]
+    }
+   }
+  },
+  {
+   "repeat": 3,
+   "condition": "outage",
+   "believed": 0.0,
+   "actual": 1.0,
+   "exercise_at": "policy",
+   "metrics": {
+    "A": {
+     "payoff": 8.308073583397126,
+     "released": 0.709,
+     "misuse_released": 0.0302,
+     "misuse_exposure": 1.2731259365797538,
+     "unpaid_exposure": 0.09276612706840513,
+     "legitimate_refused": 0.1256,
+     "queried": 0.6112,
+     "release_seconds": 65.016,
+     "late_settled": 0.001,
+     "unexecuted_expired": 0.0,
+     "misuse_grant_rate_given_misuse": 0.15439672801635992,
+     "refusal_rate_given_legitimate": 0.15614122327200397,
+     "mean_release_seconds_given_released": 91.70098730606487
+    },
+    "B4": {
+     "payoff": 8.489300470869523,
+     "released": 0.725,
+     "misuse_released": 0.0332,
+     "misuse_exposure": 1.7007441178085576,
+     "unpaid_exposure": 0.09756758129702248,
+     "legitimate_refused": 0.1126,
+     "queried": 0.5622,
+     "release_seconds": 58.776,
+     "late_settled": 0.0014,
+     "unexecuted_expired": 0.0,
+     "misuse_grant_rate_given_misuse": 0.16973415132924335,
+     "refusal_rate_given_legitimate": 0.1399801093983093,
+     "mean_release_seconds_given_released": 81.07034482758621
+    },
+    "B5": {
+     "payoff": 8.48196705648336,
+     "released": 0.7236,
+     "misuse_released": 0.033,
+     "misuse_exposure": 1.6975137366601252,
+     "unpaid_exposure": 0.09756758129702248,
+     "legitimate_refused": 0.1138,
+     "queried": 0.5612,
+     "release_seconds": 58.776,
+     "late_settled": 0.001,
+     "unexecuted_expired": 0.0,
+     "misuse_grant_rate_given_misuse": 0.1687116564417178,
+     "refusal_rate_given_legitimate": 0.14147190452511188,
+     "mean_release_seconds_given_released": 81.22719734660033
+    }
+   },
+   "misspecification_cost": {
+    "A": 0.006131794716861094,
+    "B4": 0.008889182440801946,
+    "B5": 0.004922009706902486
+   },
+   "comparisons": {
+    "B4": {
+     "mean": -0.18122688747239352,
+     "conditional_ci95": [
+      -0.48012284054862164,
+      0.10735889928847722
+     ]
+    },
+    "B5": {
+     "mean": -0.17389347308623201,
+     "conditional_ci95": [
+      -0.4748612376485984,
+      0.11518587022662544
+     ]
+    }
+   }
+  },
+  {
+   "repeat": 3,
+   "condition": "outage",
+   "believed": 0.0,
+   "actual": 1.0,
+   "exercise_at": "world",
+   "metrics": {
+    "A": {
+     "payoff": 8.31299559310403,
+     "released": 0.7092,
+     "misuse_released": 0.0302,
+     "misuse_exposure": 1.2731259365797538,
+     "unpaid_exposure": 0.09276612706840513,
+     "legitimate_refused": 0.1254,
+     "queried": 0.6112,
+     "release_seconds": 65.04,
+     "late_settled": 0.001,
+     "unexecuted_expired": 0.0,
+     "misuse_grant_rate_given_misuse": 0.15439672801635992,
+     "refusal_rate_given_legitimate": 0.15589259075087022,
+     "mean_release_seconds_given_released": 91.70896785109983
+    },
+    "B4": {
+     "payoff": 8.498189653310325,
+     "released": 0.7254,
+     "misuse_released": 0.0332,
+     "misuse_exposure": 1.7007441178085576,
+     "unpaid_exposure": 0.09756758129702248,
+     "legitimate_refused": 0.1122,
+     "queried": 0.5622,
+     "release_seconds": 58.812,
+     "late_settled": 0.0016,
+     "unexecuted_expired": 0.0,
+     "misuse_grant_rate_given_misuse": 0.16973415132924335,
+     "refusal_rate_given_legitimate": 0.13948284435604177,
+     "mean_release_seconds_given_released": 81.0752688172043
+    },
+    "B5": {
+     "payoff": 8.486889066190262,
+     "released": 0.7238,
+     "misuse_released": 0.033,
+     "misuse_exposure": 1.6975137366601252,
+     "unpaid_exposure": 0.09756758129702248,
+     "legitimate_refused": 0.1136,
+     "queried": 0.5612,
+     "release_seconds": 58.8,
+     "late_settled": 0.001,
+     "unexecuted_expired": 0.0,
+     "misuse_grant_rate_given_misuse": 0.1687116564417178,
+     "refusal_rate_given_legitimate": 0.14122327200397813,
+     "mean_release_seconds_given_released": 81.23791102514507
+    }
+   },
+   "misspecification_cost": {
+    "A": 0.001209785009956832,
+    "B4": 0.0,
+    "B5": 0.0
+   },
+   "comparisons": {
+    "B4": {
+     "mean": -0.18519406020629262,
+     "conditional_ci95": [
+      -0.48287086012339964,
+      0.10303194052322329
+     ]
+    },
+    "B5": {
+     "mean": -0.17389347308623201,
+     "conditional_ci95": [
+      -0.4748612376485984,
+      0.11518587022662544
+     ]
+    }
+   }
+  },
+  {
+   "repeat": 4,
+   "condition": "outage",
+   "believed": 0.0,
+   "actual": 1.0,
+   "exercise_at": "policy",
+   "metrics": {
+    "A": {
+     "payoff": 9.157850129061828,
+     "released": 0.6984,
+     "misuse_released": 0.0272,
+     "misuse_exposure": 0.9820217369756443,
+     "unpaid_exposure": 0.05801647175837285,
+     "legitimate_refused": 0.1288,
+     "queried": 0.6442,
+     "release_seconds": 70.884,
+     "late_settled": 0.0004,
+     "unexecuted_expired": 0.0,
+     "misuse_grant_rate_given_misuse": 0.136,
+     "refusal_rate_given_legitimate": 0.161,
+     "mean_release_seconds_given_released": 101.49484536082474
+    },
+    "B4": {
+     "payoff": 8.891474684661306,
+     "released": 0.666,
+     "misuse_released": 0.0162,
+     "misuse_exposure": 0.7675487734365809,
+     "unpaid_exposure": 0.06228637120272331,
+     "legitimate_refused": 0.1502,
+     "queried": 0.7514,
+     "release_seconds": 85.548,
+     "late_settled": 0.0008,
+     "unexecuted_expired": 0.0002,
+     "misuse_grant_rate_given_misuse": 0.081,
+     "refusal_rate_given_legitimate": 0.18775,
+     "mean_release_seconds_given_released": 128.45045045045046
+    },
+    "B5": {
+     "payoff": 8.893054747577905,
+     "released": 0.6646,
+     "misuse_released": 0.016,
+     "misuse_exposure": 0.7630037937044231,
+     "unpaid_exposure": 0.054720772668244766,
+     "legitimate_refused": 0.1514,
+     "queried": 0.7486,
+     "release_seconds": 85.452,
+     "late_settled": 0.0004,
+     "unexecuted_expired": 0.0,
+     "misuse_grant_rate_given_misuse": 0.08,
+     "refusal_rate_given_legitimate": 0.18925,
+     "mean_release_seconds_given_released": 128.57658742100512
+    }
+   },
+   "misspecification_cost": {
+    "A": 0.010214079441647428,
+    "B4": 0.3707093882270698,
+    "B5": 0.37304881566592485
+   },
+   "comparisons": {
+    "B4": {
+     "mean": 0.2663754444005041,
+     "conditional_ci95": [
+      0.03667083029600474,
+      0.5621297987142208
+     ]
+    },
+    "B5": {
+     "mean": 0.26479538148390563,
+     "conditional_ci95": [
+      0.03993705854659119,
+      0.5589877453624444
+     ]
+    }
+   }
+  },
+  {
+   "repeat": 4,
+   "condition": "outage",
+   "believed": 0.0,
+   "actual": 1.0,
+   "exercise_at": "world",
+   "metrics": {
+    "A": {
+     "payoff": 9.159062587750356,
+     "released": 0.6986,
+     "misuse_released": 0.0272,
+     "misuse_exposure": 0.9820217369756443,
+     "unpaid_exposure": 0.05801647175837285,
+     "legitimate_refused": 0.1286,
+     "queried": 0.6442,
+     "release_seconds": 70.932,
+     "late_settled": 0.0004,
+     "unexecuted_expired": 0.0,
+     "misuse_grant_rate_given_misuse": 0.136,
+     "refusal_rate_given_legitimate": 0.16075,
+     "mean_release_seconds_given_released": 101.5344975665617
+    },
+    "B4": {
+     "payoff": 8.900935036883288,
+     "released": 0.6672,
+     "misuse_released": 0.0162,
+     "misuse_exposure": 0.7675487734365809,
+     "unpaid_exposure": 0.06926683713846886,
+     "legitimate_refused": 0.149,
+     "queried": 0.7514,
+     "release_seconds": 85.62,
+     "late_settled": 0.0012,
+     "unexecuted_expired": 0.0004,
+     "misuse_grant_rate_given_misuse": 0.081,
+     "refusal_rate_given_legitimate": 0.18625,
+     "mean_release_seconds_given_released": 128.3273381294964
+    },
+    "B5": {
+     "payoff": 8.894267206266433,
+     "released": 0.6648,
+     "misuse_released": 0.016,
+     "misuse_exposure": 0.7630037937044231,
+     "unpaid_exposure": 0.054720772668244766,
+     "legitimate_refused": 0.1512,
+     "queried": 0.7486,
+     "release_seconds": 85.5,
+     "late_settled": 0.0004,
+     "unexecuted_expired": 0.0,
+     "misuse_grant_rate_given_misuse": 0.08,
+     "refusal_rate_given_legitimate": 0.189,
+     "mean_release_seconds_given_released": 128.6101083032491
+    }
+   },
+   "misspecification_cost": {
+    "A": 0.00900162075311961,
+    "B4": 0.36124903600508773,
+    "B5": 0.37183635697739703
+   },
+   "comparisons": {
+    "B4": {
+     "mean": 0.25812755086705247,
+     "conditional_ci95": [
+      0.03350619164110514,
+      0.55472053792107
+     ]
+    },
+    "B5": {
+     "mean": 0.26479538148390563,
+     "conditional_ci95": [
+      0.03993705854659119,
+      0.5589877453624444
+     ]
+    }
+   }
+  }
+ ],
+ "aggregate": [
+  {
+   "condition": "outage",
+   "exercise_at": "policy",
+   "misspecification_cost": {
+    "A": {
+     "repeat_values": [
+      0.024486543372830738,
+      0.01630931251500556,
+      -0.0013834336306768336,
+      0.006131794716861094,
+      0.010214079441647428
+     ],
+     "mean": 0.011151659283133598,
+     "repeat_bootstrap_ci95": [
+      0.00394216032280319,
+      0.018777557800357413
+     ]
+    },
+    "B4": {
+     "repeat_values": [
+      -0.00928447486477424,
+      0.0022824563699881395,
+      0.006467176194767887,
+      0.008889182440801946,
+      0.3707093882270698
+     ],
+     "mean": 0.0758127456735707,
+     "repeat_bootstrap_ci95": [
+      -0.002499413191750577,
+      0.22417555944919307
+     ]
+    },
+    "B5": {
+     "repeat_values": [
+      0.0020554101506231603,
+      0.0003860161363320458,
+      0.0,
+      0.004922009706902486,
+      0.37304881566592485
+     ],
+     "mean": 0.07608245033195651,
+     "repeat_bootstrap_ci95": [
+      0.0006426917119238595,
+      0.2248136913409354
+     ]
+    }
+   },
+   "a_minus": {
+    "B4": {
+     "repeat_values": [
+      0.12888515704559841,
+      0.05763607532782271,
+      0.04760831631676086,
+      -0.18122688747239352,
+      0.2663754444005041
+     ],
+     "mean": 0.0638556211236585
+    },
+    "B5": {
+     "repeat_values": [
+      0.11664284714002583,
+      0.10207160452527587,
+      0.05215389231545176,
+      -0.17389347308623201,
+      0.26479538148390563
+     ],
+     "mean": 0.07235405047568541
+    }
+   }
+  },
+  {
+   "condition": "outage",
+   "exercise_at": "world",
+   "misspecification_cost": {
+    "A": {
+     "repeat_values": [
+      0.022431133222207578,
+      0.015923296378673513,
+      -0.0013834336306768336,
+      0.001209785009956832,
+      0.00900162075311961
+     ],
+     "mean": 0.00943648034665614,
+     "repeat_bootstrap_ci95": [
+      0.0017308647023359213,
+      0.01714209599097636
+     ]
+    },
+    "B4": {
+     "repeat_values": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.36124903600508773
+     ],
+     "mean": 0.07224980720101755,
+     "repeat_bootstrap_ci95": [
+      0.0,
+      0.21674942160305263
+     ]
+    },
+    "B5": {
+     "repeat_values": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.37183635697739703
+     ],
+     "mean": 0.07436727139547941,
+     "repeat_bootstrap_ci95": [
+      0.0,
+      0.2231018141864382
+     ]
+    }
+   },
+   "a_minus": {
+    "B4": {
+     "repeat_values": [
+      0.14022504206100012,
+      0.05573963509416594,
+      0.041141140121990806,
+      -0.18519406020629262,
+      0.25812755086705247
+     ],
+     "mean": 0.062007861587583334
+    },
+    "B5": {
+     "repeat_values": [
+      0.11664284714002583,
+      0.10207160452527587,
+      0.05215389231545176,
+      -0.17389347308623201,
+      0.26479538148390563
+     ],
+     "mean": 0.07235405047568541
+    }
+   }
+  }
+ ],
+ "inference": "Rescoring of saved paths; no new draws, no new fitting. Costs are per input payment in dollars. Intervals are exploratory."
+}

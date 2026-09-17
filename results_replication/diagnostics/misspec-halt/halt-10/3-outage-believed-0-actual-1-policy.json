@@ -1,0 +1,75 @@
+{
+ "repeat": 3,
+ "condition": "outage",
+ "believed": 0.0,
+ "actual": 1.0,
+ "exercise_at": "policy",
+ "metrics": {
+  "A": {
+   "payoff": 8.305110992472649,
+   "released": 0.7096,
+   "misuse_released": 0.0304,
+   "misuse_exposure": 1.2756845281920381,
+   "unpaid_exposure": 0.09276612706840513,
+   "legitimate_refused": 0.1252,
+   "queried": 0.6106,
+   "release_seconds": 65.076,
+   "late_settled": 0.001,
+   "unexecuted_expired": 0.0,
+   "misuse_grant_rate_given_misuse": 0.1554192229038855,
+   "refusal_rate_given_legitimate": 0.15564395822973645,
+   "mean_release_seconds_given_released": 91.70800450958286
+  },
+  "B4": {
+   "payoff": 8.477239454612699,
+   "released": 0.7248,
+   "misuse_released": 0.0332,
+   "misuse_exposure": 1.7007441178085576,
+   "unpaid_exposure": 0.09756758129702248,
+   "legitimate_refused": 0.1128,
+   "queried": 0.5622,
+   "release_seconds": 58.668,
+   "late_settled": 0.0014,
+   "unexecuted_expired": 0.0,
+   "misuse_grant_rate_given_misuse": 0.16973415132924335,
+   "refusal_rate_given_legitimate": 0.14022874191944307,
+   "mean_release_seconds_given_released": 80.94370860927152
+  },
+  "B5": {
+   "payoff": 8.482027397211688,
+   "released": 0.7232,
+   "misuse_released": 0.0328,
+   "misuse_exposure": 1.6860400945464125,
+   "unpaid_exposure": 0.09756758129702248,
+   "legitimate_refused": 0.114,
+   "queried": 0.5606,
+   "release_seconds": 58.668,
+   "late_settled": 0.0012,
+   "unexecuted_expired": 0.0,
+   "misuse_grant_rate_given_misuse": 0.16768916155419222,
+   "refusal_rate_given_legitimate": 0.14172053704624565,
+   "mean_release_seconds_given_released": 81.12278761061947
+  }
+ },
+ "misspecification_cost": {
+  "A": 0.006811056257591375,
+  "B4": 0.016019774031445166,
+  "B5": 0.0033498007144725506
+ },
+ "comparisons": {
+  "B4": {
+   "mean": -0.17212846214004782,
+   "conditional_ci95": [
+    -0.476853003403055,
+    0.12249192256740793
+   ]
+  },
+  "B5": {
+   "mean": -0.17691640473903505,
+   "conditional_ci95": [
+    -0.4803811981958687,
+    0.11467019837220079
+   ]
+  }
+ }
+}

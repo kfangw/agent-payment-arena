@@ -1,0 +1,75 @@
+{
+ "repeat": 1,
+ "condition": "outage",
+ "believed": 0.0,
+ "actual": 1.0,
+ "exercise_at": "policy",
+ "metrics": {
+  "A": {
+   "payoff": 8.504475474386137,
+   "released": 0.6976,
+   "misuse_released": 0.0308,
+   "misuse_exposure": 1.1447616609391174,
+   "unpaid_exposure": 0.14206855829965248,
+   "legitimate_refused": 0.125,
+   "queried": 0.6436,
+   "release_seconds": 70.116,
+   "late_settled": 0.0018,
+   "unexecuted_expired": 0.0,
+   "misuse_grant_rate_given_misuse": 0.14793467819404418,
+   "refusal_rate_given_legitimate": 0.15786814852235412,
+   "mean_release_seconds_given_released": 100.51032110091744
+  },
+  "B4": {
+   "payoff": 8.446839399058314,
+   "released": 0.7288,
+   "misuse_released": 0.0402,
+   "misuse_exposure": 1.984046103098826,
+   "unpaid_exposure": 0.16375889835988797,
+   "legitimate_refused": 0.1032,
+   "queried": 0.5762,
+   "release_seconds": 60.42,
+   "late_settled": 0.0028,
+   "unexecuted_expired": 0.0,
+   "misuse_grant_rate_given_misuse": 0.1930835734870317,
+   "refusal_rate_given_legitimate": 0.13033594342005558,
+   "mean_release_seconds_given_released": 82.90340285400659
+  },
+  "B5": {
+   "payoff": 8.40240386986086,
+   "released": 0.7266,
+   "misuse_released": 0.0402,
+   "misuse_exposure": 1.984046103098826,
+   "unpaid_exposure": 0.16375889835988797,
+   "legitimate_refused": 0.1054,
+   "queried": 0.5744,
+   "release_seconds": 60.336,
+   "late_settled": 0.0018,
+   "unexecuted_expired": 0.0,
+   "misuse_grant_rate_given_misuse": 0.1930835734870317,
+   "refusal_rate_given_legitimate": 0.133114422834049,
+   "mean_release_seconds_given_released": 83.03881090008258
+  }
+ },
+ "misspecification_cost": {
+  "A": 0.01630931251500556,
+  "B4": 0.0022824563699881395,
+  "B5": 0.0003860161363320458
+ },
+ "comparisons": {
+  "B4": {
+   "mean": 0.05763607532782271,
+   "conditional_ci95": [
+    -0.31192741651138267,
+    0.45881501937525965
+   ]
+  },
+  "B5": {
+   "mean": 0.10207160452527587,
+   "conditional_ci95": [
+    -0.26491804823265785,
+    0.5102113380054855
+   ]
+  }
+ }
+}

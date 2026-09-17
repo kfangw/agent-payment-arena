@@ -1,0 +1,18 @@
+{
+ "instances": 60000,
+ "seed": 20260917,
+ "stage_rows": 149991,
+ "rows_with_waiting": 77363,
+ "waiting_not_interval": 0,
+ "grant_not_prefix": 0,
+ "reject_not_suffix": 0,
+ "verify_not_interior_interval": 0,
+ "instances_by_stage_count": {
+  "1": 15070,
+  "2": 14824,
+  "3": 15151,
+  "4": 14955
+ },
+ "pi_grid": 501,
+ "seconds": 12.6
+}

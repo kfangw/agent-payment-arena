@@ -1,0 +1,75 @@
+{
+ "repeat": 3,
+ "condition": "outage",
+ "believed": 0.0,
+ "actual": 1.0,
+ "exercise_at": "world",
+ "metrics": {
+  "A": {
+   "payoff": 8.310918793186502,
+   "released": 0.71,
+   "misuse_released": 0.0304,
+   "misuse_exposure": 1.2756845281920381,
+   "unpaid_exposure": 0.09276612706840513,
+   "legitimate_refused": 0.1248,
+   "queried": 0.6106,
+   "release_seconds": 65.208,
+   "late_settled": 0.0014,
+   "unexecuted_expired": 0.0,
+   "misuse_grant_rate_given_misuse": 0.1554192229038855,
+   "refusal_rate_given_legitimate": 0.15514669318746893,
+   "mean_release_seconds_given_released": 91.84225352112676
+  },
+  "B4": {
+   "payoff": 8.493259228644144,
+   "released": 0.7256,
+   "misuse_released": 0.0332,
+   "misuse_exposure": 1.7007441178085576,
+   "unpaid_exposure": 0.10345600986021247,
+   "legitimate_refused": 0.112,
+   "queried": 0.5622,
+   "release_seconds": 58.86,
+   "late_settled": 0.0018,
+   "unexecuted_expired": 0.0002,
+   "misuse_grant_rate_given_misuse": 0.16973415132924335,
+   "refusal_rate_given_legitimate": 0.139234211834908,
+   "mean_release_seconds_given_released": 81.11907386990077
+  },
+  "B5": {
+   "payoff": 8.48537719792616,
+   "released": 0.7234,
+   "misuse_released": 0.0328,
+   "misuse_exposure": 1.6860400945464125,
+   "unpaid_exposure": 0.09756758129702248,
+   "legitimate_refused": 0.1138,
+   "queried": 0.5606,
+   "release_seconds": 58.764,
+   "late_settled": 0.0014,
+   "unexecuted_expired": 0.0,
+   "misuse_grant_rate_given_misuse": 0.16768916155419222,
+   "refusal_rate_given_legitimate": 0.14147190452511188,
+   "mean_release_seconds_given_released": 81.23306607685927
+  }
+ },
+ "misspecification_cost": {
+  "A": 0.0010032555437380353,
+  "B4": 0.0,
+  "B5": 0.0
+ },
+ "comparisons": {
+  "B4": {
+   "mean": -0.1823404354576399,
+   "conditional_ci95": [
+    -0.48353517383843914,
+    0.1063631585495282
+   ]
+  },
+  "B5": {
+   "mean": -0.17445840473965513,
+   "conditional_ci95": [
+    -0.4795680041126488,
+    0.11551299908083548
+   ]
+  }
+ }
+}

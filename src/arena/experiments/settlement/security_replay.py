@@ -39,7 +39,31 @@ from .watch import (PAYMENTS_PER_EPISODE, FixedActionOutageWatchPolicy as OB4For
                     tune_watch_policy as tune_b4)
 
 FIELDS = ('payoff', 'released', 'misuse_released', 'misuse_exposure',
-          'unpaid_exposure', 'legitimate_refused', 'queried')
+          'unpaid_exposure', 'legitimate_refused', 'queried',
+          'ticks', 'expired_answer', 'expired_cutoff')
+# ticks: tick boundaries consumed before the episode ends, settlement ticks
+# and ticks inside an open commitment window alike; the operator reads it as
+# delay.  expired_answer: the window closed on the deadline with no answer,
+# which the committed rule turns into a rejection.  expired_cutoff: the
+# operational cutoff arrived first, which only the augmented rail can reach.
+TICK_SECONDS = {'E-fast': 2.0, 'E-slow': 2.0, 'E-slow-deep': 2.0, 'E-outage': 60.0}
+
+
+def _now():
+    import datetime
+    return datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='seconds')
+
+
+def _runner_id():
+    # the replay code is the confirmatory commit plus the instrumentation patch;
+    # record the patched module's own content hash so the result names the code it ran
+    import hashlib
+    with open(__file__, 'rb') as fh:
+        return {'base_commit': 'feb22194ee1adff4be03a199b9f53d222569c0b6',
+                'module_sha256': hashlib.sha256(fh.read()).hexdigest()}
+
+
+RUNNER_ID = _runner_id()
 DECLARED_GRID_N = 21   # the main run's B3/B4 threshold grid
 REFINED_GRID_N = 161   # the diagnostic grid B5 inherits
 SEEDS = {('E-fast', 'F1'): 1, ('E-fast', 'F2'): 2, ('E-fast', 'F3'): 3,
@@ -47,13 +71,17 @@ SEEDS = {('E-fast', 'F1'): 1, ('E-fast', 'F2'): 2, ('E-fast', 'F3'): 3,
          ('E-outage', 'F1'): 7, ('E-outage', 'F2'): 8, ('E-outage', 'F3'): 9}
 
 
-def _record(out, k, v, legitimate, released, paid, queried):
+def _record(out, k, v, legitimate, released, paid, queried,
+            ticks=0, expired_answer=False, expired_cutoff=False):
     out[k, 1] = released
     out[k, 2] = released and not legitimate
     out[k, 3] = v if (released and not legitimate) else 0.0
     out[k, 4] = v if (released and not paid) else 0.0
     out[k, 5] = legitimate and not released
     out[k, 6] = queried
+    out[k, 7] = ticks
+    out[k, 8] = expired_answer
+    out[k, 9] = expired_cutoff
 
 
 def replay_chain(ch, d, policy, ex_expected):
@@ -64,6 +92,7 @@ def replay_chain(ch, d, policy, ex_expected):
         v, pi = float(d.v[k]), float(d.pi0[k])
         legitimate = d.theta[k] == 0
         payoff, stage, released, paid, queried = 0.0, 0, False, False, False
+        ticks, exp_ans, exp_cut = 0, False, False
 
         def leg(stage):
             won = not (d.fail_at[k] >= stage and d.fail_at[k] <= N)
@@ -84,6 +113,7 @@ def replay_chain(ch, d, policy, ex_expected):
                 j = stage
                 for s in range(1, ch.tau + 1):
                     payoff -= ch.cw * v
+                    ticks += 1
                     if d.t_ans[k] == s:
                         if legitimate and ex_expected[min(j, FIN)] > 0.0:
                             paid, gain = leg(j); payoff += gain; released = True
@@ -91,15 +121,19 @@ def replay_chain(ch, d, policy, ex_expected):
                     if j <= N and d.fail_at[k] == j:
                         break
                     j = min(j + 1, FIN)
+                else:
+                    # the deadline passed with no answer: the committed rule rejects
+                    exp_ans = True
                 break
             payoff -= ch.cw * v
+            ticks += 1
             if d.fail_at[k] == stage:
                 break
             stage += 1
             if stage > FIN:
                 break
         out[k, 0] = payoff
-        _record(out, k, v, legitimate, released, paid, queried)
+        _record(out, k, v, legitimate, released, paid, queried, ticks, exp_ans, exp_cut)
     return out
 
 
@@ -111,6 +145,7 @@ def replay_outage_fields(env, d, policy, ex_pos):
         v, pi = float(d.v[k]), float(d.pi0[k])
         legitimate = d.theta[k] == 0
         payoff, released, paid, queried = 0.0, False, False, False
+        ticks, exp_ans, exp_cut = 0, False, False
         i, t = 0, 0
         while True:
             if i > N:
@@ -118,6 +153,7 @@ def replay_outage_fields(env, d, policy, ex_pos):
             l = H - t
             r = int(d.paths[k, t])
             if l <= 0 and i < FIN:
+                exp_cut = True
                 break
             a = policy(i, max(l, 0), r, v, pi)
             if a == GRANT:
@@ -131,11 +167,14 @@ def replay_outage_fields(env, d, policy, ex_pos):
                 queried = True
                 payoff -= env.C
                 w = min(env.tau, max(l, 0))
+                answered = failed_in_window = cut_in_window = False
                 s = 0
                 while s < w:
                     payoff -= env.cw * v
+                    ticks += 1
                     s += 1
                     if d.t_ans[k] == s:
+                        answered = True
                         li, lr = H - t, int(d.paths[k, t])
                         if legitimate and ex_pos[i, li, lr] > 0:
                             won = 1 if i == FIN else _settle_from(env, d, k, i, t)
@@ -144,16 +183,27 @@ def replay_outage_fields(env, d, policy, ex_pos):
                         break
                     if int(d.paths[k, t]) == 0 and i <= N:
                         if d.u_stage[k, i] < env.f[i]:
+                            failed_in_window = True
                             break
                         i += 1
                         if i > N:
                             i = FIN
                     t += 1
                     if H - t <= 0:
+                        cut_in_window = True
                         break
+                if not answered and not failed_in_window:
+                    # settlement failure inside the window is not an expiry; the
+                    # window either ran out its deadline or was cut short by the
+                    # operational cutoff, and w < tau means the residue was the binding one
+                    if cut_in_window or w < env.tau:
+                        exp_cut = True
+                    else:
+                        exp_ans = True
                 break
             if a == WAIT:
                 payoff -= env.cw * v
+                ticks += 1
                 if r == 0 and i <= N:
                     if d.u_stage[k, i] < env.f[i]:
                         break
@@ -162,7 +212,7 @@ def replay_outage_fields(env, d, policy, ex_pos):
                 continue
             break
         out[k, 0] = payoff
-        _record(out, k, v, legitimate, released, paid, queried)
+        _record(out, k, v, legitimate, released, paid, queried, ticks, exp_ans, exp_cut)
     return out
 
 
@@ -176,23 +226,42 @@ def archived(archive: Path, env_name: str, flow: str, seed: int):
     return duel, b4, b5
 
 
-def summarize(out, theta):
+def summarize(out, theta, tick_s=None):
     legit = theta == 0
     n, n_legit, n_misuse = len(theta), int(legit.sum()), int((~legit).sum())
-    return {'release_rate': float(out[:, 1].mean()),
-            'misuse_grant_rate': float(out[:, 2].sum() / n_misuse) if n_misuse else None,
-            'misuse_exposure': float(out[:, 3].mean()),
-            'unpaid_exposure': float(out[:, 4].mean()),
-            'legitimate_refusal_rate': float(out[:, 5].sum() / n_legit) if n_legit else None,
-            'query_frequency': float(out[:, 6].mean()),
-            'payoff': float(out[:, 0].mean()), 'n': n}
+    queried = out[:, 6] > 0
+    row = {'release_rate': float(out[:, 1].mean()),
+           'misuse_grant_rate': float(out[:, 2].sum() / n_misuse) if n_misuse else None,
+           'misuse_exposure': float(out[:, 3].mean()),
+           'unpaid_exposure': float(out[:, 4].mean()),
+           'legitimate_refusal_rate': float(out[:, 5].sum() / n_legit) if n_legit else None,
+           'query_frequency': float(out[:, 6].mean()),
+           'mean_delay_ticks': float(out[:, 7].mean()),
+           'mean_delay_ticks_queried': float(out[queried, 7].mean()) if queried.any() else None,
+           'expired_answer_rate': float(out[:, 8].mean()),
+           'expired_cutoff_rate': float(out[:, 9].mean()),
+           'payoff': float(out[:, 0].mean()), 'n': n}
+    if tick_s is not None:
+        row['tick_seconds'] = float(tick_s)
+        row['mean_delay_seconds'] = row['mean_delay_ticks'] * float(tick_s)
+    return row
 
 
-def block_ci(values, episodes, n_boot, rng):
+def block_ci(values, episodes, n_boot, rng, chunk=200):
     sums = np.bincount(episodes, weights=values)
     counts = np.bincount(episodes).astype(float)
-    idx = rng.integers(0, len(sums), (n_boot, len(sums)))
-    return np.quantile(sums[idx].sum(1) / counts[idx].sum(1), [.025, .975]).tolist()
+    # drawn in chunks so that a rail with many blocks does not allocate an
+    # (n_boot x n_blocks) index at once; numpy fills row-major from the same
+    # stream, so the draws are identical to one (n_boot, n_blocks) call
+    parts = []
+    left = n_boot
+    while left > 0:
+        take = min(chunk, left)
+        idx = rng.integers(0, len(sums), (take, len(sums)))
+        parts.append(sums[idx].sum(1) / counts[idx].sum(1))
+        del idx
+        left -= take
+    return np.quantile(np.concatenate(parts), [.025, .975]).tolist()
 
 
 def paired(out_a, out_b, theta, episodes, n_boot, rng):
@@ -200,7 +269,8 @@ def paired(out_a, out_b, theta, episodes, n_boot, rng):
     res = {}
     for name, col, denom in (('misuse_grant_rate', 2, ~legit), ('legitimate_refusal_rate', 5, legit),
                              ('misuse_exposure', 3, None), ('unpaid_exposure', 4, None),
-                             ('query_frequency', 6, None)):
+                             ('query_frequency', 6, None), ('mean_delay_ticks', 7, None),
+                             ('expired_answer_rate', 8, None), ('expired_cutoff_rate', 9, None)):
         d = out_a[:, col] - out_b[:, col]
         if denom is not None:
             d = d[denom]; ep = episodes[denom]
@@ -288,12 +358,22 @@ def run_cell(env_name, flow_name, archive, n_tune, n_eval, n_boot, seed_boot, ch
                 raise RuntimeError(
                     f'{env_name} {flow_name}: replayed payoffs differ from the archive: {bad}')
     rng_b = np.random.default_rng([seed_boot, seed])
+    tick_s = TICK_SECONDS.get(env_name)
     row = {'environment': env_name, 'flow': flow_name, 'seed': seed, 'n_tune': n_tune, 'n_eval': n_eval,
            'h': float(world.h), 'refitted': h is not None,
            'q_hat': q_hat, 'rho_hat': rho_hat, 'mean_exposure': float(eval_d.v.mean()),
+           'tick_seconds': tick_s,
+           'bootstrap': {'n_boot': n_boot, 'seed_boot': seed_boot,
+                         'block': CHAIN_BLOCK if kind == 'chain' else PAYMENTS_PER_EPISODE,
+                         'n_blocks': int(episodes.max()) + 1},
+           'runner': RUNNER_ID, 'created_utc': _now(),
+           'source': {'code': duel.get('code'), 'params_hash': duel.get('params_hash'),
+                      'created_utc': duel.get('created_utc'),
+                      'b4_params_hash': b4j.get('params_hash'),
+                      'b5_params_hash': b5j.get('params_hash') if b5j is not None else None},
            'policies': {'B3': [b3a, b3b], 'B4': [k4, a4, b4]},
            'identity_check': identity,
-           'outcomes': {name: summarize(o, theta) for name, o in outs.items()},
+           'outcomes': {name: summarize(o, theta, tick_s) for name, o in outs.items()},
            'paired': {f'A_minus_{name}': paired(outs['A'], outs[name], theta, episodes, n_boot, rng_b)
                       for name in outs if name != 'A'}}
     if b5ab is not None:
@@ -330,7 +410,9 @@ def main():
             o = row['outcomes']
             print(f"{env_name:>9} {flow}  " + '  '.join(
                 f"{p}: mg {o[p]['misuse_grant_rate']*100:5.2f}% me {o[p]['misuse_exposure']:.3f} "
-                f"ue {o[p]['unpaid_exposure']:.4f} lr {o[p]['legitimate_refusal_rate']*100:5.2f}%"
+                f"ue {o[p]['unpaid_exposure']:.4f} lr {o[p]['legitimate_refusal_rate']*100:5.2f}% "
+                f"dly {o[p].get('mean_delay_seconds', float('nan')):6.1f}s "
+                f"xp {o[p]['expired_answer_rate']*100:4.2f}%"
                 for p in o), flush=True)
 
 
