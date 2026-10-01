@@ -54,3 +54,13 @@ python3 scripts/replication/tables/table_b4_rows.py <blocks_dir>
 `table_b4_rows.py` and the interval columns of `table_rows.py` need the
 block sums, so they run against the archive's `results/` tree, not this
 branch alone. The flow integration in `analysis/` needs scipy.
+
+## Release-policy study
+
+`studies/release-policy/` adds the experiments built on the fitted-halt rail
+`E-fitted` (environment in `gate.py`): policies compiled from wrong constants,
+per-draw input errors, the number of observed answers, measured payment sizes,
+the harm-weight curve, the measured submission failure, misuse intents that
+answer less, and a flow built from public card-fraud labels. Its `README.md`
+lists the commands, inputs and outputs; run them from that directory with
+`PYTHONPATH=$PWD/../../src`.

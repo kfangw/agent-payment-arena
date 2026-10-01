@@ -133,6 +133,7 @@ src/arena/experiments/settlement/  Settlement model, simulation, policies, and C
 scripts/       Resumable batch definitions using shared experiment utilities
 tests/         Fast CI regression tests
 docs/          Scope, threat model, and generic arena design notes
+studies/release-policy/  Release-policy study: scripts, measured data, summary results
 ```
 
 The settlement-policy modules separate the model from the experiment plumbing:
