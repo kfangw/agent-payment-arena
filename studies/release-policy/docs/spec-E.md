@@ -1,6 +1,6 @@
 # Experiment E spec: measured x402 payment sizes
 
-Fixed before any result was seen. Scripts: `scripts/run_E.py`, `scripts/analyze_E.py`; data: `data/x402_amounts/`; results: `results/measured_streams/` (`summary.json`, `summary.md`, `manifest.json`, `plan/`). Supplement table S23.
+Fixed before any result was seen. Scripts: `scripts/run_E.py`, `scripts/analyze_E.py`; data: `data/x402_amounts/`; results: `results/measured_streams/` (`summary.json`, `summary.md`, `manifest.json`, `plan/`).
 
 Motivation: a sigma = 1 log-normal exposure law does not agree with the cited statement that payments of $1 or more make up 95% of the value, and no test distribution is the actual distribution.
 

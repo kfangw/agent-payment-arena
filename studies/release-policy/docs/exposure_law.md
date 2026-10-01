@@ -6,4 +6,4 @@ World: E-fitted, flow F2, the main run's constants and its compiled table at the
 
 Reading rules fixed in advance: (a) if at L1 Comp minus Cutoff is within 10 bp of L1's mean exposure, the main text says the policy is that one-threshold rule at today's sizes; (b) value share above v* under L2 and L3 is reported, and the "most value lies where the policy acts" statement is made only if the L3 share is at least 50%; (c) the smallest mean in the sweep at which the gain exceeds the margin is reported.
 
-Result: (a) +3.2 bp [2.5, 4.0] at L1; (b) 35% (L2), 81% (L3, sensitivity); (c) $1 (47.5 bp [44.9, 49.8]). Comp minus B4_L at small means is a grid artifact (the tuner's grid enforces a < b and cannot express a pure cutoff), so the Cutoff is the comparator there. See the supplement section "Today's Payment Sizes".
+Result: (a) +3.2 bp [2.5, 4.0] at L1; (b) 35% (L2), 81% (L3, sensitivity); (c) $1 (47.5 bp [44.9, 49.8]). Comp minus B4_L at small means is a grid artifact (the tuner's grid enforces a < b and cannot express a pure cutoff), so the Cutoff is the comparator there.
