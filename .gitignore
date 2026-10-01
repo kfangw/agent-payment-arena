@@ -48,3 +48,12 @@ reports/
 results_settlement*/
 results_cmc_v37*/
 artifacts/
+
+# The release-policy study commits its summary results; regenerated caches
+# and block sums stay local.
+!/studies/release-policy/results/
+/studies/release-policy/results/cache/
+/studies/release-policy/results/**/npz/
+/studies/release-policy/data/card_fraud/creditcard.csv
+/studies/release-policy/data/card_fraud/F4_scores.npz
+/studies/release-policy/results/generated/

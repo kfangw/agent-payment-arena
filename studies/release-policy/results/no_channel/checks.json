@@ -1,0 +1,32 @@
+{
+ "vec_vs_repo": {
+  "prefix": 20000,
+  "cases": {
+   "comp_nv": {
+    "max_abs": 0.0,
+    "grants_vec": 14038,
+    "grants_repo": 14038
+   },
+   "cutoff": {
+    "max_abs": 0.0,
+    "grants_vec": 14050,
+    "grants_repo": 14050
+   },
+   "first_action_nv": {
+    "mismatch": 0
+   }
+  },
+  "pass_": true
+ },
+ "table_nv": {
+  "hash": "50c9f3e1b2af39ccbaceb81974d3217621f122cc5f98629b8cfba1c41060695b",
+  "compile_s": 3.757253408432007,
+  "n_verify_labels": 0,
+  "label_counts": {
+   "grant": 2322732,
+   "reject": 19445767,
+   "verify": 0,
+   "wait": 1155257
+  }
+ }
+}

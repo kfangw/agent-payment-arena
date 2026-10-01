@@ -62,8 +62,9 @@ src = ["src", "tests"]
 # The settlement experiment uses mathematical notation and lightweight
 # research scripts. Keep the reusable arena package and its tests on the strict
 # lint profile; the experiment code remains covered by regression and
-# validation tests.
-extend-exclude = ["src/arena/experiments/settlement", "scripts/run_*.py", "scripts/analyze_r2.py"]
+# validation tests. The study directories under studies/ hold experiment
+# scripts of the same kind.
+extend-exclude = ["src/arena/experiments/settlement", "scripts/run_*.py", "scripts/analyze_r2.py", "studies"]
 
 [tool.ruff.lint]
 select = [

@@ -1,0 +1,367 @@
+{
+ "n_rows": 284807,
+ "bounds_mine": [
+  0,
+  142403,
+  213604,
+  284807
+ ],
+ "bounds_alt": [
+  0,
+  142403,
+  213605,
+  284807
+ ],
+ "bounds_file": [
+  0,
+  142403,
+  213604,
+  284807
+ ],
+ "split_n": [
+  142403,
+  71201,
+  71203
+ ],
+ "split_fraud": [
+  269,
+  129,
+  94
+ ],
+ "eval_base_rate": 0.0013201690939988484,
+ "split_match": true,
+ "label_matches_csv_eval": true,
+ "amount_match": true,
+ "n_pi_levels": 10,
+ "band_n": 82,
+ "band_share": 0.001151636869233038,
+ "band_fraud_rate": 0.6829268292682927,
+ "band_mean_pi": 0.6193548387096772,
+ "band_fraud": 56,
+ "bins": [
+  {
+   "lo": 0,
+   "hi": 0.05,
+   "n": 71121,
+   "mean_pi": 0.00044042226751494953,
+   "fraud_rate": 0.0005343006988090718,
+   "fraud": 38
+  },
+  {
+   "lo": 0.05,
+   "hi": 0.1625,
+   "n": 0,
+   "mean_pi": null,
+   "fraud_rate": null,
+   "fraud": 0
+  },
+  {
+   "lo": 0.1625,
+   "hi": 0.3,
+   "n": 0,
+   "mean_pi": null,
+   "fraud_rate": null,
+   "fraud": 0
+  },
+  {
+   "lo": 0.3,
+   "hi": 0.63125,
+   "n": 82,
+   "mean_pi": 0.6193548387096772,
+   "fraud_rate": 0.6829268292682927,
+   "fraud": 56
+  },
+  {
+   "lo": 0.63125,
+   "hi": 0.9,
+   "n": 0,
+   "mean_pi": null,
+   "fraud_rate": null,
+   "fraud": 0
+  },
+  {
+   "lo": 0.9,
+   "hi": 1.0,
+   "n": 0,
+   "mean_pi": null,
+   "fraud_rate": null,
+   "fraud": 0
+  }
+ ],
+ "ECE": 0.00016698216560925448,
+ "AUC": 0.8266569632535965,
+ "AP": 0.42863519279358264,
+ "zeta_k": -11,
+ "zeta_flag": "ok",
+ "zeta_hat": 0.8958341352965282,
+ "pi_levels": [
+  [
+   0.00035131984478050494,
+   63031,
+   29
+  ],
+  [
+   0.00036189753100549974,
+   1,
+   0
+  ],
+  [
+   0.0003732736095558044,
+   5753,
+   1
+  ],
+  [
+   0.0004940574263294766,
+   1,
+   0
+  ],
+  [
+   0.0016409809859674798,
+   1,
+   0
+  ],
+  [
+   0.00209351011863224,
+   854,
+   1
+  ],
+  [
+   0.003286770747740345,
+   1163,
+   2
+  ],
+  [
+   0.003861003861003861,
+   238,
+   0
+  ],
+  [
+   0.006329113924050633,
+   79,
+   5
+  ],
+  [
+   0.6193548387096774,
+   82,
+   56
+  ]
+ ],
+ "J": {
+  "comp": 16.85489003701904,
+  "b4F4": 16.832680282189656,
+  "cutoff": 16.831992917127863,
+  "comp_nv": 16.85415530076043
+ },
+ "mean_exposure": 49.505823532682356,
+ "diff_bp": {
+  "b4F4": 4.486291358171405,
+  "cutoff": 4.625136652066892,
+  "comp_nv": 0.1484141069031863
+ },
+ "draw_ci_bp": {
+  "b4F4": [
+   3.3702581066775408,
+   5.923017667659668
+  ],
+  "cutoff": [
+   3.4803869806686314,
+   6.118366420685322
+  ],
+  "comp_nv": [
+   -0.03905421987817933,
+   0.34167320880681257
+  ]
+ },
+ "n_blocks": 10000,
+ "n_misuse": 688.0,
+ "misuse_pass_rate": {
+  "comp": 0.38808139534883723,
+  "b4F4": 0.38808139534883723,
+  "cutoff": 0.38808139534883723,
+  "comp_nv": 0.38808139534883723
+ },
+ "misuse_pass_count": {
+  "comp": 267.0,
+  "b4F4": 267.0,
+  "cutoff": 267.0,
+  "comp_nv": 267.0
+ },
+ "misuse_exposure_usd": {
+  "comp": 15010.234741843964,
+  "b4F4": 15010.234741843964,
+  "cutoff": 15010.234741843964,
+  "comp_nv": 15010.234741843964
+ },
+ "total_misuse_exposure_bs_v_mis": 37513.815093908815,
+ "band_count_bs_band": 559.0,
+ "verify_share": 0.000986,
+ "band_share_draw": 0.001118,
+ "rowboot_reps": 200,
+ "rowboot_mean_v_unique": 1,
+ "rowboot_mean_v_eval_equal": true,
+ "rowboot_keys": [
+  "rep",
+  "rng",
+  "mean_v",
+  "n_misuse",
+  "band_share",
+  "row_base_rate",
+  "row_n_fraud",
+  "mean_payoff",
+  "misuse_pass_rate",
+  "misuse_exposure_usd",
+  "wall_s"
+ ],
+ "rowboot_diff_bp": {
+  "b4F4": {
+   "median": 4.481225257261391,
+   "p2_5": 4.439806616248554,
+   "p97_5": 4.488788824627637,
+   "std": 0.013897373625616102
+  },
+  "cutoff": {
+   "median": 4.8713090398453485,
+   "p2_5": 4.549912018929078,
+   "p97_5": 5.296202125716966,
+   "std": 0.1980878616305809
+  },
+  "comp_nv": {
+   "median": 0.40450132252164883,
+   "p2_5": 0.08328671095335857,
+   "p97_5": 0.8190410647564412,
+   "std": 0.19691220583137242
+  }
+ },
+ "rowboot_exposure_used": "per-rep mean_v (identical to eval mean in all reps)",
+ "rowboot_nmisuse_unique": 143,
+ "rowboot_nmisuse_range": [
+  433,
+  889
+ ],
+ "rowboot_row_nfraud_range": [
+  68,
+  131
+ ],
+ "rowboot_pass_rate_range": {
+  "comp": [
+   0.28452579034941766,
+   0.6414790996784566
+  ],
+  "b4F4": [
+   0.28452579034941766,
+   0.6414790996784566
+  ],
+  "cutoff": [
+   0.28452579034941766,
+   0.6414790996784566
+  ],
+  "comp_nv": [
+   0.28452579034941766,
+   0.6414790996784566
+  ]
+ },
+ "rowboot_pass_rate_equal_all_pol_all_reps": false,
+ "rowboot_mean_payoff_std": {
+  "comp": 0.00741497006698082,
+  "b4F4": 0.007414100504784392,
+  "cutoff": 0.007445045252773117,
+  "comp_nv": 0.007447829680538349
+ },
+ "blockwise_diff_sd_per_block_b4F4": 15.837751634287372,
+ "blockwise_diff_sd_per_block_cutoff": 16.023335936048085,
+ "blockwise_diff_sd_per_block_comp_nv": 2.4561882583879138,
+ "pi_quantiles": {
+  "0.5": 0.00035131984478050494,
+  "0.9": 0.0003732736095558044,
+  "0.99": 0.003286770747740345,
+  "0.999": 0.6193548387096774
+ },
+ "n_pi_ge_0.2552": 82,
+ "n_pi_ge_0.2552_fraud": 56,
+ "fraud_pi_below_0.2552": 38,
+ "fraud_pi_below_0.0125": 38,
+ "fraud_pi_0.0125_0.2552": 0,
+ "fraud_pi_ge_0.625": 0,
+ "draw_ci_seed_check": {
+  "b4F4_20260930": [
+   3.338,
+   5.777,
+   3.344,
+   5.796
+  ],
+  "b4F4_1": [
+   3.261,
+   5.649,
+   3.259,
+   5.656
+  ],
+  "b4F4_2": [
+   3.315,
+   5.905,
+   3.308,
+   5.922
+  ],
+  "b4F4_3": [
+   3.399,
+   5.9,
+   3.396,
+   5.911
+  ],
+  "cutoff_20260930": [
+   3.454,
+   5.932,
+   3.461,
+   5.932
+  ],
+  "cutoff_1": [
+   3.438,
+   5.823,
+   3.43,
+   5.821
+  ],
+  "cutoff_2": [
+   3.453,
+   6.076,
+   3.457,
+   6.081
+  ],
+  "cutoff_3": [
+   3.542,
+   6.083,
+   3.548,
+   6.084
+  ],
+  "comp_nv_20260930": [
+   -0.052,
+   0.36,
+   -0.052,
+   0.359
+  ],
+  "comp_nv_1": [
+   -0.057,
+   0.351,
+   -0.057,
+   0.35
+  ],
+  "comp_nv_2": [
+   -0.026,
+   0.342,
+   -0.026,
+   0.342
+  ],
+  "comp_nv_3": [
+   -0.044,
+   0.346,
+   -0.044,
+   0.346
+  ]
+ },
+ "comparison": {
+  "mismatches": [],
+  "notes": [
+   "Draw CIs: my seed 12345 (per-resample exposure) gives Comp-B4 [3.37,5.92]; reported [3.34,5.80]. Re-running with the reported seed 20260930 and fixed mean exposure reproduces the reported [3.344,5.796], [3.461,5.932], [-0.052,0.359] exactly. Seed-to-seed spread is about 0.1 bp at the tails. Not a mismatch.",
+   "zeta_mle returns k and models P(y=1|s)=min(s/zeta,1) (docstring), while docs/spec-F4.md section 3.5 writes x=min(zeta*pi,1). The reported 0.8958 is the function output exp(0.01*k), k=-11, as instructed; under the spec's literal convention the equivalent value would be 1/0.8958=1.116. Convention wording issue only.",
+   "Row-boot sd: reported 0.013932 (ddof=1) vs mine 0.013897 (ddof=0). Rounding of convention only."
+  ]
+ }
+}

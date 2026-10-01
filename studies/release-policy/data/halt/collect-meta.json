@@ -1,0 +1,19 @@
+{
+  "source": "Etherscan V2 account/txlist, chainid=1",
+  "address": "0xff00000000000000000000000000000000008453",
+  "months": 12,
+  "l1_block_range": [
+    23416048,
+    25994626
+  ],
+  "time_range_utc": [
+    "2025-09-22T04:00:11+00:00",
+    "2026-09-17T03:48:59+00:00"
+  ],
+  "span_days": 359.99,
+  "n_tx_success": 1009405,
+  "n_tx_failed": 0,
+  "n_gaps_over_60s": 68602,
+  "api_calls": 1011,
+  "note": "L2 block timestamps are not wall-clock time under the OP Stack rules and are not used."
+}

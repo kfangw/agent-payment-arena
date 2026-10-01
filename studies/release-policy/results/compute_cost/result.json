@@ -1,0 +1,132 @@
+{
+  "E-fast": {
+    "type": "chain",
+    "compile": {
+      "median_ms": 10.949521999918943,
+      "all_runs_ms": [
+        14.27724399991348,
+        10.848763000012696,
+        10.948400999950536,
+        13.473735000161469,
+        10.949521999918943
+      ]
+    },
+    "table": {
+      "shape": [
+        41,
+        501
+      ],
+      "total_entries": 20541,
+      "total_bytes": 20541,
+      "pickled_bytes": 20695
+    },
+    "lookup": {
+      "median_us": 0.2599999788799323,
+      "p99_us": 0.9059999683813658,
+      "throughput_per_s": 3178680.969618484
+    }
+  },
+  "E-slow": {
+    "type": "chain",
+    "compile": {
+      "median_ms": 2.829289999908724,
+      "all_runs_ms": [
+        2.9791169999953127,
+        2.822675999823332,
+        2.7912590001051285,
+        2.872988000035548,
+        2.829289999908724
+      ]
+    },
+    "table": {
+      "shape": [
+        9,
+        501
+      ],
+      "total_entries": 4509,
+      "total_bytes": 4509,
+      "pickled_bytes": 4663
+    },
+    "lookup": {
+      "median_us": 0.28599993129319046,
+      "p99_us": 0.6320101351775468,
+      "throughput_per_s": 3002074.4333070177
+    }
+  },
+  "E-outage": {
+    "type": "outage",
+    "compile": {
+      "median_ms": 2766.6214560001663,
+      "all_runs_ms": [
+        2672.089478000089,
+        2737.4743249999938,
+        2766.6214560001663,
+        2936.5999369999827,
+        2813.670330999912
+      ]
+    },
+    "table": {
+      "n_v": 41,
+      "table_shape_per_v": [
+        18,
+        31,
+        2,
+        501
+      ],
+      "total_entries": 22923756,
+      "v_grid_bytes": 328,
+      "tables_bytes": 22923756,
+      "total_bytes": 22924084,
+      "pickled_bytes": 22926432
+    },
+    "lookup": {
+      "median_us": 3.7239999528537737,
+      "p99_us": 13.81905005928272,
+      "throughput_per_s": 227283.68029875777
+    }
+  },
+  "E-fitted": {
+    "type": "outage",
+    "compile": {
+      "median_ms": 2743.8116240000454,
+      "all_runs_ms": [
+        2743.8116240000454,
+        2692.6299369999924,
+        2766.7467999999644,
+        2954.1868409999097,
+        2649.5014940001056
+      ]
+    },
+    "table": {
+      "n_v": 41,
+      "table_shape_per_v": [
+        18,
+        31,
+        2,
+        501
+      ],
+      "total_entries": 22923756,
+      "v_grid_bytes": 328,
+      "tables_bytes": 22923756,
+      "total_bytes": 22924084,
+      "pickled_bytes": 22926432
+    },
+    "lookup": {
+      "median_us": 3.4309998682147125,
+      "p99_us": 12.423229818523277,
+      "throughput_per_s": 236088.9491470622
+    }
+  },
+  "system_info": {
+    "cpu_model_from_lscpu": [
+      "Architecture:                            x86_64",
+      "CPU op-mode(s):                          32-bit, 64-bit",
+      "Address sizes:                           52 bits physical, 57 bits virtual",
+      "Byte Order:                              Little Endian",
+      "CPU(s):                                  2"
+    ],
+    "python_version": "3.11.15",
+    "python_version_info": "3.11.15",
+    "numpy_version": "2.4.4"
+  }
+}

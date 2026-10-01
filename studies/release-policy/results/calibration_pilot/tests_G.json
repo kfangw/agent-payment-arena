@@ -1,0 +1,55 @@
+{
+ "test_contract_passes": {
+  "result": {
+   "fields": [
+    "pi0",
+    "t_ans",
+    "theta"
+   ],
+   "theta_reads": 1497,
+   "n_ans": 1497
+  },
+  "pass_": true
+ },
+ "test_unanswered_intent_trips": {
+  "result": {
+   "one_unanswered": "information contract: intent of 1 unanswered payment(s) read",
+   "scalar_unanswered": "information contract: intent of 1 unanswered payment(s) read",
+   "all_by_slice": "information contract: intent of 30 unanswered payment(s) read",
+   "whole_array": "information contract: whole intent array read",
+   "iterate": "information contract: intent array iterated",
+   "leaky_estimator": "information contract: intent of 503 unanswered payment(s) read"
+  },
+  "pass_": true
+ },
+ "test_extra_field_trips": {
+  "result": {
+   "fields": [
+    "pi0",
+    "t_ans",
+    "theta",
+    "v"
+   ],
+   "tripped": true
+  },
+  "pass_": true
+ },
+ "test_mle_edges": {
+  "result": {
+   "no_misuse": [
+    200,
+    "no_misuse"
+   ],
+   "all_misuse": [
+    -200,
+    "all_misuse"
+   ],
+   "beta_zeta1_4": [
+    33,
+    "ok",
+    1.3909681284637803
+   ]
+  },
+  "pass_": true
+ }
+}

@@ -1,0 +1,23 @@
+11:50:41 START phase=all seeds=1..2(2) n_eval=100000 eval_seed=108 workers=2 pid=60707 label='exploratory: pre-registered follow-up on the evaluation sample (seed 108) already used by experiment D'
+11:50:43 PLAN seed=1 t=1s n130: q=0.7462 R0=(0,0.0813,0.6063) R1=(0,0.0500,0.6500) R2=(0,0.0813,0.6313) R3=(0,0.1250,0.5000) | n500: q=0.7260 R0=(0,0.0938,0.6063) R1=(0,0.1000,0.6500) R2=(0,0.1250,0.6688) R3=(0,0.1000,0.5687) d_check=PASS
+11:50:44 PLAN seed=2 t=1s n130: q=0.7615 R0=(1,0.1625,0.6313) R1=(1,0.1500,0.6500) R2=(1,0.1625,0.6688) R3=(0,0.1500,0.5687) | n500: q=0.7380 R0=(0,0.2250,0.6625) R1=(0,0.2000,0.7000) R2=(0,0.2250,0.6688) R3=(0,0.1688,0.5500) d_check=PASS
+11:50:44 PLANDONE
+11:50:45 EVALSET seed=108 n=100000 draw_s=1
+11:50:45 ITEMS comp=5 force_k=[0, 1] triples=20 est_wall=5m(+select 0.2m)
+11:50:45 DONE force_k1_R replay_s=0.1 elapsed=0.0m
+11:50:45 DONE force_k1_G replay_s=0.5 elapsed=0.0m
+11:50:45 DONE force_k1_V replay_s=0.5 elapsed=0.0m
+11:50:45 DONE force_k0_R replay_s=0.1 elapsed=0.0m
+11:50:45 DONE force_k0_G replay_s=0.4 elapsed=0.0m
+11:50:46 DONE force_k0_V replay_s=0.4 elapsed=0.0m
+11:50:49 DONE comp_q0.75 compile_s=1.9 replay_s=1.3 elapsed=0.1m
+11:50:49 DONE comp_q0.726 compile_s=1.9 replay_s=1.3 elapsed=0.1m
+11:50:52 DONE comp_q0.738 compile_s=1.9 replay_s=1.3 elapsed=0.1m
+11:50:52 DONE comp_q0.7461538461538462 compile_s=1.9 replay_s=1.3 elapsed=0.1m
+11:50:55 DONE comp_q0.7615384615384615 compile_s=1.8 replay_s=1.3 elapsed=0.2m
+11:50:55 SELECT k=0 policies=16 t=0s
+11:50:55 SELECT k=1 policies=4 t=0s
+11:50:55 CHECK select vs direct replay b4_k0_a0.05_b0.65 gap=0.000e+00 PASS
+11:50:56 CHECK select vs direct replay b4_k1_a0.15000000000000002_b0.65 gap=0.000e+00 PASS
+11:50:56 CHECK select vs direct replay b4_k0_a0.08125_b0.6062500000000001 gap=0.000e+00 PASS
+11:50:56 ALLDONE 11:50:56 elapsed=0.2m

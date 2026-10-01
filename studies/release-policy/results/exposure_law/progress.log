@@ -1,0 +1,14 @@
+21:17:43 [   0.0m] START phase=run tag=None pid=1967
+21:19:20 [   1.6m] PLAN L0 b4=(0,0.10625,0.75625) tune_mean=8.92 draw=2.0s force=4.6s tune=89.3s elapsed=1.6m
+21:20:58 [   3.2m] DONE L0 mean_v=49.4382 draw=60.2s comp=11.3s cutoff=8.2s b4L=12.3s b4L0=0.0s law_total=194.2s J_comp=8.93903 J_cutoff=5.86074 J_b4L=8.91036 J_b4L0=8.91036 elapsed=3.2m
+21:22:34 [   4.8m] PLAN L1 b4=(0,0.33125,0.33750) tune_mean=0.0187989 draw=2.5s force=4.2s tune=89.5s elapsed=4.8m
+21:24:16 [   6.5m] DONE L1 mean_v=0.1999 draw=58.2s comp=7.5s cutoff=8.4s b4L=11.0s b4L0=11.8s law_total=198.0s J_comp=0.0237686 J_cutoff=0.0237041 J_b4L=0.0184647 J_b4L0=-0.320318 elapsed=6.5m
+21:25:53 [   8.2m] PLAN L2 b4=(0,0.27500,0.28125) tune_mean=0.018955 draw=2.4s force=4.6s tune=90.3s elapsed=8.2m
+21:27:35 [   9.9m] DONE L2 mean_v=0.2008 draw=58.4s comp=9.1s cutoff=7.3s b4L=9.0s b4L0=12.9s law_total=199.4s J_comp=0.0263214 J_cutoff=0.0239977 J_b4L=0.0183947 J_b4L0=-0.319996 elapsed=9.9m
+21:29:10 [  11.4m] PLAN L3 b4=(0,0.48750,0.49375) tune_mean=0.0266057 draw=1.9s force=4.0s tune=88.8s elapsed=11.4m
+21:30:57 [  13.2m] DONE L3 mean_v=0.1364 draw=57.9s comp=8.3s cutoff=8.5s b4L=13.9s b4L0=13.2s law_total=201.2s J_comp=0.0239194 J_cutoff=0.017485 J_b4L=0.0132386 J_b4L0=-0.33119 elapsed=13.2m
+21:32:32 [  14.8m] PLAN L4 b4=(0,0.25000,0.25625) tune_mean=0.113846 draw=1.9s force=4.5s tune=88.8s elapsed=14.8m
+21:34:06 [  16.4m] DONE L4 mean_v=0.9996 draw=56.4s comp=7.5s cutoff=6.3s b4L=6.6s b4L0=12.5s law_total=189.0s J_comp=0.12326 J_cutoff=0.118512 J_b4L=0.113928 J_b4L0=-0.170397 elapsed=16.4m
+21:35:44 [  18.0m] PLAN L5 b4=(0,0.21250,0.45625) tune_mean=0.661886 draw=2.0s force=4.1s tune=92.6s elapsed=18.0m
+21:37:25 [  19.7m] DONE L5 mean_v=4.9981 draw=57.0s comp=9.2s cutoff=8.6s b4L=9.2s b4L0=11.8s law_total=199.8s J_comp=0.739897 J_cutoff=0.592558 J_b4L=0.657228 J_b4L0=0.57922 elapsed=19.7m
+21:37:25 [  19.7m] ALLDONE 2026-09-30 21:37:25 elapsed=19.7m

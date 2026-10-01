@@ -1,0 +1,62 @@
+{
+ "laws": [
+  "L6",
+  "L7"
+ ],
+ "n_eval": 5663400,
+ "eval_seed": 111,
+ "learn_rng": [
+  111,
+  700,
+  {
+   "L6": 6,
+   "L7": 7
+  }
+ ],
+ "n_learn": 200000,
+ "table_hash": "b80233bd3f238993d72e5a68c23a516da2590e25b8cbc8847d7337e58488b7d2",
+ "policies": [
+  "comp",
+  "cutoff",
+  "b4L",
+  "b4L0"
+ ],
+ "floor": 1.9,
+ "vstar": 3.13,
+ "b4L0_source": "experiment H results/exposure_law/plan/b4_L0.json",
+ "data": "data/x402_amounts/hist.json",
+ "data_source": "Public Dune table tokens.transfers, blockchain base, symbol USDC, tx_from in the facilitator address list of the public dashboard \"x402 Facilitators\" (Dune team). Amounts rounded to 3 significant figures and counted per amount; no addresses or recipients. Queried 2026-09-30.",
+ "law_params": {
+  "L6": {
+   "name": "L6",
+   "kind": "empirical",
+   "window": "A_all90d",
+   "n_points": 1195,
+   "n_payments": 144494,
+   "mean_target": 0.4022833667833958,
+   "mean_unclipped": 0.4576403899815908,
+   "sigma": NaN,
+   "median": 0.01,
+   "lo": 0.01,
+   "hi": 2000.0,
+   "share_count_below_lo": 0.2559137403629217,
+   "share_count_above_hi": 4.1524215538361455e-05
+  },
+  "L7": {
+   "name": "L7",
+   "kind": "empirical",
+   "window": "B_cb90d",
+   "n_points": 4038,
+   "n_payments": 43734389,
+   "mean_target": 0.3966958668246171,
+   "mean_unclipped": 0.3985855465647868,
+   "sigma": NaN,
+   "median": 0.02,
+   "lo": 0.01,
+   "hi": 2000.0,
+   "share_count_below_lo": 0.018221518997327248,
+   "share_count_above_hi": 1.5548405169213632e-06
+  }
+ },
+ "started": "redacted"
+}

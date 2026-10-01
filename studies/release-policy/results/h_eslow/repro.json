@@ -1,0 +1,19 @@
+{
+ "q_hat": 0.75062,
+ "rho_hat": 0.004618559637664554,
+ "load_s": 4.907423734664917,
+ "replay_s": 34.58937120437622,
+ "n_blocks": 5664,
+ "n_blocks_arch": 5664,
+ "counts_equal": true,
+ "blocks_bit_equal": false,
+ "max_abs_block_diff": 1.8189894035458565e-12,
+ "mean_payoff": 8.08061058357997,
+ "mean_payoff_arch": 8.080610583579972,
+ "mean_exposure": 49.41996900063451,
+ "prefix_loop_vs_vector_equal": true,
+ "prefix_n": 20000,
+ "blocks_equal_within_1e-14_rel": true,
+ "n_blocks_not_bit_equal": 354,
+ "max_ulp_diff": 2
+}

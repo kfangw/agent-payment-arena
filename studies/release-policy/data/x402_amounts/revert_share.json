@@ -1,0 +1,19 @@
+{
+ "source": "Dune query on base.transactions, from in the Dune-team x402 facilitator list (public dashboard 'x402 Facilitators'), queried 2026-10-01",
+ "windows": {
+  "A_all90d": {
+   "desc": "all listed Base facilitators, last 90 days to 2026-10-01",
+   "n_tx": 147059,
+   "n_revert": 596,
+   "revert_share": 0.00405279513664584
+  },
+  "B_cb90d": {
+   "desc": "Coinbase facilitator addresses, 2025-10-12..2026-01-09",
+   "n_tx": 44276970,
+   "n_revert": 538473,
+   "revert_share": 0.01216146904361342
+  }
+ },
+ "declared_f0": 0.005,
+ "c_w": 0.006
+}
