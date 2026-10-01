@@ -88,6 +88,24 @@ def envs_for(cw_key, m=0.35, h=1.0, C=0.5):
         ),
         rho_o,
     )
+    # E-fitted: E-outage with the halt law fitted to Base batch-inbox gaps
+    # (360 days, 18 gaps > 5 min, mean 22.8 min, stationary share 0.0792%).
+    out["E-fitted"] = (
+        "outage",
+        OutageEnv(
+            f=np.array([0.005] + [3e-5] * 16),
+            m=m,
+            h=h,
+            C=C,
+            cw=cw_o,
+            tau=tau_o,
+            H=30,
+            rho=rho_o,
+            p01=18 / 517975.2,
+            p10=1 / 22.8,
+        ),
+        rho_o,
+    )
     return out
 
 

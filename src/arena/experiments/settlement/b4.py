@@ -236,7 +236,7 @@ def _resolved(args, kind, env, rho, ab_grid, k_list, tune_on_eval):
 
 def main(argv=None):
     ap = argparse.ArgumentParser()
-    ap.add_argument("--env", required=True, choices=["E-fast", "E-outage", "E-slow", "E-slow-deep"])
+    ap.add_argument("--env", required=True, choices=["E-fast", "E-outage", "E-slow", "E-slow-deep", "E-fitted"])
     ap.add_argument("--flow", required=True, choices=["F1", "F2", "F3"])
     ap.add_argument("--cw", default="mid", choices=["high", "mid", "low"])
     ap.add_argument("--n-eval", type=int, default=5_663_400)
